@@ -25,4 +25,4 @@
 التشغيل: افتح `index.html` مباشرة، أو فعّل GitHub Pages (Settings ← Pages ← Branch: main / root).
 
 ---
-**للصيانة:** المصدر الكامل والاختبارات في مجلد `dev/`، وبرومت التسليم لأي مساعد ذكاء صناعي في [`dev/AI_HANDOFF.md`](dev/AI_HANDOFF.md). نقاط الرجوع: git tags (مثل `v2026.10.05`).
+**للصيانة:** المصدر الكامل والاختبارات في مجلد `dev/`، وبرومت التسليم لأي مساعد ذكاء صناعي في [`dev/AI_HANDOFF.md`](dev/AI_HANDOFF.md). نقاط الرجوع: فروع `stable-YYYY-MM-DD` (مثل `stable-2026-10-05`).

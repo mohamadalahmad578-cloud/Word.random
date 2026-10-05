@@ -21,8 +21,8 @@
 - المستودع: `github.com/mohamadalahmad578-cloud/Word.random` (فرع `main`).
 - النشر: GitHub Pages من جذر الفرع، والملف المنشور هو `index.html` فقط: https://mohamadalahmad578-cloud.github.io/Word.random/
 - كل المعالجة تجري داخل المتصفح، بلا خادم. المكتبات من CDN: docx.js 9.7.1 (jsdelivr ثم unpkg) و JSZip 3.10.1 (cdnjs ثم jsdelivr) و docx-preview 0.4.1 للمعاينة الحقيقية فقط.
-- نسخ للرجوع: كل نسخة مستقرة لها tag في git (مثل `v2026.10.05`). للتراجع عن الموقع المنشور:
-  `git checkout v2026.10.05 -- index.html dev/ && git commit -m "rollback" && git push`
+- نسخ للرجوع: كل نسخة مستقرة محفوظة كفرع باسم `stable-YYYY-MM-DD` (أولها `stable-2026-10-05`). للتراجع عن الموقع المنشور:
+  `git fetch origin && git checkout origin/stable-2026-10-05 -- index.html dev/ && git commit -m "rollback" && git push`
 
 ## 3) بنية الملفات (`dev/`)
 | الملف | المسؤولية |
@@ -65,7 +65,7 @@ python3 src/build.py                 # يُنتج src/index.html
 bash tests/run_all.sh                # كل الاختبارات (القسم 5)
 cp src/index.html ../index.html      # انشر النسخة المبنية
 cd .. && git add -A && git commit -m "وصف الإصلاح" && git push
-git tag v$(date +%Y.%m.%d) && git push --tags   # نقطة رجوع
+git push origin HEAD:refs/heads/stable-$(date +%Y-%m-%d)   # نقطة رجوع (فرع)
 ```
 إن لم يكن عندك Node/Playwright: عدّل `src/` وابنِ بـ `build.py` على الأقل، وجرّب `src/index.html` يدوياً في المتصفح (افتحه مباشرة). يحتاج إنترنت أول مرة لتحميل المكتبات.
 
