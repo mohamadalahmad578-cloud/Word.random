@@ -132,5 +132,6 @@ git push origin HEAD:refs/heads/stable-$(date +%Y-%m-%d)   # نقطة رجوع (
 - قسم «حماية الملفات 🔒» بالإعدادات: `S.protOn, protWord, protPdf, protNoPrint, protNoCopy`. كلمات السر (`protPw`, `protOwner`) بالذاكرة فقط ولا تُحفظ أبداً.
 - Word: `encryptDocx(blob, pw)` = تشفير ECMA-376 Agile (AES-256-CBC + SHA-512، spinCount 100000) داخل حاوية CFB مكتوبة يدوياً (`_cfb`) مع `\x06DataSpaces`. يُطبَّق عند الحفظ فقط عبر `guardDocx` و`saveBlob` (التحقق من الكلمات يتم على النسخة غير المشفّرة).
 - PDF: `pdfSecurity({userPw, ownerPw, noPrint, noCopy})` = معالج Standard R6/AESV3. `writePdf(pages, title, sec)` يشفّر كل المجاري والنصوص ويضيف `/Encrypt` و`/ID`.
+- `protectPdf(blobOrBytes, opts)`: يحمي ملف PDF جاهز (مثلاً محوّل من Word على جهاز المستخدم): يقرأ كل الكائنات (xref عادي/مضغوط، مجاري الكائنات، التحديثات المتتالية، الملفات المُخطّطة linearized) ويعيد كتابتها مشفّرة بلا أي تغيير بالمحتوى. زر «حماية ملف PDF جاهز عندك» بقسم الحماية. اختباره: النص (pdftotext) والصور متطابقة قبل/بعد.
 - ملف Word لا يمكن منع طباعته/نسخه (لا يدعمه Word بدون خادم IRM) — المنع فقط بالـ PDF، وصفحات الـ PDF صور أصلاً.
 - الاختبار: `tests/prot_t.js` ثم `tests/verify_agile.py` (يفك التشفير ويتحقق من HMAC والمحتوى) و`qpdf --show-encryption`. وLibreOffice يفتح ملف Word المقفل بكلمة السر.

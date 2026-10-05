@@ -451,7 +451,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
         <details class="sec" id="protSec">
           <summary>حماية الملفات 🔒 <span class="pill" id="protLbl">مطفأة</span></summary>
           <div class="in">
-            <div class="toggles"><label class="tg"><span>تفعيل الحماية<small>كلمة سر للفتح، ومنع الطباعة والنسخ بالـ PDF</small></span><span class="sw-t"><input type="checkbox" id="protOn"><span></span></span></label></div>
+            <div class="toggles"><label class="tg"><span>تفعيل الحماية<small>كلمة سر للفتح، منع الطباعة والنسخ بالـ PDF، وحماية PDF جاهز عندك</small></span><span class="sw-t"><input type="checkbox" id="protOn"><span></span></span></label></div>
             <div id="protBox">
               <div class="field"><label class="lbl" for="protPw">كلمة سر فتح الملف</label><div class="prow"><input class="inp" id="protPw" type="password" dir="ltr" autocomplete="new-password" maxlength="64" placeholder="مثال: Bio2026"><button type="button" class="btn" id="protEye" aria-label="إظهار كلمة السر">👁</button></div><small class="hint">لازمة لقفل Word. للـ PDF اختيارية: إذا تركتها فاضية بينفتح الملف عادي بس القيود (منع الطباعة/النسخ) بتضل.</small></div>
               <div class="toggles">
@@ -460,6 +460,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
                 <label class="tg"><span>منع الطباعة (PDF)</span><span class="sw-t"><input type="checkbox" id="protNoPrint"><span></span></span></label>
                 <label class="tg"><span>منع النسخ والتعديل (PDF)<small>صفحات الـ PDF أصلاً صور، فالنص ما بينسخ</small></span><span class="sw-t"><input type="checkbox" id="protNoCopy"><span></span></span></label>
               </div>
+              <div class="field"><span class="lbl">حماية ملف PDF جاهز عندك 📄</span><div class="prow"><label class="btn">⬆ اختار ملف PDF<input type="file" id="protPdfIn" accept="application/pdf,.pdf" class="sr"></label></div><small class="hint">حوّلت الملف لـ PDF من Word عندك؟ ارفعه هون وبتنزل نسخة محمية بالإعدادات اللي فوق (كلمة السر ومنع الطباعة والنسخ). المحتوى ما بيتغيّر ولا حرف، وكل شي بيصير على جهازك.</small></div>
               <div class="field"><label class="lbl" for="protOwner">كلمة سر المالك للـ PDF <small style="font-weight:400;color:var(--ink-soft)">(اختيارية — لترفع القيود لاحقاً)</small></label><input class="inp" id="protOwner" type="password" dir="ltr" autocomplete="new-password" maxlength="64" placeholder="إذا تركتها فاضية بتنعمل عشوائية"></div>
               <small class="hint">⚠️ كلمات السر ما بتنحفظ بالمتصفح، بتنمسح لما تسكّر الصفحة. احفظها عندك: إذا ضاعت كلمة سر Word ما في أي طريقة لفتح الملف. ملف Word ما فيه منع طباعة أو نسخ، هاد بس بالـ PDF.</small>
             </div>
@@ -2806,6 +2807,18 @@ var ENGINE = (function () {
   ["protOn", "protWord", "protPdf", "protNoPrint", "protNoCopy"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); paintProt(); }; });
   $("protPw").oninput = function () { protPw = this.value; paintProt(); };
   $("protOwner").oninput = function () { protOwner = this.value; };
+  $("protPdfIn").onchange = function (e) {
+    var f = e.target.files[0]; e.target.value = ""; if (!f) return; if (busy) return;
+    if (!window.RMED_PROTECT || !(window.crypto && window.crypto.subtle) || typeof DecompressionStream === "undefined") return show("err", "المتصفح ما بيدعم هالميزة — جرّب Chrome أو Safari محدّث، وافتح الموقع من رابطه.");
+    var o = { userPw: protPw, ownerPw: protOwner, noPrint: !!S.protNoPrint, noCopy: !!S.protNoCopy };
+    if (!o.userPw && !o.noPrint && !o.noCopy) return show("err", "ما في شي نحميه: اكتب كلمة سر أو فعّل منع الطباعة/النسخ.");
+    busy = true; show("info", "جارٍ حماية «" + f.name + "»…"); prog(30);
+    RMED_PROTECT.protectPdf(f, o).then(function (r) {
+      saveRaw(r.blob, f.name.replace(/\.pdf$/i, "") + " - محمي.pdf"); prog(100); setTimeout(function () { prog(null); }, 700);
+      show("ok", "تمت حماية الملف (" + r.pages + " صفحة) 🔒" + (o.userPw ? " بكلمة سر" : "") + (o.noPrint ? "، بلا طباعة" : "") + (o.noCopy ? "، بلا نسخ" : "") + " وبدأ التنزيل ✓");
+    }).catch(function (er) { prog(null); show("err", "تعذّرت حماية الملف: " + (er && er.message ? er.message : er)); if (window.console) console.error(er); })
+      .then(function () { busy = false; });
+  };
   $("protEye").onclick = function () { var t = $("protPw").type === "password" ? "text" : "password"; $("protPw").type = $("protOwner").type = t; };
   paintProt();
   paintPpt();

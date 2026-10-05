@@ -219,5 +219,181 @@ var RMED_PROTECT = (function () {
       });
     });
   }
-  return { encryptDocx: encryptDocx, pdfSecurity: pdfSecurity, sha512: sha512, _cfb: cfb };
+
+  /* ======================= حماية ملف PDF جاهز (مثلاً محوّل من Word على جهازك) =======================
+     نقرأ كل كائنات الملف (جداول xref العادية والمضغوطة ومجاري الكائنات)، ونعيد كتابته كاملاً مشفّراً — المحتوى نفسه بايت ببايت. */
+  function binStr(u) { var s = ""; for (var i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return s; }
+  function inflate(bytes) {
+    function run(fmt, b) { return new Response(new Blob([b]).stream().pipeThrough(new DecompressionStream(fmt))).arrayBuffer().then(function (ab) { return new Uint8Array(ab); }); }
+    return run("deflate", bytes).catch(function () { return run("deflate-raw", bytes.subarray(2)); });
+  }
+  function unpredict(data, parms) {
+    var pr = parms ? +numOf(dget(parms, "/Predictor")) || 1 : 1; if (pr < 10) return data;
+    var cols = +numOf(dget(parms, "/Columns")) || 1, colors = +numOf(dget(parms, "/Colors")) || 1, bpc = +numOf(dget(parms, "/BitsPerComponent")) || 8;
+    var bpp = Math.max(1, Math.ceil(colors * bpc / 8)), rl = Math.ceil(cols * colors * bpc / 8), rows = Math.floor(data.length / (rl + 1)), out = new Uint8Array(rows * rl), prev = new Uint8Array(rl);
+    for (var r = 0; r < rows; r++) {
+      var ft = data[r * (rl + 1)], row = data.subarray(r * (rl + 1) + 1, (r + 1) * (rl + 1)), cur = new Uint8Array(rl);
+      for (var i = 0; i < rl; i++) {
+        var a = i >= bpp ? cur[i - bpp] : 0, b = prev[i], c = i >= bpp ? prev[i - bpp] : 0, x = row[i];
+        if (ft === 1) x += a; else if (ft === 2) x += b; else if (ft === 3) x += (a + b) >> 1;
+        else if (ft === 4) { var pp = a + b - c, pa = Math.abs(pp - a), pb = Math.abs(pp - b), pc = Math.abs(pp - c); x += pa <= pb && pa <= pc ? a : pb <= pc ? b : c; }
+        cur[i] = x & 255;
+      }
+      out.set(cur, r * rl); prev = cur;
+    }
+    return out;
+  }
+  function dget(d, k) { if (!d || d.t !== "d") return null; for (var i = 0; i < d.v.length; i++) if (d.v[i][0] === k) return d.v[i][1]; return null; }
+  function dset(d, k, val) { for (var i = 0; i < d.v.length; i++) if (d.v[i][0] === k) { d.v[i][1] = val; return; } d.v.push([k, val]); }
+  function numOf(v) { return v && v.t === "k" ? v.v : null; }
+  function makeParser(s) {
+    function ws(c) { return c === 0 || c === 9 || c === 10 || c === 12 || c === 13 || c === 32; }
+    function delim(c) { return ws(c) || c === 40 || c === 41 || c === 60 || c === 62 || c === 91 || c === 93 || c === 123 || c === 125 || c === 47 || c === 37 || isNaN(c); }
+    function skip(p) { for (;;) { var c = s.charCodeAt(p); if (c === 37) { while (p < s.length && s.charCodeAt(p) !== 10 && s.charCodeAt(p) !== 13) p++; continue; } if (ws(c)) { p++; continue; } return p; } }
+    function tok(p) { var q = p; while (q < s.length && !delim(s.charCodeAt(q))) q++; return q; }
+    function val(p) {
+      p = skip(p); var c = s.charCodeAt(p), q, out;
+      if (c === 47) { q = tok(p + 1); return [{ t: "n", v: s.slice(p, q) }, q]; }
+      if (c === 40) { // نص حرفي
+        out = []; var depth = 1; p++;
+        while (p < s.length) {
+          c = s.charCodeAt(p++);
+          if (c === 92) { var e = s.charCodeAt(p++);
+            if (e === 110) out.push(10); else if (e === 114) out.push(13); else if (e === 116) out.push(9); else if (e === 98) out.push(8); else if (e === 102) out.push(12);
+            else if (e >= 48 && e <= 55) { var o = e - 48, k = 0; while (k < 2 && s.charCodeAt(p) >= 48 && s.charCodeAt(p) <= 55) { o = o * 8 + s.charCodeAt(p++) - 48; k++; } out.push(o & 255); }
+            else if (e === 13) { if (s.charCodeAt(p) === 10) p++; } else if (e === 10) {} else out.push(e);
+            continue; }
+          if (c === 40) depth++; else if (c === 41 && --depth === 0) break;
+          if (c === 13) { out.push(10); if (s.charCodeAt(p) === 10) p++; continue; }
+          out.push(c);
+        }
+        return [{ t: "s", b: new Uint8Array(out) }, p];
+      }
+      if (c === 60 && s.charCodeAt(p + 1) === 60) { // قاموس
+        var d = { t: "d", v: [] }; p += 2;
+        for (;;) { p = skip(p); if (s.charCodeAt(p) === 62 && s.charCodeAt(p + 1) === 62) { p += 2; break; } if (p >= s.length) throw new Error("dict"); var kk = val(p), vv = val(kk[1]); d.v.push([kk[0].v, vv[0]]); p = vv[1]; }
+        return [d, p];
+      }
+      if (c === 60) { q = s.indexOf(">", p); var h = s.slice(p + 1, q).replace(/[^0-9A-Fa-f]/g, ""); if (h.length % 2) h += "0"; out = new Uint8Array(h.length / 2); for (var i = 0; i < out.length; i++) out[i] = parseInt(h.substr(i * 2, 2), 16); return [{ t: "s", b: out }, q + 1]; }
+      if (c === 91) { var arr = { t: "a", v: [] }; p++; for (;;) { p = skip(p); if (s.charCodeAt(p) === 93) { p++; break; } if (p >= s.length) throw new Error("array"); var x = val(p); arr.v.push(x[0]); p = x[1]; } return [arr, p]; }
+      q = tok(p); var t = s.slice(p, q); if (!t) throw new Error("token@" + p);
+      if (/^\d+$/.test(t)) { var p2 = skip(q), q2 = tok(p2), t2 = s.slice(p2, q2); if (/^\d+$/.test(t2)) { var p3 = skip(q2); if (s.charAt(p3) === "R" && delim(s.charCodeAt(p3 + 1))) return [{ t: "r", n: +t, g: +t2 }, p3 + 1]; } }
+      return [{ t: "k", v: t }, q];
+    }
+    return { val: val, skip: skip, tok: tok };
+  }
+  function protectPdf(input, opts) {
+    return Promise.resolve(input instanceof Blob ? input.arrayBuffer() : input).then(function (ab) {
+      var u = new Uint8Array(ab), s = binStr(u), P = makeParser(s);
+      if (s.slice(0, 1024).indexOf("%PDF-") < 0) throw new Error("هاد مو ملف PDF.");
+      var X = {}, trailer = null, stmCache = {}, objCache = {};
+      function at(off) { // كائن عند إزاحة: n g obj …
+        var p = P.skip(off), q = P.tok(p), n = +s.slice(p, q); p = P.skip(q); q = P.tok(p); var g = +s.slice(p, q); p = P.skip(q);
+        if (s.slice(p, p + 3) !== "obj") throw new Error("obj@" + off);
+        var r = P.val(p + 3), v = r[0], o = { n: n, g: g, v: v }; p = P.skip(r[1]);
+        if (v.t === "d" && s.slice(p, p + 6) === "stream") {
+          p += 6; if (s.charCodeAt(p) === 13) p++; if (s.charCodeAt(p) === 10) p++;
+          var L = dget(v, "/Length"), len = L && L.t === "k" ? +L.v : NaN;
+          if (L && L.t === "r") { var lo = getSync(L.n); len = lo && lo.v.t === "k" ? +lo.v.v : NaN; }
+          var endOk = !isNaN(len) && /^\s*endstream/.test(s.substr(p + len, 40));
+          if (!endOk) { var e = s.indexOf("endstream", p); len = e - p; while (len > 0 && (s.charCodeAt(p + len - 1) === 10 || s.charCodeAt(p + len - 1) === 13)) len--; }
+          o.data = u.subarray(p, p + len);
+        }
+        return o;
+      }
+      function getSync(n) { var e = X[n]; if (!e || e.t !== 1) return objCache[n] || null; try { return at(e.o); } catch (er) { return null; } }
+      function decodeStream(o) {
+        var f = dget(o.v, "/Filter"), parms = dget(o.v, "/DecodeParms"), list = f ? (f.t === "a" ? f.v : [f]) : [], pl = parms ? (parms.t === "a" ? parms.v : [parms]) : [];
+        var chain = Promise.resolve(o.data);
+        list.forEach(function (fi, i) { chain = chain.then(function (d) { if (fi.v !== "/FlateDecode" && fi.v !== "/Fl") throw new Error("filter " + fi.v); return inflate(d).then(function (x) { return unpredict(x, pl[i] && pl[i].t === "d" ? pl[i] : null); }); }); });
+        return chain;
+      }
+      function readXref(off, seen) {
+        if (off == null || seen[off] || off >= u.length) return Promise.resolve(); seen[off] = 1;
+        var p = P.skip(off);
+        if (s.slice(p, p + 4) === "xref") {
+          p += 4;
+          for (;;) {
+            p = P.skip(p);
+            if (s.slice(p, p + 7) === "trailer") break;
+            var q = P.tok(p), start = +s.slice(p, q); p = P.skip(q); q = P.tok(p); var cnt = +s.slice(p, q); p = q;
+            if (isNaN(start) || isNaN(cnt)) throw new Error("xref");
+            for (var i = 0; i < cnt; i++) { p = P.skip(p); var m = /^(\d{1,10})\s+(\d{1,5})\s+([nf])/.exec(s.substr(p, 22)); if (!m) throw new Error("xref row"); p += m[0].length; if (m[3] === "n" && !(start + i in X) && +m[1] > 0) X[start + i] = { t: 1, o: +m[1], g: +m[2] }; }
+          }
+          var tr = P.val(p + 7)[0]; if (!trailer) trailer = tr;
+          var xs = numOf(dget(tr, "/XRefStm")), pv = numOf(dget(tr, "/Prev"));
+          return readXref(xs != null ? +xs : null, seen).then(function () { return readXref(pv != null ? +pv : null, seen); });
+        }
+        var o = at(off); if (!trailer) trailer = o.v;
+        return decodeStream(o).then(function (d) {
+          var W = dget(o.v, "/W").v.map(function (x) { return +x.v; }), idx = dget(o.v, "/Index"), size = +numOf(dget(o.v, "/Size"));
+          var ranges = idx ? idx.v.map(function (x) { return +x.v; }) : [0, size], rl = W[0] + W[1] + W[2], pos = 0;
+          function rd(w) { var v = 0; for (var k = 0; k < w; k++) v = v * 256 + d[pos++]; return v; }
+          for (var r = 0; r < ranges.length; r += 2) for (var i = 0; i < ranges[r + 1]; i++) {
+            if (pos + rl > d.length) break;
+            var ty = W[0] ? rd(W[0]) : 1, f2 = rd(W[1]), f3 = rd(W[2]), n = ranges[r] + i;
+            if (n in X) continue;
+            if (ty === 1 && f2 > 0) X[n] = { t: 1, o: f2, g: f3 }; else if (ty === 2) X[n] = { t: 2, s: f2, i: f3 };
+          }
+          var pv = numOf(dget(o.v, "/Prev")); return readXref(pv != null ? +pv : null, seen);
+        });
+      }
+      function scanAll() { // احتياط: ملف بجدول تالف
+        X = {}; var re = /(\d+)\s+(\d+)\s+obj\b/g, m; while ((m = re.exec(s))) X[+m[1]] = { t: 1, o: m.index, g: +m[2] };
+        var tp = s.lastIndexOf("trailer"); trailer = tp >= 0 ? P.val(tp + 7)[0] : null;
+      }
+      var sx = s.lastIndexOf("startxref"), start = sx >= 0 ? +s.slice(P.skip(sx + 9), P.tok(P.skip(sx + 9))) : NaN;
+      return readXref(isNaN(start) ? null : start, {}).then(function () { if (!trailer || !dget(trailer, "/Root")) throw 0; }).catch(function () { scanAll(); }).then(function () {
+        if (dget(trailer || { t: "d", v: [] }, "/Encrypt")) throw new Error("الملف محمي أصلاً — ارفع النسخة غير المحمية.");
+        var nums = Object.keys(X).map(Number).sort(function (a, b) { return a - b; }), objs = [], chain = Promise.resolve();
+        nums.forEach(function (n) {
+          chain = chain.then(function () {
+            var e = X[n];
+            if (e.t === 1) { try { var o = at(e.o); if (o.n !== n) throw 0; objs.push(o); } catch (er) { /* كائن تالف: نتجاهله */ } return; }
+            var sp = stmCache[e.s] || (stmCache[e.s] = (function () { var so = getSync(e.s); if (!so || !so.data) return Promise.resolve(null); return decodeStream(so).then(function (d) { return { o: so, s: binStr(d) }; }); })());
+            return sp.then(function (st) {
+              if (!st) return; var first = +numOf(dget(st.o.v, "/First")), cnt = +numOf(dget(st.o.v, "/N")), SP = makeParser(st.s), p = 0, pairs = [];
+              for (var k = 0; k < cnt; k++) { p = SP.skip(p); var q = SP.tok(p), on = +st.s.slice(p, q); p = SP.skip(q); q = SP.tok(p); pairs.push([on, +st.s.slice(p, q)]); p = q; }
+              if (pairs[e.i] && pairs[e.i][0] === n) objs.push({ n: n, g: 0, v: SP.val(first + pairs[e.i][1])[0] });
+            });
+          });
+        });
+        return chain.then(function () {
+          objs = objs.filter(function (o) { var ty = dget(o.v, "/Type"); return !(o.v.t === "d" && (ty && (ty.v === "/XRef" || ty.v === "/ObjStm") || dget(o.v, "/Linearized"))); });
+          if (!objs.length) throw new Error("ما قدرنا نقرأ محتوى الملف.");
+          return pdfSecurity(opts).then(function (sec) {
+            var strs = [], jobs = [];
+            function walk(v) { if (v.t === "s") strs.push(v); else if (v.t === "a") v.v.forEach(walk); else if (v.t === "d") v.v.forEach(function (kv) { walk(kv[1]); }); }
+            objs.forEach(function (o) { walk(o.v); if (o.data) jobs.push(sec.enc(o.data).then(function (b) { o.enc = b; })); });
+            strs.forEach(function (x) { jobs.push(sec.enc(x.b).then(function (b) { x.e = b; })); });
+            return Promise.all(jobs).then(function () {
+              var te = new TextEncoder(), chunks = [], off = 0, xref = {}, maxN = 0, pages = 0;
+              function push(x) { if (typeof x === "string") x = te.encode(x); chunks.push(x); off += x.length; }
+              function ser(v) {
+                if (v.t === "n" || v.t === "k") return v.v; if (v.t === "r") return v.n + " " + v.g + " R";
+                if (v.t === "s") return "<" + hex(v.e || v.b) + ">";
+                if (v.t === "a") return "[" + v.v.map(ser).join(" ") + "]";
+                return "<<" + v.v.map(function (kv) { return kv[0] + " " + ser(kv[1]); }).join(" ") + ">>";
+              }
+              push("%PDF-1.7\n"); push(new Uint8Array([37, 226, 227, 207, 211, 10]));
+              objs.forEach(function (o) {
+                maxN = Math.max(maxN, o.n); var ty = dget(o.v, "/Type"); if (ty && ty.v === "/Page") pages++;
+                xref[o.n] = [off, o.g]; push(o.n + " " + o.g + " obj\n");
+                if (o.data) { dset(o.v, "/Length", { t: "k", v: String(o.enc.length) }); push(ser(o.v) + "\nstream\n"); push(o.enc); push("\nendstream\nendobj\n"); }
+                else push(ser(o.v) + "\nendobj\n");
+              });
+              var en = maxN + 1; xref[en] = [off, 0]; push(en + " 0 obj\n" + sec.dict + "\nendobj\n");
+              var xo = off; push("xref\n0 " + (en + 1) + "\n0000000000 65535 f \n");
+              for (var i = 1; i <= en; i++) push(xref[i] ? ("0000000000" + xref[i][0]).slice(-10) + " " + ("00000" + xref[i][1]).slice(-5) + " n \n" : "0000000000 00000 f \n");
+              var id = dget(trailer, "/ID"), idS = id && id.t === "a" && id.v.length === 2 ? "[<" + hex(id.v[0].b) + "><" + hex(id.v[1].b) + ">]" : (function () { var r = hex(rnd(16)); return "[<" + r + "><" + r + ">]"; })();
+              var info = dget(trailer, "/Info");
+              push("trailer\n<< /Size " + (en + 1) + " /Root " + ser(dget(trailer, "/Root")) + (info && info.t === "r" ? " /Info " + ser(info) : "") + " /Encrypt " + en + " 0 R /ID " + idS + " >>\nstartxref\n" + xo + "\n%%EOF\n");
+              return { blob: new Blob(chunks, { type: "application/pdf" }), pages: pages, objects: objs.length };
+            });
+          });
+        });
+      });
+    });
+  }
+  return { encryptDocx: encryptDocx, pdfSecurity: pdfSecurity, protectPdf: protectPdf, sha512: sha512, _cfb: cfb };
 })();

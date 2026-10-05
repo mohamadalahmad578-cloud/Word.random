@@ -30,6 +30,7 @@ const OUT=__OUT; fs.mkdirSync(OUT,{recursive:true});
  await pg.setInputFiles('#pptIn',[__FX+'deck1.pptx',__FX+'deck2.pptx']);
  await pg.waitForFunction(()=>document.querySelectorAll('#pptList .wfile .chips').length===2,null,{timeout:60000});
  console.log('ppt zip:', await dl('#dlBtn','ppt_locked.zip'));
+ const [dp]=await Promise.all([pg.waitForEvent('download',{timeout:120000}),pg.setInputFiles('#protPdfIn',__FX+'word_export.pdf')]); await dp.saveAs(OUT+'ext_protected.pdf'); await pg.waitForTimeout(300); console.log('ext pdf:', await pg.textContent('#msg'));
  const sw=await pg.evaluate(()=>[document.documentElement.scrollWidth,innerWidth]); console.log('scroll',sw,'errors',errs);
  await (await pg.$('#protSec')).screenshot({path:OUT+'sec.png'});
  await b.close();})().catch(e=>{console.error(e);process.exit(1)});
