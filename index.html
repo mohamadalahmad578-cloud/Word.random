@@ -214,7 +214,12 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .bgs button.sel{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass) inset;font-weight:700}
 /* ---- وضع ملف Word ---- */
 .main-col{display:grid;gap:12px;min-width:0}
-.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.modes{grid-template-columns:1fr}.mode-btn{min-height:54px}}
+.ppt-opts{border:1px solid var(--line);border-radius:13px;padding:10px 12px;margin:12px 0;background:var(--surface-2)}
+.ppt-opts .field{margin:10px 0 0}
+.mini-thumb{height:56px;max-width:90px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:none}
+.mini-thumb.on{display:block}
 .mode-btn{display:flex;align-items:center;gap:10px;text-align:start;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);cursor:pointer;box-shadow:var(--shadow);min-height:62px}
 .mode-btn svg{width:26px;height:26px;flex:none;color:var(--brass-deep)}
 .mode-btn b{display:block;font-family:var(--font-display);font-size:15px}
@@ -326,6 +331,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
     <div class="modes" role="tablist" aria-label="طريقة الإدخال">
       <button class="mode-btn" id="modeText" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span><b>نص المحاضرات</b><small>الصق التفريغ (Markdown)</small></span></button>
       <button class="mode-btn" id="modeWord" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13l1.5 5 2.5-4 2.5 4 1.5-5"/></svg><span><b>ملف Word جاهز</b><small>نلبّسه هوية Random.MEd</small></span></button>
+      <button class="mode-btn" id="modePpt" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V8z"/></svg><span><b>عرض PowerPoint</b><small>نحوّله لملف Word منسّق</small></span></button>
     </div>
     <section class="card" id="wordCard" aria-label="ملفات Word" hidden>
       <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span><h2>ملفات Word</h2><span class="pill" id="wordCount">0</span></div>
@@ -346,6 +352,37 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
         <div class="toggles" style="margin:0 0 10px"><label class="tg"><span>حافظ على تباعد الأسطر وحجم خط المتن الأصليين<small>نفس عدد صفحات الملف تقريباً (لإعادة التلبيس) — أطفئه لتطبيق تباعد وحجم الإعدادات</small></span><span class="sw-t"><input type="checkbox" id="optOrigLine"><span></span></span></label></div>
         <div class="merge-box" id="mergeBox"><div class="toggles"><label class="tg"><span>دمج الملفات بكتاب واحد<small>غلاف وفهرس موحّد لكل الملفات بترتيبها هنا (يستخدم إعادة البناء)</small></span><span class="sw-t"><input type="checkbox" id="optMerge"><span></span></span></label></div></div>
         <div id="wordList" class="wlist"></div>
+      </div>
+    </section>
+    <section class="card" id="pptCard" aria-label="عروض PowerPoint" hidden>
+      <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span><h2>عروض PowerPoint</h2><span class="pill" id="pptCount">0</span></div>
+      <div class="card-b">
+        <label class="wdrop" id="pdrop">
+          <input type="file" id="pptIn" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" multiple class="sr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+          <b>اختر عرض PowerPoint ‎(.pptx)‎ أو أفلته هنا</b>
+          <small>عنوان كل شريحة يصير عنواناً، ونقاطها وجداولها وصورها تنتقل بالترتيب — كل المعالجة على جهازك</small>
+        </label>
+        <div class="ppt-opts">
+          <div class="toggles">
+            <label class="tg"><span>شعار المنصة<small>على الغلاف والترويسة والغلاف الخلفي — مطفأ افتراضياً</small></span><span class="sw-t"><input type="checkbox" id="pptLogo"><span></span></span></label>
+            <label class="tg"><span>ملاحظات المتحدث<small>تظهر بصندوق أزرق بعد محتوى كل شريحة</small></span><span class="sw-t"><input type="checkbox" id="pptNotes"><span></span></span></label>
+            <label class="tg"><span>صفحة الغلاف</span><span class="sw-t"><input type="checkbox" id="pptCover"><span></span></span></label>
+          </div>
+          <div class="field"><span class="lbl">غلاف العروض</span><div class="seg" id="pptCovSeg"><button type="button" data-v="style">تصميم جاهز</button><button type="button" data-v="image">صورة خاصة</button></div></div>
+          <div class="field" id="pptCovStyleRow"><select class="inp" id="pptCovStyle" aria-label="تصميم غلاف العروض"></select></div>
+          <div class="field" id="pptCovImgRow">
+            <div class="prow"><label class="btn">⬆ رفع صورة الغلاف<input type="file" id="pptCovImg" accept="image/*" class="sr"></label><img id="pptCovThumb" class="mini-thumb" alt="صورة الغلاف"><button type="button" class="btn danger" id="pptCovDel">إزالة</button></div>
+            <div class="toggles"><label class="tg"><span>الصورة فقط بدون نصوص<small>الصورة تُمدّ لتملأ صفحة A4 ويُقص الزائد من الأطراف</small></span><span class="sw-t"><input type="checkbox" id="pptImageOnly"><span></span></span></label></div>
+          </div>
+          <div class="field"><span class="lbl">العلامة المائية للعروض</span><div class="seg" id="pptWmSeg"><button type="button" data-v="none">بدون</button><button type="button" data-v="logo">الشعار</button><button type="button" data-v="text">نص</button><button type="button" data-v="image">صورة</button></div></div>
+          <div class="field" id="pptWmTextRow"><input class="inp" id="pptWmText" dir="auto" maxlength="60" placeholder="مثال: خاص بطلاب الدفعة 2026"></div>
+          <div class="field" id="pptWmImgRow"><div class="prow"><label class="btn">⬆ رفع صورة العلامة<input type="file" id="pptWmImg" accept="image/*" class="sr"></label><img id="pptWmThumb" class="mini-thumb" alt="العلامة المائية"><button type="button" class="btn danger" id="pptWmDel">إزالة</button></div></div>
+          <div class="sl" id="pptWmOpRow"><label for="pptWmOp">الشفافية</label><input type="range" id="pptWmOp" min="3" max="25" step="1"><output id="pptWmOpV"></output></div>
+          <small class="hint">هذه الإعدادات للعروض فقط. الألوان والخطوط والخلفيات والغلاف الخلفي مشتركة من لوحة الإعدادات.</small>
+        </div>
+        <div class="merge-box" id="pptMergeBox"><div class="toggles"><label class="tg"><span>دمج العروض بكتاب واحد<small>غلاف وفهرس موحّد بترتيب العروض هنا</small></span><span class="sw-t"><input type="checkbox" id="pptMerge"><span></span></span></label></div></div>
+        <div id="pptList" class="wlist"></div>
       </div>
     </section>
     <section class="card" id="textCard" aria-label="المحاضرات">
@@ -2193,6 +2230,7 @@ var RMED_PDF = (function () {
         items.forEach(function (it) { if (it.k === "p") { it.L = layout(it.inl, Object.assign({ width: w - 20 }, it.o)); it.h = it.L.h; } hsum += (it.pre || 0) + it.h + (it.gap || 0); });
         return { items: items, h: hsum, x: x, w: w };
       }
+      if (S.coverImageOnly && A.cover) { newPage("cover"); img(A.cover, 0, 0, PW, PH); return; } // غلاف = صورة المستخدم فقط
       var f = 1, P = plan(f), avail = PH - MT - c.top - 90;
       while (P.h > avail && f > 0.55) { f *= 0.93; P = plan(f); }
       newPage("cover");
@@ -2311,6 +2349,207 @@ var RMED_PDF = (function () {
     return ENGINE.tokens(parts.join("\n"));
   }
   return { build: build, expectedWords: expectedWords };
+})();
+</script>
+<script id="pptxlib">/* Random.MEd — قراءة عروض PowerPoint (.pptx) وتحويلها إلى نموذج المحرك (محاضرة: عناوين الشرائح، نقاط، جداول، صور، ملاحظات) */
+var RMED_PPTX = (function () {
+  "use strict";
+  var NA = "http://schemas.openxmlformats.org/drawingml/2006/main", NP = "http://schemas.openxmlformats.org/presentationml/2006/main",
+    NR = "http://schemas.openxmlformats.org/officeDocument/2006/relationships", NPR = "http://schemas.openxmlformats.org/package/2006/relationships";
+  var AR = /[؀-ۿ]/;
+  function parse(x) { var d = new DOMParser().parseFromString(x, "application/xml"); if (d.getElementsByTagName("parsererror").length) throw new Error("xml"); return d; }
+  function kids(el, ns, name) { var o = []; if (!el) return o; for (var c = el.firstChild; c; c = c.nextSibling) if (c.nodeType === 1 && c.namespaceURI === ns && (!name || c.localName === name)) o.push(c); return o; }
+  function kid(el, ns, name) { return kids(el, ns, name)[0] || null; }
+  function all(el, ns, name) { return el ? Array.prototype.slice.call(el.getElementsByTagNameNS(ns, name)) : []; }
+  function dir(p) { return p.replace(/[^/]+$/, ""); }
+  function resolve(base, t) { if (/^\//.test(t)) return t.slice(1); var parts = (base + t).split("/"), out = []; parts.forEach(function (s) { if (s === "..") out.pop(); else if (s !== ".") out.push(s); }); return out.join("/"); }
+  function rels(zip, part) {
+    var rp = dir(part) + "_rels/" + part.split("/").pop() + ".rels", f = zip.file(rp);
+    if (!f) return Promise.resolve({});
+    return f.async("string").then(function (x) {
+      var m = {}; Array.prototype.forEach.call(parse(x).getElementsByTagNameNS(NPR, "Relationship"), function (r) {
+        m[r.getAttribute("Id")] = { type: r.getAttribute("Type") || "", target: r.getAttribute("TargetMode") === "External" ? r.getAttribute("Target") : resolve(dir(part), r.getAttribute("Target")), ext: r.getAttribute("TargetMode") === "External" };
+      }); return m;
+    });
+  }
+  // نص فقرة a:p → مقاطع بأنماط
+  function paraInl(p) {
+    var segs = [];
+    for (var c = p.firstChild; c; c = c.nextSibling) {
+      if (c.nodeType !== 1 || c.namespaceURI !== NA) continue;
+      if (c.localName === "r" || c.localName === "fld") {
+        var t = kid(c, NA, "t"); if (!t) continue; var txt = t.textContent; if (!txt) continue;
+        var rp = kid(c, NA, "rPr"), b = rp && /^(1|true)$/.test(rp.getAttribute("b") || ""), i = rp && /^(1|true)$/.test(rp.getAttribute("i") || ""), bl = rp ? +(rp.getAttribute("baseline") || 0) : 0;
+        var sg = { text: txt }; if (b) sg.b = true; if (i) sg.i = true; if (bl > 0) sg.sup = true; else if (bl < 0) sg.sub = true;
+        var last = segs[segs.length - 1];
+        if (last && !!last.b === !!sg.b && !!last.i === !!sg.i && !!last.sup === !!sg.sup && !!last.sub === !!sg.sub) last.text += txt; else segs.push(sg);
+      } else if (c.localName === "br") { if (segs.length) segs[segs.length - 1].text += " "; }
+    }
+    return tagSplit(segs);
+  }
+  function tagSplit(inl) { // [هام جداً] وأخواتها كوسوم ملوّنة كما في بقية الموقع
+    var out = [];
+    inl.forEach(function (sg) {
+      if (!ENGINE.CO_RE.test(sg.text)) { out.push(sg); return; }
+      sg.text.split(ENGINE.CO_RE).forEach(function (part) { if (!part) return; var co = ENGINE.coByTag(part); if (co) out.push({ text: part, b: true, tag: co }); else out.push({ text: part, b: sg.b, i: sg.i, sup: sg.sup, sub: sg.sub }); });
+    });
+    return out;
+  }
+  function plainOf(inl) { return inl.map(function (s) { return s.text || ""; }).join(""); }
+  function fmtNum(n, type) {
+    var roman = function (k) { var v = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1], s = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"], o = ""; for (var i = 0; i < v.length; i++) while (k >= v[i]) { o += s[i]; k -= v[i]; } return o; };
+    var core = /alphaLc/.test(type) ? String.fromCharCode(96 + ((n - 1) % 26) + 1) : /alphaUc/.test(type) ? String.fromCharCode(64 + ((n - 1) % 26) + 1) : /romanLc/.test(type) ? roman(n).toLowerCase() : /romanUc/.test(type) ? roman(n) : /arabicAbjad|arabicAlpha|hebrew/.test(type) ? "أبجدهوزحطيكلمنسعفصقرشتثخذضظغ".charAt((n - 1) % 28) : String(n);
+    return /ParenBoth/.test(type) ? "(" + core + ")" : /ParenR/.test(type) ? core + ")" : /Plain/.test(type) ? core : core + ".";
+  }
+  function xfrmOf(el) { // موقع العنصر (EMU) لترتيب القراءة
+    var sp = kid(el, NP, "spPr") || kid(el, NP, "grpSpPr"), xf = sp && kid(sp, NA, "xfrm");
+    if (!xf) { var gx = kid(el, NP, "xfrm"); xf = gx; }
+    var off = xf && kid(xf, NA, "off"), ext = xf && kid(xf, NA, "ext");
+    return off ? { x: +off.getAttribute("x"), y: +off.getAttribute("y"), w: ext ? +ext.getAttribute("cx") : 0, h: ext ? +ext.getAttribute("cy") : 0 } : null;
+  }
+  function phOf(sp) { var nv = kid(sp, NP, "nvSpPr") || kid(sp, NP, "nvPicPr") || kid(sp, NP, "nvGraphicFramePr"), nvPr = nv && kid(nv, NP, "nvPr"), ph = nvPr && kid(nvPr, NP, "ph"); return ph ? { type: ph.getAttribute("type") || "body", idx: ph.getAttribute("idx") } : null; }
+
+  function parseDeck(buf, opt) {
+    opt = opt || {};
+    return JSZip.loadAsync(buf).then(function (zip) {
+      var pf = zip.file("ppt/presentation.xml");
+      if (!pf) throw new Error("هذا ليس عرض PowerPoint ‎.pptx صالحاً (لا يحوي ppt/presentation.xml). ملفات ‎.ppt القديمة غير مدعومة — احفظها بصيغة ‎.pptx أولاً.");
+      return Promise.all([pf.async("string"), rels(zip, "ppt/presentation.xml")]).then(function (x) {
+        var pres = parse(x[0]), prels = x[1];
+        var ids = all(pres, NP, "sldId").map(function (s) { return s.getAttributeNS(NR, "id"); });
+        var slidePaths = ids.map(function (id) { return prels[id] && prels[id].target; }).filter(Boolean);
+        var stats = { slides: 0, hidden: 0, words: 0, images: 0, tables: 0, notes: 0, smartart: 0, charts: 0, droppedImages: 0 };
+        var texts = [], imgJobs = [], lecture = { title: null, titleInl: null, intro: null, outro: [], blocks: [] };
+        function rec(inl) { texts.push(plainOf(inl)); }
+        var chain = Promise.resolve();
+        slidePaths.forEach(function (path, si) {
+          chain = chain.then(function () {
+            var f = zip.file(path); if (!f) return;
+            return Promise.all([f.async("string"), rels(zip, path)]).then(function (y) {
+              var sd = parse(y[0]), srels = y[1], root = sd.documentElement;
+              if (root.getAttribute("show") === "0" && !opt.hidden) { stats.hidden++; return; }
+              stats.slides++;
+              var spTree = all(sd, NP, "spTree")[0]; if (!spTree) return;
+              var slideAr = AR.test(Array.prototype.map.call(sd.getElementsByTagNameNS(NA, "t"), function (t) { return t.textContent; }).join(" "));
+              // جمع العناصر مع مواقعها
+              function collect(tree) {
+                var items = [];
+                for (var c = tree.firstChild; c; c = c.nextSibling) {
+                  if (c.nodeType !== 1 || c.namespaceURI !== NP) continue;
+                  var pos = xfrmOf(c), ph = phOf(c);
+                  if (c.localName === "grpSp") { var sub = collect(c); if (sub.length) items.push({ kind: "group", pos: pos, items: sub }); continue; }
+                  if (c.localName === "sp" || c.localName === "pic" || c.localName === "graphicFrame") items.push({ kind: c.localName, el: c, pos: pos, ph: ph });
+                }
+                // العنوان أولاً، ثم من الأعلى للأسفل، وفي نفس الصف حسب اتجاه الشريحة
+                var rank = function (it) { return it.ph && /title/i.test(it.ph.type) && !/sub/i.test(it.ph.type) ? 0 : 1; };
+                items.sort(function (a, b) {
+                  var ra = rank(a), rb = rank(b); if (ra !== rb) return ra - rb;
+                  var pa = a.pos || { x: 0, y: a.ph ? 1e5 : 1e9 }, pb = b.pos || { x: 0, y: b.ph ? 1e5 : 1e9 };
+                  if (Math.abs(pa.y - pb.y) > 274320) return pa.y - pb.y;
+                  return slideAr ? pb.x - pa.x : pa.x - pb.x;
+                });
+                return items;
+              }
+              var items = collect(spTree), blocks = [], title = null, olOpen = null, counters = {};
+              function flat(list, out) { list.forEach(function (it) { if (it.kind === "group") flat(it.items, out); else out.push(it); }); return out; }
+              flat(items, []).forEach(function (it) {
+                var ph = it.ph, type = ph ? ph.type : null;
+                if (type && /^(dt|ftr|sldNum|hdr)$/.test(type)) return; // ترويسات الشريحة الآلية
+                if (it.kind === "sp") {
+                  var tx = kid(it.el, NP, "txBody"); if (!tx) return;
+                  var isTitle = type && /title/i.test(type) && !/sub/i.test(type), isBody = !!ph && !isTitle && !/subTitle/i.test(type);
+                  kids(tx, NA, "p").forEach(function (p) {
+                    var inl = paraInl(p), t = plainOf(inl); if (!t.trim()) return;
+                    rec(inl);
+                    if (isTitle && title === null) { title = inl; return; }
+                    if (isTitle) { blocks.push({ t: "h", level: 3, inl: inl }); olOpen = null; return; }
+                    var pPr = kid(p, NA, "pPr"), lvl = pPr ? Math.min(3, +(pPr.getAttribute("lvl") || 0)) : 0;
+                    var buNone = pPr && kid(pPr, NA, "buNone"), buAuto = pPr && kid(pPr, NA, "buAutoNum"), buChar = pPr && kid(pPr, NA, "buChar");
+                    var imp = ENGINE.calloutOf(t);
+                    if (buAuto && !buNone) {
+                      var ty = buAuto.getAttribute("type") || "arabicPeriod", key = lvl;
+                      Object.keys(counters).forEach(function (k) { if (+k > lvl) delete counters[k]; });
+                      counters[key] = (counters[key] || (+(buAuto.getAttribute("startAt") || 1)) - 1) + 1;
+                      var item = { num: fmtNum(counters[key], ty), inl: inl, imp: imp, children: [], gen: true };
+                      if (olOpen && olOpen.lvl === lvl && blocks[blocks.length - 1] === olOpen.block) olOpen.block.items.push(item);
+                      else { var blk = { t: "ol", items: [item], nested: lvl > 0, indentLevel: lvl }; blocks.push(blk); olOpen = { lvl: lvl, block: blk }; }
+                      return;
+                    }
+                    olOpen = null; counters = {};
+                    if (!buNone && (buChar || (isBody && (lvl > 0 || kids(tx, NA, "p").filter(function (q) { return plainOf(paraInl(q)).trim(); }).length > 1)))) blocks.push({ t: "li", level: lvl, inl: inl, imp: imp });
+                    else blocks.push({ t: "p", inl: inl, imp: imp, level: 0 });
+                  });
+                } else if (it.kind === "pic") {
+                  olOpen = null;
+                  var bl = all(it.el, NA, "blip")[0], rid = bl && bl.getAttributeNS(NR, "embed"), r = rid && srels[rid];
+                  if (!r || r.ext) { stats.droppedImages++; return; }
+                  var ext = (r.target.split(".").pop() || "").toLowerCase(), ty2 = { png: "png", jpg: "jpg", jpeg: "jpg", gif: "gif", bmp: "bmp" }[ext], mf = zip.file(r.target);
+                  if (!ty2 || !mf) { stats.droppedImages++; return; }
+                  var im = { type: ty2, w: it.pos && it.pos.w ? Math.round(it.pos.w / 9525) : 400, h: it.pos && it.pos.h ? Math.round(it.pos.h / 9525) : 300 };
+                  imgJobs.push(mf.async("uint8array").then(function (u) { im.data = u; }));
+                  blocks.push({ t: "img", img: im }); stats.images++;
+                } else if (it.kind === "graphicFrame") {
+                  olOpen = null;
+                  var tbl = all(it.el, NA, "tbl")[0];
+                  if (tbl) {
+                    var rows = all(tbl, NA, "tr").map(function (tr) {
+                      var row = [];
+                      kids(tr, NA, "tc").forEach(function (tc) {
+                        if (/^(1|true)$/.test(tc.getAttribute("hMerge") || "")) return;
+                        var segs = [];
+                        all(tc, NA, "p").forEach(function (p) { var inl = paraInl(p); if (!plainOf(inl).trim()) return; if (segs.length) segs.push({ text: " " }); segs = segs.concat(inl); });
+                        if (segs.length) rec(segs);
+                        var gs = +(tc.getAttribute("gridSpan") || 1); if (gs > 1) segs.span = gs;
+                        row.push(segs);
+                      });
+                      return row;
+                    }).filter(function (r2) { return r2.length; });
+                    if (rows.length) { var hdr = rows.length > 1 && rows[0].every(function (c) { return !c.length || c.every(function (s) { return s.b || !s.text.trim(); }); }); blocks.push({ t: "table", rows: rows, noHead: false, ltrTable: !AR.test(rows.map(function (r3) { return r3.map(plainOf).join(" "); }).join(" ")) }); stats.tables++; }
+                    return;
+                  }
+                  var gd = all(it.el, NA, "graphicData")[0], uri = gd ? gd.getAttribute("uri") || "" : "";
+                  if (/diagram/.test(uri)) {
+                    stats.smartart++;
+                    var relIds = gd.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/diagram", "relIds")[0], dm = relIds && relIds.getAttributeNS(NR, "dm"), dr = dm && srels[dm];
+                    if (dr && zip.file(dr.target)) blocks.push({ t: "_smart", path: dr.target });
+                  } else if (/chart/.test(uri)) stats.charts++;
+                }
+              });
+              // ملاحظات المتحدث
+              var notesRel = Object.keys(srels).map(function (k) { return srels[k]; }).filter(function (r) { return /notesSlide$/.test(r.type); })[0];
+              var notesP = opt.notes && notesRel && zip.file(notesRel.target) ? zip.file(notesRel.target).async("string").then(function (nx) {
+                var nd = parse(nx), nts = [];
+                all(nd, NP, "sp").forEach(function (sp) { var ph = phOf(sp); if (!ph || ph.type !== "body") return; var tx = kid(sp, NP, "txBody"); kids(tx, NA, "p").forEach(function (p) { var inl = paraInl(p); if (plainOf(inl).trim()) nts.push(inl); }); });
+                return nts;
+              }) : Promise.resolve([]);
+              // SmartArt: نصوص البيانات كنقاط
+              var smartJobs = blocks.filter(function (b) { return b.t === "_smart"; }).map(function (b) {
+                return zip.file(b.path).async("string").then(function (dx) {
+                  var dd = parse(dx); b.t = "smart"; b.items = [];
+                  all(dd, "http://schemas.openxmlformats.org/drawingml/2006/diagram", "pt").forEach(function (pt) { var tb = all(pt, "http://schemas.openxmlformats.org/drawingml/2006/diagram", "t")[0]; if (!tb) return; kids(tb, NA, "p").forEach(function (p) { var inl = paraInl(p); if (plainOf(inl).trim()) { rec(inl); b.items.push(inl); } }); });
+                });
+              });
+              return Promise.all([notesP].concat(smartJobs)).then(function (z) {
+                var nts = z[0] || [];
+                var out = [];
+                blocks.forEach(function (b) { if (b.t === "smart") b.items.forEach(function (inl) { out.push({ t: "li", level: 0, inl: inl, imp: ENGINE.calloutOf(plainOf(inl)) }); }); else if (b.t !== "_smart") out.push(b); });
+                if (nts.length) { stats.notes++; var co = ENGINE.coByTag("[ملاحظة]"); nts.forEach(function (inl) { rec(inl); out.push({ t: "p", inl: inl, imp: co, level: 0 }); }); }
+                if (lecture.title === null && !lecture.blocks.length && title) { lecture.title = plainOf(title).trim(); lecture.titleInl = title; }
+                else if (title) out.unshift({ t: "h", level: 2, inl: title });
+                lecture.blocks = lecture.blocks.concat(out);
+              });
+            });
+          });
+        });
+        return chain.then(function () { return Promise.all(imgJobs); }).then(function () {
+          var toks = ENGINE.tokens(texts.join("\n"));
+          stats.words = toks.length;
+          return { lecture: lecture, tokens: toks, stats: stats, title: lecture.title || "" };
+        });
+      });
+    });
+  }
+  return { parse: parseDeck };
 })();
 </script>
 <script id="engine">
@@ -2906,10 +3145,12 @@ var ENGINE = (function () {
         o.push(panel([cntP], sd, marg)); o.push(gap());
         return o;
       }
-      var bgRun = brand.coverBg ? new D.ImageRun({ type: "png", data: brand.coverBg.data, transformation: { width: 794, height: 1123 },
+      var bgRun = brand.coverBg ? new D.ImageRun({ type: brand.coverBg.type || "png", data: brand.coverBg.data, transformation: { width: 794, height: 1123 },
         floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 0 },
           behindDocument: true, allowOverlap: true, lockAnchor: true, wrap: { type: D.TextWrappingType.NONE } }, altText: { title: "خلفية الغلاف", description: PF.name, name: "coverbg" } }) : null;
       if (bgRun) cover.push(new D.Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [bgRun] }));
+      if (S.coverImageOnly && bgRun) { coverFooterKids = []; } // غلاف = صورة المستخدم فقط
+      else {
       if (CSTYLE === "block") {
         coverMargins = { top: 0, bottom: 1100, left: 0, right: 0, header: 0, footer: 500 };
         var inner = titleBlock(CS, { r: 1200, l: 1200 });
@@ -2939,6 +3180,7 @@ var ENGINE = (function () {
       if (rightsOn) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, shading: ffill ? shade(ffill) : undefined, spacing: { after: 0 }, children: rightsRuns(fsz, fc, CSTYLE === "geo" || CSTYLE === "wave" ? "E6C27A" : GOLD) }));
       var lk = linkRun(fsz, fc === "404040" ? T.acc : fc);
       if (lk) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, shading: ffill ? shade(ffill) : undefined, spacing: { before: 40, after: 0 }, children: [lk] }));
+      }
     }
     if (S.toc) {
       var TL = Object.assign({ title: "فهرس المحاضرات ومحاورها", c1: "المحاضرة", c2: "المحاور الرئيسية" }, S.tocLabels || {});
@@ -3149,7 +3391,8 @@ var ENGINE = (function () {
   }
   function previewHTML(lectures, S, logoSrc, bgUrl) {
     var h = "";
-    if (S.cover && bgUrl) {
+    if (S.cover && bgUrl && S.coverImageOnly) h += '<div class="pv-cover styled" style="background-image:url(' + bgUrl + ')"></div>';
+    else if (S.cover && bgUrl) {
       var cl2 = (S.coverLines || []).filter(function (x) { return String(x).trim(); }), st = S.coverStyle || "classic", T = resolveTheme(S);
       var dark = st === "geo", tc = dark ? "#fff" : "#" + T.h1, sc = dark ? "#F2CF86" : "#262626", lc = dark ? "#fff" : "#1A1A1A";
       var pad = { classic: "16% 10% 0", band: "26% 37% 0 6%", geo: "15% 12% 0", frame: "18% 14% 0", wave: "13% 10% 0", block: "0" }[st] || "16% 10% 0";
@@ -4178,7 +4421,8 @@ var ENGINE = (function () {
   var LS_KEY = "randommed.lec2docx.settings.v2";
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
-    keepParas: true, origLine: true, pageBg: "none", pageFrame: false, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
+    keepParas: true, origLine: true, pageBg: "none", pageFrame: false,
+    pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "logo", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
   var BAD_KEY = /^(__proto__|constructor|prototype)$/;
   // تنظيف أي إعدادات مخزنة/مستوردة: الأنواع والقيم المسموحة فقط
@@ -4531,6 +4775,11 @@ var ENGINE = (function () {
     return dpLib;
   }
   function realBlob() {
+    if (S.uiMode === "ppt") {
+      var pr = pptReady(); if (!pr.length) return Promise.resolve(null);
+      var grp = S.merge && pr.length > 1 ? pr : [pr[0]], ps = pptGroupSettings(grp);
+      return pptBrand(ps).then(function (brand) { ps.brand = brand; return makeDoc(grp.map(function (f) { return f.res.lecture; }), ps); });
+    }
     if (S.uiMode === "word") {
       var ready = wordFiles.filter(function (f) { return f.status === "ready" || f.status === "done"; });
       if (!ready.length) return Promise.resolve(null);
@@ -4613,8 +4862,15 @@ var ENGINE = (function () {
     for (var k in map) pv.style.setProperty(k, "#" + map[k]);
     ["body", "table", "h1", "h2", "h3", "h4"].forEach(function (k) { pv.style.setProperty("--fs-" + k, s.sizes[k]); });
     pv.style.setProperty("--pv-lh", s.lineSpacing >= 1.5 ? 1.75 : s.lineSpacing >= 1.3 ? 1.55 : 1.4);
-    var L = parseAll();
-    if (S.uiMode === "word") {
+    var L = parseAll(), pptWmUrl = null;
+    if (S.uiMode === "ppt") {
+      var pr = pptReady();
+      if (!pr.length) { pv.innerHTML = '<div class="empty">ستظهر هنا معاينة تقريبية بعد اختيار عرض PowerPoint.</div>'; return; }
+      var grp = S.merge && pr.length > 1 ? pr : [pr[0]];
+      s = Object.assign(s, pptGroupSettings(grp)); L = grp.map(function (f) { return f.res.lecture; });
+      pptWmUrl = s.wm ? pptWmUrlCached(s) : null;
+    }
+    else if (S.uiMode === "word") {
       var wf = wordFiles.filter(function (f) { return f.model; })[0];
       if (!wf) { pv.innerHTML = '<div class="empty">ستظهر هنا معاينة تقريبية بعد اختيار ملف Word.</div>'; return; }
       var ws = wordSettings(wf), lines = (wf.coverLines || []).slice();
@@ -4623,11 +4879,12 @@ var ENGINE = (function () {
       s = Object.assign(s, ws); L = wf.model;
     }
     pv.style.background = ENGINE.pageBgColor(s) ? "#" + ENGINE.pageBgColor(s) : ""; pv.style.outline = s.pageFrame ? "3px double #" + T.h2line : ""; pv.style.outlineOffset = s.pageFrame ? "-12px" : "";
-    var wm = s.wm ? '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>' : "";
+    var wm = s.wm ? (pptWmUrl ? '<div class="wm" style="background-image:url(' + pptWmUrl + ');opacity:1"></div>' : '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>') : "";
     var pfx = Object.assign({ name: "Random.MEd", url: "" }, s.platform || {});
     var foot = '<div class="pv-foot"><b style="color:#' + T.h1 + '">صفحة <span style="color:#' + T.acc + '">1</span></b>' + (s.footBrand && s.rights === false ? ' · <b>' + esc2(pfx.name) + '</b>' : "") +
       (s.rights !== false || pfx.url ? "<br>" + (s.rights !== false ? "© " + new Date().getFullYear() + " <b>" + esc2(pfx.name) + "</b> — جميع الحقوق محفوظة" : "") + (pfx.url ? (s.rights !== false ? " · " : "") + '<span dir="ltr" style="color:var(--c-acc)">' + esc2(pfx.url.replace(/^https?:\/\//, "")) + "</span>" : "") : "") + "</div>";
-    pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? LOGO_SRC : "", s.cover ? coverBgUrl(s) : "") + foot + backHTML(s) : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
+    var cbg = s.cover ? (S.uiMode === "ppt" && S.pptCovMode === "image" && pptCovImg ? pptCovImg.url : coverBgUrl(s)) : "";
+    pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? LOGO_SRC : "", cbg) + foot + backHTML(s) : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
   }
   $("pvBtn").onclick = function () { if (S.pvReal) renderReal(); else renderPreview(); $("pvCard").scrollIntoView({ behavior: "smooth", block: "start" }); };
 
@@ -4680,7 +4937,8 @@ var ENGINE = (function () {
     var el = $("nameEx"); if (!el) return;
     var ex;
     try {
-      if (S.uiMode === "word") { var rf = wordFiles.filter(function (f) { return f.status !== "error" && f.status !== "reading"; }); ex = rf.length ? (S.merge && rf.length > 1 ? ENGINE.fileName(S.nameTpl, nameVals(wordSettings(rf[0]), { num: ENGINE.numLabel(rf.map(wordNum)) })) : wordDocName(rf[0], wordSettings(rf[0]))) : ENGINE.fileName(S.nameTpl, nameVals(effSettings(), { num: "04" })); }
+      if (S.uiMode === "ppt") { var pr = pptReady(); ex = pr.length ? (S.merge && pr.length > 1 ? pptName(pr, pptGroupSettings(pr)) : pptName([pr[0]], pptGroupSettings([pr[0]]))) : ENGINE.fileName(S.nameTpl, nameVals(effSettings(), { num: "04" })); }
+      else if (S.uiMode === "word") { var rf = wordFiles.filter(function (f) { return f.status !== "error" && f.status !== "reading"; }); ex = rf.length ? (S.merge && rf.length > 1 ? ENGINE.fileName(S.nameTpl, nameVals(wordSettings(rf[0]), { num: ENGINE.numLabel(rf.map(wordNum)) })) : wordDocName(rf[0], wordSettings(rf[0]))) : ENGINE.fileName(S.nameTpl, nameVals(effSettings(), { num: "04" })); }
       else { var L = parseAll(), s = effSettings(); ex = L.length ? (S.mode === "split" && L.length > 1 ? lecDocName(L[0], 0, s) : textDocName(L, s)) : ENGINE.fileName(S.nameTpl, nameVals(s, { num: "04" })); }
     } catch (e) { ex = "—"; }
     el.textContent = "مثال: " + ex + ".docx";
@@ -4688,6 +4946,11 @@ var ENGINE = (function () {
 
   /* ---- تنزيل PDF: صفحة طباعة بنفس التصميم ثم «حفظ كـ PDF» من نافذة الطباعة ---- */
   function pdfModel() { // يرجع {L, s} حسب الوضع
+    if (S.uiMode === "ppt") {
+      var pr = pptReady(); if (!pr.length) return null;
+      var grp = S.merge && pr.length > 1 ? pr : [pr[0]], ps = pptGroupSettings(grp);
+      return { L: grp.map(function (f) { return f.res.lecture; }), s: ps, name: pptName(grp, ps), note: !S.merge && pr.length > 1 ? "الـ PDF للعرض الأول فقط — فعّل «دمج العروض بكتاب واحد» لتطلع كلها بملف واحد." : "", ppt: true };
+    }
     if (S.uiMode === "word") {
       var ready = wordFiles.filter(function (f) { return f.model && f.status !== "error" && f.status !== "reading"; });
       if (!ready.length) return null;
@@ -4736,10 +4999,10 @@ var ENGINE = (function () {
     busy = true; $("dlBtn").disabled = $("dlBtn2").disabled = $("pdfBtn").disabled = true; show("info", "جارٍ إنشاء ملف PDF…"); prog(5);
     var s = m.s, T = ENGINE.resolveTheme(s);
     logoReady.then(function () { return document.fonts && document.fonts.ready ? document.fonts.ready : null; }).then(function () { return modelImages(m.L); }).then(function (images) {
-      var A = { logo: logoImg.naturalWidth ? logoImg : null, images: images };
-      if (s.cover) A.cover = drawCover(s.coverStyle || "classic", T, platformName(s), 1);
+      var A = { logo: logoImg.naturalWidth && s.logo !== false ? logoImg : null, images: images };
+      if (s.cover) A.cover = m.ppt && S.pptCovMode === "image" && pptCovImg ? pptCoverCanvas() : drawCover(s.coverStyle || "classic", T, platformName(s), 1);
       if (s.backCover) { A.back = drawBack(T, 1); var qh = qrHref(s); if (qh) { try { A.qr = drawQR(qh); } catch (e) {} } }
-      if (s.wm) A.wm = drawWatermark(s);
+      if (s.wm) A.wm = m.ppt ? pptWmCanvas(s) : drawWatermark(s);
       return new Promise(function (r) { setTimeout(r, 30); }).then(function () {
         return RMED_PDF.build(m, A, { scale: 1.8, quality: 0.8, title: m.name, onEncode: function (i, n) { prog(10 + Math.round(85 * i / n)); } });
       });
@@ -4809,6 +5072,7 @@ var ENGINE = (function () {
   var busy = false;
   function download() {
     if (S.uiMode === "word") return processWord(true);
+    if (S.uiMode === "ppt") return processPpt(true);
     if (busy) return;
     var L = parseAll();
     if (!L.length) return show("err", "لا يوجد نص لتحويله. الصق نص محاضرة أولاً.");
@@ -4836,6 +5100,7 @@ var ENGINE = (function () {
   /* ---- التحقق من الكلمات ---- */
   $("checkBtn").onclick = function () {
     if (S.uiMode === "word") return processWord(false);
+    if (S.uiMode === "ppt") return processPpt(false);
     var texts = allText().filter(function (t) { return t.trim(); }), L = parseAll();
     if (!L.length) return show("err", "لا يوجد نص للتحقق منه.");
     show("info", "جارٍ توليد الملف ومقارنة الكلمات…"); prog(20);
@@ -4861,16 +5126,16 @@ var ENGINE = (function () {
 
   /* ===================== وضع ملف Word ===================== */
   var wordFiles = [], wid = 0;
-  clearResults = function () { var ch = false; if (mergeResult && !busy) { mergeResult = null; ch = true; } wordFiles.forEach(function (f) { if ((f.result || f.status === "done") && !busy) { f.result = null; f.status = "ready"; ch = true; } }); if (ch) renderWordList(); };
+  clearResults = function () { var ch = false; if (!busy && typeof pptFiles !== "undefined" && pptFiles) { var pc = !!pptResult; pptResult = null; pptFiles.forEach(function (f) { if (f.result) { f.result = null; f.status = "ready"; pc = true; } }); if (pc) renderPptList(); } if (mergeResult && !busy) { mergeResult = null; ch = true; } wordFiles.forEach(function (f) { if ((f.result || f.status === "done") && !busy) { f.result = null; f.status = "ready"; ch = true; } }); if (ch) renderWordList(); };
   function setUiMode(m) {
-    S.uiMode = m === "word" ? "word" : "text"; save();
-    $("modeText").classList.toggle("sel", S.uiMode === "text"); $("modeWord").classList.toggle("sel", S.uiMode === "word");
-    $("modeText").setAttribute("aria-selected", S.uiMode === "text"); $("modeWord").setAttribute("aria-selected", S.uiMode === "word");
-    $("textCard").hidden = S.uiMode !== "text"; $("wordCard").hidden = S.uiMode !== "word";
+    S.uiMode = m === "word" || m === "ppt" ? m : "text"; save();
+    [["modeText", "text"], ["modeWord", "word"], ["modePpt", "ppt"]].forEach(function (p) { $(p[0]).classList.toggle("sel", S.uiMode === p[1]); $(p[0]).setAttribute("aria-selected", S.uiMode === p[1]); });
+    $("textCard").hidden = S.uiMode !== "text"; $("wordCard").hidden = S.uiMode !== "word"; $("pptCard").hidden = S.uiMode !== "ppt";
     $("report").className = "report"; hide(); schedulePreview(); paintName();
   }
   $("modeText").onclick = function () { setUiMode("text"); };
   $("modeWord").onclick = function () { setUiMode("word"); };
+  $("modePpt").onclick = function () { setUiMode("ppt"); };
   Array.prototype.forEach.call(document.querySelectorAll(".method"), function (b) { b.onclick = function () { S.method = b.dataset.m; save(); paintMethods(); renderWordList(); }; });
   function paintMethods() { Array.prototype.forEach.call(document.querySelectorAll(".method"), function (b) { b.classList.toggle("sel", b.dataset.m === S.method); }); }
   paintMethods();
@@ -5050,11 +5315,183 @@ var ENGINE = (function () {
       (c.extra.length ? '<div class="note warn">زائدة: ' + c.extra.slice(0, 12).map(function (x) { return "«" + esc2(x[0]) + "»×" + x[1]; }).join("، ") + "</div>" : "");
     return '<div class="wfile"><div class="top"><span class="nm" style="direction:rtl">📚 الكتاب المدموج</span></div><div class="rep" style="border-top:none;margin-top:4px;padding-top:0">' + res + "<ul>" + li.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul></div></div>";
   }
+  /* ===================== وضع PowerPoint ===================== */
+  var pptFiles = [], pptId = 0, pptCovImg = null, pptWmImgObj = null, pptResult = null;
+  function loadImgUrl(url) { return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = rej; im.src = url; }); }
+  function fileToDataUrl(file, maxSide) { // نصغّر الصور الكبيرة قبل الحفظ
+    return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = rej; r.readAsDataURL(file); }).then(loadImgUrl).then(function (im) {
+      var k = Math.min(1, maxSide / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+      c.getContext("2d").drawImage(im, 0, 0, c.width, c.height); var png = /png|gif|webp/i.test(file.type);
+      return c.toDataURL(png ? "image/png" : "image/jpeg", 0.9);
+    });
+  }
+  function setPptImage(kind, url) {
+    var key = "randommed.ppt." + kind;
+    if (!url) { try { localStorage.removeItem(key); } catch (e) {} if (kind === "cover") pptCovImg = null; else pptWmImgObj = null; paintPpt(); schedulePreview(); return; }
+    loadImgUrl(url).then(function (im) {
+      var o = { url: url, img: im }; if (kind === "cover") pptCovImg = o; else { pptWmImgObj = o; wmCache = {}; }
+      try { localStorage.setItem(key, url); } catch (e) { show("info", "الصورة كبيرة على حفظ المتصفح — رح تنستعمل بهالجلسة بس."); }
+      paintPpt(); schedulePreview();
+    });
+  }
+  try { var sc = localStorage.getItem("randommed.ppt.cover"); if (sc) loadImgUrl(sc).then(function (im) { pptCovImg = { url: sc, img: im }; paintPpt(); }); var sw = localStorage.getItem("randommed.ppt.wm"); if (sw) loadImgUrl(sw).then(function (im) { pptWmImgObj = { url: sw, img: im }; paintPpt(); }); } catch (e) {}
+  function pptCoverCanvas() { // صورة الغلاف تملأ A4 (قص من الأطراف)
+    var W = 1240, H = 1754, c = document.createElement("canvas"); c.width = W; c.height = H; var g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, W, H);
+    var im = pptCovImg.img, k = Math.max(W / im.naturalWidth, H / im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k;
+    g.drawImage(im, (W - w) / 2, (H - h) / 2, w, h); return c;
+  }
+  function pptWmCanvas(s) {
+    var mode = S.pptWm || "logo", a = Math.max(0.02, Math.min(0.35, (S.pptWmOpacity || 8) / 100));
+    if (mode === "none") return null;
+    if (mode === "logo") return drawWatermark(Object.assign({}, s, { wmOpacity: S.pptWmOpacity || 8 }));
+    var c = document.createElement("canvas"), g;
+    if (mode === "image") {
+      if (!pptWmImgObj) return drawWatermark(Object.assign({}, s, { wmOpacity: S.pptWmOpacity || 8 }));
+      var im = pptWmImgObj.img, k = Math.min(1, 900 / Math.max(im.naturalWidth, im.naturalHeight)); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+      g = c.getContext("2d"); g.globalAlpha = a; g.drawImage(im, 0, 0, c.width, c.height); return c;
+    }
+    var t = String(S.pptWmText || "").trim() || platformName(s); c.width = 900; c.height = 640; g = c.getContext("2d");
+    g.translate(450, 320); g.rotate(-Math.PI / 7); g.globalAlpha = a; g.fillStyle = "#7C5714"; g.textAlign = "center"; g.textBaseline = "middle"; g.direction = /[\u0600-\u06FF]/.test(t) ? "rtl" : "ltr";
+    var fz = 110; do { g.font = "700 " + fz + "px 'El Messiri','IBM Plex Sans Arabic',sans-serif"; fz -= 6; } while (g.measureText(t).width > 820 && fz > 30);
+    g.fillText(t, 0, 0); return c;
+  }
+  var wmCache = {};
+  function pptWmUrlCached(s) { var k = [S.pptWm, S.pptWmText, S.pptWmOpacity, platformName(s), s.rights, pptWmImgObj ? pptWmImgObj.url.length : 0].join("|"); if (!(k in wmCache)) { var c = pptWmCanvas(s); wmCache[k] = c ? c.toDataURL("image/png") : null; } return wmCache[k]; }
+  function canvasJpeg(c) { return new Promise(function (r) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { r(new Uint8Array(ab)); }); }, "image/jpeg", 0.9); }); }
+  function pptBrand(s) {
+    return brandAssets(Object.assign({}, s, { wm: false, cover: s.cover && !(S.pptCovMode === "image" && pptCovImg) })).then(function (out) {
+      var jobs = [];
+      if (s.cover && S.pptCovMode === "image" && pptCovImg) jobs.push(canvasJpeg(pptCoverCanvas()).then(function (u) { out.coverBg = { data: u, w: 1240, h: 1754, type: "jpg" }; }));
+      var wc = s.wm ? pptWmCanvas(s) : null; if (wc) jobs.push(canvasPng(wc).then(function (u) { out.wm = { data: u, w: 660, h: Math.round(660 * wc.height / wc.width) }; }));
+      return Promise.all(jobs).then(function () { return out; });
+    });
+  }
+  function pptReady() { return pptFiles.filter(function (f) { return f.res && f.status !== "error" && f.status !== "reading"; }); }
+  function pptGroupSettings(grp) {
+    var s = JSON.parse(JSON.stringify(S));
+    s.userSubject = !!String(S.subject || "").trim();
+    if (!s.userSubject) s.subject = (grp[0].res.title || baseName(grp[0].name)).slice(0, 120) || "العرض";
+    s.logo = !!S.pptLogo; s.cover = S.pptCover !== false; s.coverStyle = S.pptCoverStyle || "classic";
+    s.coverImageOnly = !!(S.pptCovMode === "image" && pptCovImg && S.pptImageOnly);
+    s.wm = (S.pptWm || "logo") !== "none"; s.wmOpacity = S.pptWmOpacity || 8;
+    s.tocLabels = { title: "فهرس المحتويات", c1: "العرض", c2: "عناوين الشرائح", count: "عدد العروض: " };
+    return s;
+  }
+  function pptNum(f) { var n = ENGINE.lecNum(f.res ? f.res.title : ""); if (n == null) n = ENGINE.lecNum(baseName(f.name), true); return n; }
+  function pptName(grp, s) { return ENGINE.fileName(S.nameTpl, nameVals(s, { num: ENGINE.numLabel(grp.map(pptNum)), title: grp.length === 1 ? (grp[0].res.title || baseName(grp[0].name)) : "" })); }
+  function parsePpt(f) {
+    f.status = "reading"; renderPptList();
+    return ensureLibs().then(function () { return RMED_PPTX.parse(f.buf.slice(0), { notes: S.pptNotes !== false }); })
+      .then(function (res) { f.res = res; f.status = "ready"; f.result = null; })
+      .catch(function (e) { f.status = "error"; f.err = e && e.message && /[\u0600-\u06FF]/.test(e.message) ? e.message : "تعذّرت قراءة العرض — تأكد أنه ملف ‎.pptx‎ سليم."; if (window.console) console.error(e); })
+      .then(function () { renderPptList(); schedulePreview(); paintName(); });
+  }
+  function addPpt(files) {
+    files = Array.prototype.filter.call(files, function (f) { return /\.pptx$/i.test(f.name); });
+    if (!files.length) return show("err", "يُقبل فقط عروض PowerPoint بصيغة ‎.pptx‎ (ملفات ‎.ppt‎ القديمة: افتحها واحفظها بصيغة ‎.pptx‎ أولاً).");
+    files.forEach(function (file) { var f = { id: ++pptId, name: file.name, size: file.size, status: "reading" }; pptFiles.push(f); renderPptList(); file.arrayBuffer().then(function (b) { f.buf = b; return parsePpt(f); }); });
+  }
+  $("pptIn").onchange = function (e) { addPpt(e.target.files); e.target.value = ""; };
+  var pdrop = $("pdrop");
+  ["dragenter", "dragover"].forEach(function (ev) { pdrop.addEventListener(ev, function (e) { e.preventDefault(); pdrop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { pdrop.addEventListener(ev, function () { pdrop.classList.remove("over"); }); });
+  pdrop.addEventListener("drop", function (e) { e.preventDefault(); if (e.dataTransfer && e.dataTransfer.files.length) addPpt(e.dataTransfer.files); });
+  function renderPptList() {
+    $("pptCount").textContent = pptFiles.length; $("pptMergeBox").classList.toggle("on", pptFiles.length > 1);
+    var merging = S.merge && pptFiles.length > 1, el = $("pptList");
+    var top = merging && pptResult ? '<div class="wfile"><div class="top"><span class="nm" style="direction:rtl">📚 الكتاب المدموج</span></div><div class="rep" style="border-top:none;margin-top:4px;padding-top:0">' + checkLine(pptResult.check) + "</div></div>" : "";
+    el.innerHTML = top + pptFiles.map(function (f, idx) {
+      var h = '<div class="wfile"><div class="top">' + (f.status === "reading" || f.status === "working" ? '<span class="spin" aria-hidden="true"></span>' : "") + (merging ? '<span class="pill">' + (idx + 1) + "</span>" : "") +
+        '<span class="nm" title="' + esc2(f.name) + '">' + esc2(f.name) + '</span><span class="pill">' + fmtSize(f.size) + "</span>" + (merging ? '<button class="icon-x" data-pup="' + f.id + '" aria-label="نقل العرض للأعلى"' + (idx ? "" : " disabled") + ">▲</button>" : "") + '<button class="icon-x" data-pdel="' + f.id + '" aria-label="إزالة العرض">✕</button></div>';
+      if (f.status === "error") return h + '<div class="note warn">' + esc2(f.err) + "</div></div>";
+      if (!f.res) return h + '<div class="note">جارٍ قراءة العرض…</div></div>';
+      var st = f.res.stats, ch = ['<span class="chip">' + st.slides + " شريحة</span>", '<span class="chip">' + st.words + " كلمة</span>"];
+      if (st.tables) ch.push('<span class="chip">' + st.tables + " جدول</span>"); if (st.images) ch.push('<span class="chip">' + st.images + " صورة</span>");
+      if (st.notes) ch.push('<span class="chip">ملاحظات ' + st.notes + " شريحة</span>"); if (st.smartart) ch.push('<span class="chip">' + st.smartart + " SmartArt</span>");
+      h += '<div class="chips">' + ch.join("") + "</div>";
+      var notes = [];
+      if (st.hidden) notes.push(st.hidden + " شريحة مخفية لم تُضمّن.");
+      if (st.droppedImages) notes.push('<span style="color:var(--rose)">' + st.droppedImages + " صورة بصيغة غير مدعومة (EMF/SVG…) لم تُنقل.</span>");
+      if (st.charts) notes.push('<span style="color:var(--rose)">' + st.charts + " رسم بياني لا يُنقل — انسخه كصورة في العرض إن أردته.</span>");
+      if (notes.length) h += '<div class="note">' + notes.join("<br>") + "</div>";
+      if (!merging && f.result) h += '<div class="rep">' + checkLine(f.result.check) + "</div>";
+      return h + "</div>";
+    }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("[data-pdel]"), function (b) { b.onclick = function () { var id = +b.dataset.pdel; pptFiles = pptFiles.filter(function (f) { return f.id !== id; }); pptResult = null; renderPptList(); schedulePreview(); }; });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-pup]"), function (b) { b.onclick = function () { var id = +b.dataset.pup, i = pptFiles.findIndex(function (f) { return f.id === id; }); if (i > 0) { var t = pptFiles[i]; pptFiles[i] = pptFiles[i - 1]; pptFiles[i - 1] = t; pptResult = null; renderPptList(); schedulePreview(); } }; });
+    paintName();
+  }
+  function checkLine(c) {
+    return c.ok ? '<div class="res ok">✓ تحقق الكلمات: ' + c.inCount + " كلمة بدون أي فرق</div>" : '<div class="res bad">✗ تحقق الكلمات: ' + (c.missing.length + c.extra.length) + " فرق</div>" +
+      (c.missing.length ? '<div class="note warn">ناقصة: ' + c.missing.slice(0, 12).map(function (x) { return "«" + esc2(x[0]) + "»×" + x[1]; }).join("، ") + "</div>" : "") +
+      (c.extra.length ? '<div class="note warn">زائدة: ' + c.extra.slice(0, 12).map(function (x) { return "«" + esc2(x[0]) + "»×" + x[1]; }).join("، ") + "</div>" : "");
+  }
+  function processPpt(save) {
+    if (pptFiles.some(function (f) { return f.status === "reading"; })) return show("info", "لحظة… عم نقرأ العروض، جرّب بعد ثوانٍ.");
+    var ready = pptReady();
+    if (!ready.length) return show("err", pptFiles.length ? "العروض المختارة غير صالحة — راجع الرسالة تحت كل ملف." : "اختر عرض PowerPoint ‎(.pptx)‎ أولاً.");
+    if (busy) return;
+    busy = true; $("dlBtn").disabled = $("dlBtn2").disabled = true; show("info", save ? "جارٍ تحويل العروض…" : "جارٍ التحويل والتحقق من الكلمات…"); prog(8);
+    var groups = S.merge && ready.length > 1 ? [ready] : ready.map(function (f) { return [f]; }), outs = [], chain = Promise.resolve();
+    groups.forEach(function (grp, gi) {
+      chain = chain.then(function () {
+        var s = pptGroupSettings(grp);
+        return ensureLibs().then(function () { return pptBrand(s); }).then(function (brand) {
+          s.brand = brand; return makeDoc(grp.map(function (f) { return f.res.lecture; }), s);
+        }).then(function (blob) {
+          return JSZip.loadAsync(blob).then(function (z) { return z.file("word/document.xml").async("string"); }).then(function (xml) {
+            var toks = []; grp.forEach(function (f) { toks = toks.concat(f.res.tokens); });
+            var c = ENGINE.compare(toks, ENGINE.xmlTokens(xml, { all: true }));
+            if (grp.length > 1) pptResult = { check: c }; else { grp[0].result = { check: c }; grp[0].status = "done"; }
+            outs.push({ blob: blob, name: pptName(grp, s), ok: c.ok }); prog(8 + Math.round(85 * (gi + 1) / groups.length)); renderPptList();
+          });
+        });
+      });
+    });
+    chain.then(function () {
+      var bad = outs.filter(function (o) { return !o.ok; }).length;
+      if (save) {
+        var nm = uniq(outs.map(function (o) { return o.name; }));
+        if (outs.length === 1) saveBlob(outs[0].blob, nm[0] + ".docx");
+        else { var z = new JSZip(); outs.forEach(function (o, i) { z.file(nm[i] + ".docx", o.blob); }); return z.generateAsync({ type: "blob" }).then(function (b) { saveBlob(b, ENGINE.fileName(S.nameTpl, nameVals(pptGroupSettings(ready), { num: ENGINE.numLabel(ready.map(pptNum)) })) + ".zip"); return bad; }); }
+      }
+      return bad;
+    }).then(function (bad) {
+      prog(100); setTimeout(function () { prog(null); }, 700);
+      show(bad ? "err" : "ok", bad ? "تم التحويل لكن تحقق الكلمات وجد فروقاً — راجع التقرير." : (save ? "تم تحويل " + ready.length + " عرض إلى Word وبدأ التنزيل ✓ — تحقق الكلمات: صفر فروق." : "✓ تحقق الكلمات: صفر فروق في " + ready.length + " عرض."));
+    }).catch(function (e) { prog(null); show("err", "حدث خطأ أثناء تحويل العرض: " + (e && e.message ? e.message : e)); if (window.console) console.error(e); })
+      .then(function () { busy = false; $("dlBtn").disabled = $("dlBtn2").disabled = false; });
+  }
+  // ربط إعدادات العروض
+  COVER_STYLES.forEach(function (cs) { var o = document.createElement("option"); o.value = cs[0]; o.textContent = cs[1]; $("pptCovStyle").appendChild(o); });
+  $("pptCovStyle").onchange = function () { S.pptCoverStyle = this.value; save(); schedulePreview(); };
+  [["pptLogo", "pptLogo"], ["pptCover", "pptCover"], ["pptImageOnly", "pptImageOnly"], ["pptMerge", "merge"]].forEach(function (p) { $(p[0]).onchange = function () { S[p[1]] = this.checked; save(); paintPpt(); pptResult = null; renderPptList(); schedulePreview(); }; });
+  $("pptNotes").onchange = function () { S.pptNotes = this.checked; save(); paintPpt(); pptFiles.forEach(function (f) { if (f.buf) parsePpt(f); }); };
+  Array.prototype.forEach.call($("pptCovSeg").children, function (b) { b.onclick = function () { S.pptCovMode = b.dataset.v; save(); paintPpt(); schedulePreview(); }; });
+  Array.prototype.forEach.call($("pptWmSeg").children, function (b) { b.onclick = function () { S.pptWm = b.dataset.v; save(); paintPpt(); schedulePreview(); }; });
+  $("pptWmText").oninput = function () { S.pptWmText = this.value; save(); schedulePreview(); };
+  $("pptWmOp").oninput = function () { S.pptWmOpacity = +this.value; $("pptWmOpV").textContent = this.value + "%"; save(); schedulePreview(); };
+  $("pptCovImg").onchange = function (e) { var f = e.target.files[0]; e.target.value = ""; if (f) fileToDataUrl(f, 1754).then(function (u) { S.pptCovMode = "image"; save(); setPptImage("cover", u); }).catch(function () { show("err", "تعذّرت قراءة الصورة."); }); };
+  $("pptWmImg").onchange = function (e) { var f = e.target.files[0]; e.target.value = ""; if (f) fileToDataUrl(f, 900).then(function (u) { S.pptWm = "image"; save(); setPptImage("wm", u); }).catch(function () { show("err", "تعذّرت قراءة الصورة."); }); };
+  $("pptCovDel").onclick = function () { setPptImage("cover", null); };
+  $("pptWmDel").onclick = function () { setPptImage("wm", null); };
+  function paintPpt() {
+    $("pptLogo").checked = !!S.pptLogo; $("pptNotes").checked = S.pptNotes !== false; $("pptCover").checked = S.pptCover !== false; $("pptImageOnly").checked = !!S.pptImageOnly; $("pptMerge").checked = !!S.merge;
+    $("pptCovStyle").value = S.pptCoverStyle || "classic";
+    Array.prototype.forEach.call($("pptCovSeg").children, function (b) { b.classList.toggle("sel", b.dataset.v === (S.pptCovMode || "style")); });
+    Array.prototype.forEach.call($("pptWmSeg").children, function (b) { b.classList.toggle("sel", b.dataset.v === (S.pptWm || "logo")); });
+    var img = S.pptCovMode === "image"; $("pptCovStyleRow").hidden = img; $("pptCovImgRow").hidden = !img;
+    $("pptCovThumb").classList.toggle("on", !!pptCovImg); if (pptCovImg) $("pptCovThumb").src = pptCovImg.url; $("pptCovDel").hidden = !pptCovImg;
+    $("pptWmTextRow").hidden = S.pptWm !== "text"; $("pptWmImgRow").hidden = S.pptWm !== "image"; $("pptWmOpRow").hidden = S.pptWm === "none";
+    $("pptWmThumb").classList.toggle("on", !!pptWmImgObj); if (pptWmImgObj) $("pptWmThumb").src = pptWmImgObj.url; $("pptWmDel").hidden = !pptWmImgObj;
+    $("pptWmText").value = S.pptWmText || ""; $("pptWmOp").value = S.pptWmOpacity || 8; $("pptWmOpV").textContent = (S.pptWmOpacity || 8) + "%";
+  }
+  paintPpt();
   setUiMode(S.uiMode);
-  renderWordList();
+  renderWordList(); renderPptList();
   $("pvWrap").hidden = !!S.pvReal; $("pvReal").classList.toggle("on", !!S.pvReal);
 
-  window.addEventListener("beforeunload", function (e) { syncActive(); if (lectures.some(function (l) { return l.text.trim(); }) || wordFiles.length) { e.preventDefault(); e.returnValue = ""; } });
+  window.addEventListener("beforeunload", function (e) { syncActive(); if (lectures.some(function (l) { return l.text.trim(); }) || wordFiles.length || pptFiles.length) { e.preventDefault(); e.returnValue = ""; } });
   renderAll();
 })();
 </script>
