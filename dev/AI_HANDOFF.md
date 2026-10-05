@@ -53,7 +53,7 @@
   - القوالب المحفوظة في `randommed.lec2docx.presets.v1`، وملفات الدكاترة في `randommed.ppt.profiles`.
   - صور الغلاف والعلامة والشعار الخاص في `randommed.ppt.cover / .wm / .logo`.
 - **الهوية المرسومة على Canvas**:
-  - `drawCover(style, T, name, scale, logo)` بعشرة أنماط: classic, block, band, geo, frame, wave, dna, molecule, cycle, peptide.
+  - `drawCover(style, T, name, scale, logo)` بـ13 نمط: classic, block, band, geo, frame, wave, dna (الشريط يمين), molecule, cycle, peptide, helix (داكن فاخر), protein (كريمي), steroid. أي نمط جديد يلزمه: CS بالمحرك + PFILL أو DARKC + pad المعاينة + CSMAP في pdf.js + المصغّرات.
   - `drawBack` للغلاف الخلفي، و `drawWatermark` للعلامة المائية، و `drawQR`.
   - الغلاف في Word: صورة خلفية عائمة خلف النص، والنصوص داخل جداول مظلّلة بالأبيض حتى تبقى مقروءة في الوضع الداكن لتطبيق Word.
 
