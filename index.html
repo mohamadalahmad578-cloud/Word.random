@@ -2288,13 +2288,17 @@ var ENGINE = (function () {
     if (S.cover) {
       var cl = (S.coverLines || []).filter(function (x) { return String(x).trim(); });
       var showSub = S.showSubtitle !== false && (!cl.length || S.subtitle);
+      // كثافة الغلاف: كثرة السطور (مع احتمال استبدال Word للخط) قد تدفع الغلاف لصفحة ثانية — نصغّر المسافات والخط تدريجياً
+      var coverRows = 0;
+      cl.concat(String(S.coverExtra || "").split(/\n/)).concat([S.doctor || "", S.coverTitle || ""]).forEach(function (x) { x = String(x || "").trim(); if (x) coverRows += Math.ceil(x.length / 52); });
+      var DENSE = coverRows > 16 ? 2 : coverRows > 8 ? 1 : 0;
       var subTxt = S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات";
       var cntLabel = (S.tocLabels && S.tocLabels.count) || "عدد المحاضرات: ";
       var cnt = String(S.tocItems ? S.tocItems.length : lectures.length);
       // عناصر العنوان (مولّدة) + سطر العنوان الأصلي إن وجد
       function titleBlock(c, indent) {
         var o = [];
-        var lr = c.logo ? logoRun(CSTYLE === "block" ? 96 : 120) : null;
+        var lr = c.logo ? logoRun(DENSE ? 76 : CSTYLE === "block" ? 96 : 120) : null;
         if (lr) o.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: indent ? ind(indent.r || 0, indent.l || 0) : undefined, spacing: { line: 240, lineRule: AUTO, after: 300 }, children: [lr] }));
         if (S.coverTitle) o.headN = o.length + 1; // الشعار + عنوان الغلاف الأصلي (نص أصلي خارج علامات GEN)
         if (S.coverTitle) o.push(P(parseInline(String(S.coverTitle)), { align: CENTER, side: indent, size: SZ.body + 24, bold: true, color: c.title, boldColor: c.title, after: 120, line: 320, forceRtl: AR_RE.test(S.coverTitle) }));
@@ -2303,17 +2307,18 @@ var ENGINE = (function () {
         if (showSub) o.push(P([{ text: subTxt }], { align: CENTER, side: indent, size: SZ.body + 6, color: c.sub, after: 200, forceRtl: true }));
         var drC = (CSTYLE === "block" || CSTYLE === "geo") ? "FFFFFF" : c.first, exC = CSTYLE === "block" ? "FFFFFF" : c.line;
         var dr = String(S.doctor || "").trim();
-        if (dr) o.push(P(parseInline(dr), { align: CENTER, side: indent, size: SZ.body + 5, bold: true, color: drC, boldColor: drC, before: 100, after: 80, line: 300, forceRtl: AR_RE.test(dr) }));
+        if (dr) o.push(P(parseInline(dr), { align: CENTER, side: indent, size: SZ.body + (DENSE ? 2 : 5), bold: true, color: drC, boldColor: drC, before: 100, after: 80, line: 300, forceRtl: AR_RE.test(dr) }));
         String(S.coverExtra || "").split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 8).forEach(function (x) {
-          o.push(P(parseInline(x), { align: CENTER, side: indent, size: SZ.body + 2, color: exC, boldColor: drC, after: 60, line: 300, forceRtl: AR_RE.test(x) }));
+          o.push(P(parseInline(x), { align: CENTER, side: indent, size: DENSE ? SZ.body : SZ.body + 2, color: exC, boldColor: drC, after: DENSE ? 30 : 60, line: DENSE ? 250 : 300, forceRtl: AR_RE.test(x) }));
         });
         o.push(markP(GE()));
         return o;
       }
       function linesBlock(c, indent) {
         var o = [];
-        cl.forEach(function (line, k) { o.push(P(parseInline(String(line)), { align: CENTER, side: indent, size: SZ.body + (k === 0 ? 4 : 2), bold: k === 0, color: k === 0 ? c.first : c.line, boldColor: c.first, after: 80, line: 300 })); });
-        o.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: indent ? ind(indent.r || 0, indent.l || 0) : undefined, spacing: { before: cl.length ? 360 : 200, after: 0 }, children: [GS(),
+        var lsz = DENSE === 2 ? SZ.body - 2 : DENSE ? SZ.body : SZ.body + 2;
+        cl.forEach(function (line, k) { o.push(P(parseInline(String(line)), { align: CENTER, side: indent, size: lsz + (k === 0 ? 2 : 0), bold: k === 0, color: k === 0 ? c.first : c.line, boldColor: c.first, after: DENSE ? 30 : 80, line: DENSE ? 250 : 300 })); });
+        o.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: indent ? ind(indent.r || 0, indent.l || 0) : undefined, spacing: { before: cl.length ? (DENSE ? 140 : 360) : 200, after: 0 }, children: [GS(),
           mkRun(cntLabel, true, {}, { size: SZ.body, color: c.line === "FFFFFF" ? "E6EAF0" : "404040" }), mkRun(cnt, false, {}, { size: SZ.body, color: c.line === "FFFFFF" ? "E6EAF0" : "404040" }), GE()] }));
         return o;
       }
@@ -2348,15 +2353,15 @@ var ENGINE = (function () {
             rows: [new D.TableRow({ height: h ? { value: h, rule: D.HeightRule.ATLEAST } : undefined, children: [new D.TableCell({ width: { size: PAGE_W, type: D.WidthType.DXA }, verticalAlign: D.VerticalAlign.CENTER, shading: shade(T.h1),
               borders: { top: NONE, left: NONE, right: NONE, bottom: last ? { style: D.BorderStyle.SINGLE, size: 48, color: "D9A84E" } : NONE }, margins: { top: top ? 500 : 0, bottom: last ? 500 : 0, left: 0, right: 0 }, children: kids })] })] });
         };
-        if (inner.headN) { cover.push(navy(inner.slice(0, inner.headN), 0, true, false)); cover.push(gap(T.h1)); cover.push(navy(inner.slice(inner.headN), 4600, false, true)); }
-        else cover.push(navy(inner, 7600, true, true));
-        cover.push(new D.Paragraph({ spacing: { before: 0, after: 500 }, children: [] }));
+        if (inner.headN) { cover.push(navy(inner.slice(0, inner.headN), 0, true, false)); cover.push(gap(T.h1)); cover.push(navy(inner.slice(inner.headN), DENSE ? 2000 : 4600, false, true)); }
+        else cover.push(navy(inner, DENSE ? 5200 : 7600, true, true));
+        cover.push(new D.Paragraph({ spacing: { before: 0, after: DENSE ? 150 : 500 }, children: [] }));
         var lb0 = linesBlock(CS, undefined), cnt0 = lb0.pop(), sdB = { r: 1418 + 400, l: 1418 + 400 };
         if (lb0.length) { cover.push(panel(lb0, sdB, 0)); cover.push(gap()); }
         cover.push(panel([cnt0], sdB, 0)); cover.push(gap());
       } else {
         var side = (CS.s || CS.e) ? { r: CS.s, l: CS.e } : undefined;
-        cover.push(new D.Paragraph({ spacing: { before: CS.top, after: 0 }, children: [] }));
+        cover.push(new D.Paragraph({ spacing: { before: DENSE === 2 ? Math.round(CS.top * 0.2) : DENSE ? Math.round(CS.top * 0.45) : CS.top, after: 0 }, children: [] }));
         cover = cover.concat(PFILL ? panels(CS, side, MARGIN) : titleBlock(CS, side).concat(linesBlock(CS, side)));
       }
       // تذييل الغلاف: الحقوق + رابط المنصة
@@ -4061,11 +4066,11 @@ var ENGINE = (function () {
     }
     var css = pageCss() + "\n" +
       "@page{size:A4;margin:17mm 19mm 19mm;@top-center{content:" + q(s.subject) + ";font:9pt 'Noto Naskh Arabic','Simplified Arabic',serif;color:#8a8a8a}@bottom-center{content:\"صفحة \" counter(page) " + q(footTxt) + ";font:9pt 'Noto Naskh Arabic','Simplified Arabic',serif;color:#7f7f7f}}" +
-      (s.cover ? "@page:first{margin:0;@top-center{content:none}@bottom-center{content:none}}" : "") +
-      "html{background:#fff}html,body{margin:0;padding:0}body{background:transparent}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}" +
-      ".page{background:transparent;max-width:none;margin:0;padding:0;box-shadow:none;border-radius:0;font-family:'Simplified Arabic','Noto Naskh Arabic','Traditional Arabic',serif;font-size:" + Z.body + "pt;line-height:" + (s.lineSpacing >= 1.5 ? 1.75 : s.lineSpacing >= 1.3 ? 1.55 : 1.4) + "}" +
+      (s.cover ? "@page:first{@top-center{content:none}@bottom-center{content:none}}" : "") +
+      "html{background:#fff;-webkit-text-size-adjust:100%;text-size-adjust:100%}html,body{margin:0;padding:0}body{background:transparent}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}" +
+      ".page{background:transparent;max-width:none;margin:0;padding:0;box-shadow:none;border-radius:0;font-family:'Simplified Arabic','Geeza Pro','Noto Naskh Arabic','Traditional Arabic',serif;font-size:" + Z.body + "pt;line-height:" + (s.lineSpacing >= 1.5 ? 1.75 : s.lineSpacing >= 1.3 ? 1.55 : 1.4) + "}" +
       ".page .lat{font-family:'Times New Roman','Liberation Serif',serif}" +
-      ".page .pv-cover.styled{box-sizing:border-box;margin:0;width:210mm;height:296mm;aspect-ratio:auto;break-after:page;font-size:" + (Z.body + 2) + "pt}.page .pv-cover:not(.styled){break-after:page}" +
+      ".page .pv-cover.styled{box-sizing:border-box;margin:0;width:auto;height:255mm;aspect-ratio:auto;break-after:page;break-inside:avoid;border-radius:3mm;font-size:" + (Z.body + 2) + "pt}.page .pv-cover:not(.styled){break-after:page}" +
       ".page .pv-cover.styled .ct{font-size:2.1em}.page .pv-cover img{height:30mm}" +
       ".page .pgbreak{break-before:page;border:0;margin:0;height:0}.page .pgbreak::after{display:none}" +
       ".page .pv-back{break-before:page;break-inside:avoid;box-sizing:border-box;margin:0;height:250mm;aspect-ratio:auto;border-radius:3mm;font-size:" + (Z.body + 2) + "pt}.page .pv-back img.lg{height:30mm}.page .pv-back img.qr{width:38mm;height:38mm}.page .pv-back a{text-decoration:none}" +
@@ -4074,7 +4079,7 @@ var ENGINE = (function () {
       ".wmf{position:fixed;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;z-index:-1;pointer-events:none}.wmf img{width:118mm;max-width:80%}" +
       ".tb{position:sticky;top:0;z-index:5;background:#141B2E;color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;font:14px 'IBM Plex Sans Arabic',system-ui,sans-serif;direction:rtl}" +
       ".tb button{background:#D9A84E;color:#141B2E;border:0;border-radius:10px;padding:10px 16px;font:700 14px inherit;cursor:pointer}.tb small{opacity:.85;line-height:1.5}" +
-      "@media screen{body{background:#e9e7e2}.page{max-width:210mm;margin:12px auto;padding:17mm 19mm;box-shadow:0 2px 12px rgba(0,0,0,.2)}.page .pv-cover.styled{margin:-17mm -19mm 0;width:auto;height:auto;aspect-ratio:1/1.414}.page .pgbreak{border-top:2px dashed #ccc;margin:18mm -19mm}}" +
+      "@media screen{body{background:#e9e7e2}.page{max-width:210mm;margin:12px auto;padding:17mm 19mm;box-shadow:0 2px 12px rgba(0,0,0,.2)}.page .pv-cover.styled{height:255mm}.page .pgbreak{border-top:2px dashed #ccc;margin:18mm -19mm}}" +
       "@media print{.tb{display:none}}";
     var wm = s.wm && A.wm ? '<div class="wmf"><img src="' + A.wm + '" alt=""></div>' : "";
     return '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc2(m.name) + "</title>" +
@@ -4082,7 +4087,8 @@ var ENGINE = (function () {
       "<style>" + css + "</style></head><body>" +
       '<div class="tb"><small>من نافذة الطباعة اختر «حفظ كـ PDF» (على الآيفون: مشاركة ← حفظ في الملفات).' + (m.note ? "<br>" + esc2(m.note) : "") + '</small><button onclick="window.print()">حفظ PDF</button></div>' +
       wm + '<div class="page" style="' + st + '">' + body + back + "</div>" +
-      "<script>window.addEventListener('load',function(){var go=function(){setTimeout(function(){window.print();},350);};(document.fonts&&document.fonts.ready?document.fonts.ready.then(go,go):go());});<\/script></body></html>";
+      "<script>function fit(){['.pv-cover.styled','.pv-back'].forEach(function(q){var el=document.querySelector(q);if(!el)return;var f=parseFloat(getComputedStyle(el).fontSize),n=0;while(el.scrollHeight>el.clientHeight+2&&n++<40){f*=0.95;el.style.fontSize=f+'px';}});}" +
+      "window.addEventListener('load',function(){var go=function(){fit();setTimeout(function(){window.print();},350);};(document.fonts&&document.fonts.ready?document.fonts.ready.then(go,go):go());});<\/script></body></html>";
   }
   function pdfAssets(s) {
     return logoReady.then(function () { return document.fonts && document.fonts.ready ? document.fonts.ready : null; }).then(function () {
