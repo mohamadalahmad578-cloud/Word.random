@@ -207,6 +207,11 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .page .pv-cover.styled .cin{padding:14% 10% 0}
 .page .pv-cover .rights{position:absolute;bottom:3.5%;left:0;right:0;font-size:.72em;color:#7f7f7f}
 .page .pv-cover .rights a{color:inherit}
+.page .pv-cover .pfbig{font-family:"El Messiri",serif;font-weight:700;font-size:2.1em;line-height:1.2;margin-bottom:4px}
+.bgs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.bgs button{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:6px 4px;cursor:pointer;font-size:12px;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:4px;min-height:58px}
+.bgs button i{display:block;width:100%;height:24px;border-radius:6px;border:1px solid rgba(0,0,0,.12)}
+.bgs button.sel{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass) inset;font-weight:700}
 /* ---- وضع ملف Word ---- */
 .main-col{display:grid;gap:12px;min-width:0}
 .modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -253,7 +258,7 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .page .pv-cover .cx{font-size:.9em}
 .page .pv-back{position:relative;aspect-ratio:1/1.414;margin:22px -28px 0;background-size:100% 100%;color:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;padding:14% 10% 0;overflow:hidden}
 .page .pv-back img.lg{height:74px;margin-bottom:10px}
-.page .pv-back .bn{font-size:1.9em;font-weight:700;font-family:"El Messiri",serif}
+.page .pv-back .bn{font-size:2.6em;font-weight:700;font-family:"El Messiri",serif}
 .page .pv-back .bt{color:#E6C27A;margin-top:2px}
 .page .pv-back .bb{height:3px;width:30%;background:#D9A84E;margin:10px auto 14px}
 .page .pv-back img.qr{width:96px;height:96px;border-radius:6px}
@@ -426,6 +431,14 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
             </div>
             <div class="field" style="margin:12px 0 8px"><label class="lbl" for="pfName">اسم المنصة</label><input class="inp" id="pfName" placeholder="Random.MEd" dir="auto"></div>
             <div class="field" style="margin:0"><label class="lbl" for="pfUrl">رابط المنصة <small style="font-weight:400;color:var(--ink-soft)">(اختياري — يظهر كرابط قابل للضغط)</small></label><input class="inp" id="pfUrl" type="url" inputmode="url" dir="ltr" placeholder="https://…"></div>
+          </div>
+        </details>
+        <details class="sec" open>
+          <summary>خلفية الصفحات</summary>
+          <div class="in">
+            <div class="bgs" id="bgs" role="radiogroup" aria-label="خلفية الصفحات"></div>
+            <div class="toggles" style="margin-top:10px"><label class="tg"><span>إطار مزدوج حول الصفحات<small>بلون القالب، في الفهرس والمتن</small></span><span class="sw-t"><input type="checkbox" id="optFrame"><span></span></span></label></div>
+            <small class="hint">الخلفية لون صفحة من Word نفسه، فتبقى مقروءة حتى بالوضع الداكن. ملاحظة: Word على الكمبيوتر لا يطبع لون الصفحة إلا إذا فعّلت «طباعة ألوان الخلفية»، أما ملف PDF من الموقع فيتضمنها دائماً.</small>
           </div>
         </details>
         <details class="sec">
@@ -1806,7 +1819,7 @@ var RMED_PDF = (function () {
     var MX = 70.87, MT = 70.87, MB = 70.87, CW = PW - 2 * MX, TOP = MT, BOT = PH - MB;
     var PF = Object.assign({ name: "Random.MEd", url: "" }, S.platform || {}), pfName = String(PF.name || "Random.MEd").trim() || "Random.MEd";
     var URL = String(PF.url || "").trim(), HREF = URL ? (/^https?:\/\//i.test(URL) ? URL : "https://" + URL) : "", URLTXT = URL.replace(/^https?:\/\//i, "").replace(/\/$/, "");
-    var YEAR = String(new Date().getFullYear()), rightsOn = S.rights !== false;
+    var YEAR = String(new Date().getFullYear()), rightsOn = S.rights !== false, PBG = ENGINE.pageBgColor ? ENGINE.pageBgColor(S) : null, GOLD = "A9761E";
     var meas = document.createElement("canvas").getContext("2d"), wcache = {};
     function width(font, t) { var k = font + "\u0001" + t; if (wcache[k] === undefined) { meas.font = font; wcache[k] = meas.measureText(t).width; } return wcache[k]; }
     function fnt(size, bold, italic, ar) { return (italic ? "italic " : "") + (bold ? "700 " : "400 ") + f2(size) + "px " + (ar ? FA : FL); }
@@ -1822,6 +1835,10 @@ var RMED_PDF = (function () {
         cur = { c: c, g: gg, links: [], kind: kind }; pages.push(cur);
       } else cur = null;
       y = TOP;
+      if ((kind === "body" || kind === "toc") && !dry) {
+        if (PBG) rect(0, 0, PW, PH, PBG);
+        if (S.pageFrame) { rect(17, 17, PW - 34, PH - 34, null, T.h2line, 1.4); rect(21, 21, PW - 42, PH - 42, null, T.h2line, 0.6); }
+      }
       if (kind === "body") bodyChrome();
       if (onPage) onPage(pageNo);
     }
@@ -1935,13 +1952,19 @@ var RMED_PDF = (function () {
       var sub = String(S.subject || ""), f = fnt(hs, false, false, true);
       text(sub, PW - MX - (A.logo && S.logo ? 22 : 0) - width(f, sub), hy, f, "7F7F7F", true);
       hline(MX, hy + 6, CW, T.border, 0.6);
-      var fy = PH - 42, fs = 8.5, pg = "صفحة " + bodyPage, fp = fnt(fs, false, false, true);
-      text(pg, (PW - width(fp, pg)) / 2, fy, fp, "7F7F7F", true);
-      var parts = [];
-      if (rightsOn) parts.push("© " + YEAR + " " + pfName + " — جميع الحقوق محفوظة"); else if (S.footBrand) parts.push(pfName);
-      var rl = parts.join(""), fr = fnt(7.5, false, false, true), wr = width(fr, rl), wu = URLTXT ? width(fnt(7.5, false, false, false), URLTXT) : 0, tot = wr + (wu ? wu + 14 : 0), xs = (PW - tot) / 2;
-      if (URLTXT) { text(URLTXT, xs, fy + 12, fnt(7.5, false, false, false), T.acc, false); link(xs, fy + 4, wu, 10); }
-      if (rl) text(rl, xs + (wu ? wu + 14 : 0), fy + 12, fr, "8C8C8C", true);
+      var fy = PH - 42, fs = 9, fp = fnt(fs, true, false, true), fn = fnt(fs + 1, true, false, false), pl = "صفحة ", pn = String(bodyPage);
+      var wpl = width(fp, pl), wpn = width(fn, pn), x0 = (PW - wpl - wpn - 3) / 2;
+      text(pn, x0, fy, fn, T.acc, false); text(pl, x0 + wpn + 3, fy, fp, T.h1, true);
+      // سطر الحقوق: اسم المنصة ذهبي عريض
+      var fr = fnt(7.5, false, false, true), fb = fnt(7.5, true, false, AR.test(pfName)), segs = [];
+      if (rightsOn) segs = [["© " + YEAR + " ", fnt(7.5, false, false, false), "7F7F7F", false], [pfName, fb, GOLD, AR.test(pfName)], [" — جميع الحقوق محفوظة", fr, "7F7F7F", true]];
+      else if (S.footBrand) segs = [[pfName, fb, GOLD, AR.test(pfName)]];
+      var wsg = segs.map(function (q) { return width(q[1], q[0]); }), wr = wsg.reduce(function (a, b) { return a + b; }, 0);
+      var fu = fnt(7.5, false, false, false), wu = URLTXT ? width(fu, URLTXT) : 0, tot = wr + (wu ? wu + 14 : 0), xs = (PW - tot) / 2;
+      if (URLTXT) { text(URLTXT, xs, fy + 13, fu, T.acc, false); link(xs, fy + 5, wu, 10); }
+      // الترتيب البصري RTL: «جميع الحقوق محفوظة» يساراً ثم الاسم ثم ©السنة يميناً
+      var xr = xs + (wu ? wu + 14 : 0);
+      for (var q = segs.length - 1; q >= 0; q--) { text(segs[q][0], xr, fy + 13, segs[q][1], segs[q][2], segs[q][3]); xr += wsg[q]; }
     }
 
     /* ---- كتل المتن ---- */
@@ -2146,6 +2169,8 @@ var RMED_PDF = (function () {
       });
       // التذييل: الحقوق + الرابط
       var fy = PH - 46, fc = c.foot, fr = fnt(8, false, false, true);
+      var bigC = st === "wave" ? "FFFFFF" : st === "geo" ? "E6C27A" : GOLD, fbig = fnt(Z.body + 11, true, false, AR.test(pfName)), wbig = width(fbig, pfName), xbig = st === "band" ? MX + (CW - 135 - wbig) / 2 : (PW - wbig) / 2;
+      text(pfName, xbig, fy - 22, fbig, bigC, AR.test(pfName));
       if (rightsOn) { var rt = "© " + YEAR + " " + pfName + " — جميع الحقوق محفوظة", xr = st === "band" ? MX + (CW - 135 - width(fr, rt)) / 2 : (PW - width(fr, rt)) / 2; text(rt, xr, fy, fr, fc, true); }
       if (URLTXT) { var fu = fnt(8, false, false, false), wu = width(fu, URLTXT), xu = st === "band" ? MX + (CW - 135 - wu) / 2 : (PW - wu) / 2; text(URLTXT, xu, fy + 12, fu, fc === "404040" ? T.acc : fc, false); link(xu, fy + 3, wu, 11); }
     }
@@ -2178,7 +2203,7 @@ var RMED_PDF = (function () {
       var yy = A.qr ? 150 : 230;
       if (A.logo && S.logo) { var lh = 70, lw = lh * A.logo.width / A.logo.height; img(A.logo, (PW - lw) / 2, yy, lw, lh); yy += lh + 18; }
       function ctr(t, size, bold, color, ar) { var f = fnt(size, bold, false, ar), w = width(f, t); text(t, (PW - w) / 2, yy + size, f, color, ar); yy += size * 1.6; return { x: (PW - w) / 2, w: w }; }
-      ctr(pfName, Z.body + 14, true, "FFFFFF", AR.test(pfName));
+      ctr(pfName, Z.body + 20, true, "FFFFFF", AR.test(pfName));
       var btx = String(S.backText || "").trim(); if (btx) ctr(btx, Z.body + 3, false, "E6C27A", AR.test(btx));
       rect(PW / 2 - 50, yy + 4, 100, 2, "D9A84E"); yy += 26;
       if (A.qr) { var q = 112; rect(PW / 2 - q / 2 - 6, yy - 6, q + 12, q + 12, "FFFFFF"); img(A.qr, PW / 2 - q / 2, yy, q, q); link(PW / 2 - q / 2, yy, q, q); yy += q + 16; ctr("امسح الرمز لزيارة المنصة", Z.body - 1, false, "D5DCE8", true); }
@@ -2278,6 +2303,8 @@ var ENGINE = (function () {
     return { name: "مخصص", h1: main, h2bg: mix(acc, "FFFFFF", 0.85), h2line: acc, h2t: dark, h3: mix(acc, "000000", 0.25), h4: mix(main, acc, 0.5), bold: dark, thead: main,
       fc: mix(acc, "FFFFFF", 0.85), alt: mix(acc, "FFFFFF", 0.95), border: mix(acc, "FFFFFF", 0.55), acc: acc, light: mix(acc, "FFFFFF", 0.85), outro: mix(acc, "FFFFFF", 0.9) };
   }
+  var PAGE_BGS = [["none", "أبيض", "FFFFFF"], ["cream", "كريمي", "FBF7EE"], ["sand", "رملي", "F5EFE3"], ["mist", "رمادي هادئ", "F3F4F6"], ["sky", "سماوي", "EFF5FB"], ["mint", "نعناعي", "EFF7F2"], ["tint", "من لون القالب", null]];
+  function pageBgColor(S) { var k = S.pageBg || "none"; if (k === "none") return null; if (k === "tint") { var T = resolveTheme(S); return mix("FFFFFF", T.light, 0.45); } for (var i = 0; i < PAGE_BGS.length; i++) if (PAGE_BGS[i][0] === k) return PAGE_BGS[i][2]; return null; }
   function resolveTheme(S) { return S.theme === "custom" ? customTheme(S.cMain, S.cAcc) : (THEMES[S.theme] || THEMES.brand); }
   var SIZE_DEFAULTS = { body: 12, table: 11, h1: 18, h2: 15, h3: 13.5, h4: 13 };
 
@@ -2750,9 +2777,10 @@ var ENGINE = (function () {
     var PF = Object.assign({ name: "Random.MEd", url: "" }, S.platform || {});
     var rightsOn = S.rights !== false;
     var YEAR = String(new Date().getFullYear());
-    function rightsRuns(size, color) {
+    var GOLD = "A9761E";
+    function rightsRuns(size, color, nameColor) {
       return [mkRun("© ", false, {}, { size: size, color: color }), mkRun(YEAR + " ", false, {}, { size: size, color: color })]
-        .concat(runs([{ text: PF.name }], { size: size, color: color, bold: true })).concat(runs([{ text: " — جميع الحقوق محفوظة" }], { size: size, color: color }));
+        .concat(runs([{ text: PF.name }], { size: size, color: nameColor || color, bold: true })).concat(runs([{ text: " — جميع الحقوق محفوظة" }], { size: size, color: color }));
     }
     function linkRun(size, color) {
       var u = String(PF.url || "").trim(); if (!u) return null;
@@ -2853,7 +2881,10 @@ var ENGINE = (function () {
       var fc = CS.foot, fsz = Math.max(16, SZ.body - 3);
       var ffill = CSTYLE === "block" ? mix("FFFFFF", T.light, 0.55) : (PFILL && CSTYLE !== "wave" ? PFILL : null);
       coverFooterKids = [];
-      if (rightsOn) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, shading: ffill ? shade(ffill) : undefined, spacing: { after: 0 }, children: rightsRuns(fsz, fc) }));
+      var bigC = CSTYLE === "wave" ? "FFFFFF" : CSTYLE === "geo" ? "E6C27A" : GOLD;
+      coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, shading: CSTYLE === "wave" ? shade(T.h1) : ffill ? shade(ffill) : undefined, spacing: { after: 60 },
+        children: runs([{ text: PF.name }], { size: SZ.body + 22, bold: true, color: bigC, boldColor: bigC }) }));
+      if (rightsOn) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, shading: ffill ? shade(ffill) : undefined, spacing: { after: 0 }, children: rightsRuns(fsz, fc, CSTYLE === "geo" || CSTYLE === "wave" ? "E6C27A" : GOLD) }));
       var lk = linkRun(fsz, fc === "404040" ? T.acc : fc);
       if (lk) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, shading: ffill ? shade(ffill) : undefined, spacing: { before: 40, after: 0 }, children: [lk] }));
     }
@@ -2910,12 +2941,12 @@ var ENGINE = (function () {
     var header = new D.Header({ children: [new D.Paragraph({ bidirectional: true, spacing: { after: 0 },
       border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: T.border, space: 4 } }, children: hdrKids })] });
     var fs = Math.max(16, SZ.body - 4);
-    var footKids = [mkRun("صفحة ", true, {}, { size: fs, color: "7F7F7F" }),
-      new D.TextRun({ children: [D.PageNumber.CURRENT], size: fs, color: "7F7F7F", font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })];
+    var footKids = [mkRun("صفحة ", true, {}, { size: fs, color: T.h1, bold: true }),
+      new D.TextRun({ children: [D.PageNumber.CURRENT], size: fs + 2, bold: true, boldComplexScript: true, color: T.acc, font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })];
     if (S.footBrand && !rightsOn) { footKids.push(mkRun("   ·   ", true, {}, { size: fs, color: "BFBFBF" })); footKids.push(new D.TextRun({ text: PF.name, size: fs, bold: true, color: "A9761E", font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })); }
     var footParas = [new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { after: 0 }, children: footKids })];
     if (rightsOn || PF.url) {
-      var rk = rightsOn ? rightsRuns(fs - 2, "8C8C8C") : [];
+      var rk = rightsOn ? rightsRuns(fs - 2, "7F7F7F", GOLD) : [];
       var lk2 = linkRun(fs - 2, T.acc);
       if (lk2) { if (rk.length) rk.push(mkRun("   ·   ", true, {}, { size: fs - 2, color: "BFBFBF" })); rk.push(lk2); }
       footParas.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { before: 20, after: 0 }, children: rk }));
@@ -2923,6 +2954,8 @@ var ENGINE = (function () {
     var footer = new D.Footer({ children: footParas });
 
     var page = { size: { width: PAGE_W, height: 16838 }, margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN, header: 709, footer: 709 } };
+    var PBG = pageBgColor(S);
+    if (S.pageFrame) { var fb = { style: D.BorderStyle.DOUBLE, size: 6, color: T.h2line, space: 22 }; page.borders = { pageBorders: { display: "allPages", offsetFrom: "page" }, pageBorderTop: fb, pageBorderBottom: fb, pageBorderLeft: fb, pageBorderRight: fb }; }
     /* الغلاف الخلفي: الشعار + المنصة + الرابط + رمز QR + الحسابات — كله مولّد (داخل علامات GEN) */
     var back = [], backFooterKids = [];
     if (S.backCover) {
@@ -2934,7 +2967,7 @@ var ENGINE = (function () {
       back.push(new D.Paragraph({ spacing: { before: brand.qr ? 1500 : 2600, after: 0 }, children: [] }));
       var blr = brand.logo ? logoRun(130) : null;
       if (blr) back.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { after: 260, line: 240, lineRule: AUTO }, children: [blr] }));
-      back.push(P([{ text: PF.name }], { align: CENTER, size: SZ.body + 26, bold: true, color: BW, boldColor: BW, after: 60, line: 320 }));
+      back.push(P([{ text: PF.name }], { align: CENTER, size: SZ.body + 40, bold: true, color: BW, boldColor: BW, after: 80, line: 300 }));
       var btx = String(S.backText || "").trim();
       if (btx) back.push(P(parseInline(btx), { align: CENTER, size: SZ.body + 4, color: BG2, boldColor: BG2, after: 60, line: 300, forceRtl: AR_RE.test(btx) }));
       back.push(new D.Paragraph({ bidirectional: true, spacing: { before: 60, after: 300 }, indent: ind(3400, 3400), border: { bottom: { style: D.BorderStyle.THICK, size: 18, color: "D9A84E", space: 1 } }, children: [] }));
@@ -2959,15 +2992,16 @@ var ENGINE = (function () {
         headers: { default: new D.Header({ children: [new D.Paragraph({ spacing: { after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: chKids })] }) },
         footers: { default: coverFooterKids && coverFooterKids.length ? new D.Footer({ children: coverFooterKids }) : emptyHF(D.Footer) }, children: cover });
     }
+    var plain2 = Object.assign({}, page); delete plain2.borders;
     if (tocKids.length) sections.push({ properties: { page: page }, headers: { default: emptyHF(D.Header) }, footers: { default: emptyHF(D.Footer) }, children: tocKids });
     sections.push({ properties: { page: Object.assign({}, page, { pageNumbers: { start: 1, formatType: D.NumberFormat.DECIMAL } }) }, headers: { default: header }, footers: { default: footer }, children: body });
-    if (back.length) sections.push({ properties: { page: page }, headers: { default: emptyHF(D.Header) }, footers: { default: backFooterKids.length ? new D.Footer({ children: backFooterKids }) : emptyHF(D.Footer) }, children: back });
+    if (back.length) sections.push({ properties: { page: plain2 }, headers: { default: emptyHF(D.Header) }, footers: { default: backFooterKids.length ? new D.Footer({ children: backFooterKids }) : emptyHF(D.Footer) }, children: back });
     function hStyle(id, name, size, color) {
       return { id: id, name: name, basedOn: "Normal", next: "Normal", quickFormat: true,
         run: { size: size, bold: true, color: color, font: { ascii: FE, hAnsi: FE, cs: FA } }, paragraph: { keepNext: true, keepLines: true, bidirectional: true } };
     }
     return new D.Document({
-      creator: "Random.MEd", title: subject, description: S.subtitle || "",
+      creator: "Random.MEd", title: subject, description: S.subtitle || "", background: PBG ? { color: PBG } : undefined,
       styles: {
         default: { document: { run: { font: { ascii: FE, hAnsi: FE, cs: FA, eastAsia: FA }, size: SZ.body, language: { value: "ar-SA", bidirectional: "ar-SA" } }, paragraph: { spacing: { line: LINE, lineRule: AUTO }, bidirectional: true } } },
         paragraphStyles: [hStyle("Heading1", "Heading 1", SZ.h1, "FFFFFF"), hStyle("Heading2", "Heading 2", SZ.h2, T.h2t), hStyle("Heading3", "Heading 3", SZ.h3, T.h3), hStyle("Heading4", "Heading 4", SZ.h4, T.h4)]
@@ -3073,7 +3107,7 @@ var ENGINE = (function () {
         (showSub ? '<div class="cs" style="color:' + (st === "block" ? "#F2CF86" : sc) + '">' + sub + "</div>" : "") + drHTML(S, st === "block" || dark ? "#fff" : "#" + T.h2t, st === "block" ? "#fff" : lc);
       var lines = cl2.map(function (l, k) { return '<div class="cl' + (k ? "" : " first") + '" style="color:' + (k ? lc : (dark ? "#fff" : "#" + T.h2t)) + '">' + inlHTML([{ text: l }]) + "</div>"; }).join("");
       var pf = Object.assign({ name: "Random.MEd", url: "" }, S.platform || {});
-      var rights = (S.rights !== false ? "© " + new Date().getFullYear() + " " + esc(pf.name) + " — جميع الحقوق محفوظة" : "") + (pf.url ? (S.rights !== false ? "<br>" : "") + '<a href="#" onclick="return false" dir="ltr">' + esc(String(pf.url).replace(/^https?:\/\//, "")) + "</a>" : "");
+      var rights = '<div class="pfbig" style="color:' + (st === "wave" ? "#fff" : st === "geo" ? "#E6C27A" : "#A9761E") + '">' + esc(pf.name) + "</div>" + (S.rights !== false ? "© " + new Date().getFullYear() + ' <b style="color:' + (st === "geo" || st === "wave" ? "#E6C27A" : "#A9761E") + '">' + esc(pf.name) + "</b> — جميع الحقوق محفوظة" : "") + (pf.url ? (S.rights !== false ? "<br>" : "") + '<a href="#" onclick="return false" dir="ltr">' + esc(String(pf.url).replace(/^https?:\/\//, "")) + "</a>" : "");
       h += '<div class="pv-cover styled" style="background-image:url(' + bgUrl + ')">' +
         (st === "block" ? '<div style="background:#' + T.h1 + ';border-bottom:5px solid #D9A84E;padding:12% 8% 9%">' + head + '</div><div class="cin" style="padding:8% 10% 0">' + lines + "</div>"
           : '<div class="cin" style="padding:' + pad + '">' + head + '<div style="margin-top:4%">' + lines + "</div></div>") +
@@ -3100,7 +3134,7 @@ var ENGINE = (function () {
     return h;
   }
 
-  return { lecNum: lecNum, numLabel: numLabel, fileName: fileName, NAME_TPL: NAME_TPL, THEMES: THEMES, SIZE_DEFAULTS: SIZE_DEFAULTS, resolveTheme: resolveTheme, customTheme: customTheme, parseLectures: parseLectures, build: build, finalize: finalize,
+  return { PAGE_BGS: PAGE_BGS, pageBgColor: pageBgColor, lecNum: lecNum, numLabel: numLabel, fileName: fileName, NAME_TPL: NAME_TPL, THEMES: THEMES, SIZE_DEFAULTS: SIZE_DEFAULTS, resolveTheme: resolveTheme, customTheme: customTheme, parseLectures: parseLectures, build: build, finalize: finalize,
     previewHTML: previewHTML, detectSubject: detectSubject, inputTokens: inputTokens, xmlTokens: xmlTokens, compare: compare, lectureLabel: lectureLabel,
     plain: plain, splitDir: splitDir, b64ToBytes: b64ToBytes, parseInline: parseInline, tokens: tokens, AR_RE: AR_RE, IMP: IMP, CALLOUTS: CALLOUTS, CO_RE: CO_RE, calloutOf: calloutOf, coByTag: coByTag };
 })();
@@ -3825,7 +3859,20 @@ var ENGINE = (function () {
         removeKids(sp, ["headerReference", "footerReference", "titlePg"]);
         if (ftrId) { var f = mk(doc, "footerReference", { type: "default" }); f.setAttributeNS(RNS, "r:id", ftrId); sp.insertBefore(f, sp.firstChild); }
         if (hdrId) { var h = mk(doc, "headerReference", { type: "default" }); h.setAttributeNS(RNS, "r:id", hdrId); sp.insertBefore(h, sp.firstChild); }
+        // إطار الصفحات (اختياري)
+        removeKids(sp, ["pgBorders"]);
+        if (S2.pageFrame) {
+          var Tf = ENGINE.resolveTheme(S2), pb = mk(doc, "pgBorders", { offsetFrom: "page" });
+          ["top", "left", "bottom", "right"].forEach(function (sd) { pb.appendChild(mk(doc, sd, { val: "double", sz: "6", space: "22", color: Tf.h2line })); });
+          var after = kid(sp, "paperSrc") || kid(sp, "pgMar") || kid(sp, "pgSz") || kid(sp, "type");
+          if (!after) { for (var cc = sp.firstChild; cc; cc = cc.nextSibling) if (isW(cc) && /^(headerReference|footerReference|footnotePr|endnotePr)$/.test(cc.localName)) after = cc; }
+          sp.insertBefore(pb, after ? after.nextSibling : sp.firstChild);
+        }
       });
+      // لون خلفية الصفحات (لون صفحة Word — يتكيّف مع الوضع الداكن)
+      var root = doc.documentElement, pbg = ENGINE.pageBgColor(S2);
+      kids(root, "background").forEach(function (b) { root.removeChild(b); });
+      if (pbg) root.insertBefore(mk(doc, "background", { color: pbg }), root.firstChild);
       // الغلاف الخلفي في نهاية المستند: فاصل قسم يحمل خصائص القسم الأصلي الأخير، ثم صفحة الغلاف الخلفي بقسمها
       if (back.length) {
         var remap = function (nn) {
@@ -3854,7 +3901,11 @@ var ENGINE = (function () {
       zip.file("[Content_Types].xml", toXml(ctDoc));
       // إلغاء ترويسات الصفحات الزوجية حتى تظهر ترويستنا في كل الصفحات
       var setF = zip.file("word/settings.xml");
-      if (setF) jobs.push(setF.async("string").then(function (sx) { zip.file("word/settings.xml", sx.replace(/<w:evenAndOddHeaders[^>]*\/>/g, "")); }));
+      if (setF) jobs.push(setF.async("string").then(function (sx) {
+        sx = sx.replace(/<w:evenAndOddHeaders[^>]*\/>/g, "");
+        if (pbg && !/<w:displayBackgroundShape/.test(sx)) sx = /<w:zoom\b[^>]*\/>/.test(sx) ? sx.replace(/(<w:zoom\b[^>]*\/>)/, "$1<w:displayBackgroundShape/>") : sx.replace(/(<w:settings\b[^>]*>)/, "$1<w:displayBackgroundShape/>");
+        zip.file("word/settings.xml", sx);
+      }));
       return Promise.all(jobs);
     });
   }
@@ -4034,7 +4085,7 @@ var ENGINE = (function () {
   var LS_KEY = "randommed.lec2docx.settings.v2";
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
-    keepParas: true, origLine: true, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
+    keepParas: true, origLine: true, pageBg: "none", pageFrame: false, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
   try { var saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); if (saved && typeof saved === "object") { Object.assign(S, saved); S.sizes = Object.assign({}, ENGINE.SIZE_DEFAULTS, saved.sizes || {}); } } catch (e) {}
   if (!ENGINE.THEMES[S.theme] && S.theme !== "custom") S.theme = "brand";
@@ -4305,7 +4356,7 @@ var ENGINE = (function () {
   $("pfName").oninput = function () { S.platform.name = this.value; save(); paintCoverThumbs(); schedulePreview(); };
   $("pfUrl").oninput = function () { S.platform.url = this.value.trim(); save(); paintQrHint(); schedulePreview(); };
   function paintQrHint() { $("qrHint").textContent = qrHref(S) ? "رمز QR رح ينولّد تلقائياً لـ " + qrHref(S).replace(/^https?:\/\//, "") : "اكتب «رابط المنصة» بقسم الغلاف والحقوق ليظهر رمز QR."; }
-  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"], ["optBack", "backCover"], ["optMerge", "merge"], ["optKeep", "keepParas"], ["optOrigLine", "origLine"]].forEach(function (p) {
+  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"], ["optBack", "backCover"], ["optMerge", "merge"], ["optKeep", "keepParas"], ["optOrigLine", "origLine"], ["optFrame", "pageFrame"]].forEach(function (p) {
     $(p[0]).onchange = function () { S[p[1]] = this.checked; save(); paintSettings(); schedulePreview(); };
   });
   $("wmOp").oninput = function () { S.wmOpacity = +this.value; $("wmOpV").textContent = this.value + "%"; save(); schedulePreview(); };
@@ -4321,7 +4372,7 @@ var ENGINE = (function () {
     $("optSub").checked = S.showSubtitle !== false; $("optRights").checked = S.rights !== false;
     $("pfName").value = S.platform.name || ""; $("pfUrl").value = S.platform.url || "";
     $("doctor").value = S.doctor || ""; $("coverExtra").value = S.coverExtra || ""; $("backText").value = S.backText || ""; $("social").value = S.social || "";
-    $("optBack").checked = !!S.backCover; $("optKeep").checked = !!S.keepParas; $("optOrigLine").checked = S.origLine !== false; $("optMerge").checked = !!S.merge; $("nameTpl").value = S.nameTpl || "";
+    $("optBack").checked = !!S.backCover; $("optKeep").checked = !!S.keepParas; $("optFrame").checked = !!S.pageFrame; paintBgs(); $("optOrigLine").checked = S.origLine !== false; $("optMerge").checked = !!S.merge; $("nameTpl").value = S.nameTpl || "";
     Array.prototype.forEach.call($("pvSeg").children, function (b) { b.classList.toggle("sel", (b.dataset.v === "real") === !!S.pvReal); });
     paintQrHint(); paintName(); paintPresets();
     Array.prototype.forEach.call($("covers").children, function (b) { var on = b.dataset.k === (S.coverStyle || "classic"); b.classList.toggle("sel", on && S.cover); b.setAttribute("aria-checked", on && S.cover ? "true" : "false"); });
@@ -4458,9 +4509,10 @@ var ENGINE = (function () {
       ws.coverLines = lines; ws.tocLabels = { title: "فهرس المحتويات", c1: "القسم", c2: "العناوين الفرعية" };
       s = Object.assign(s, ws); L = wf.model;
     }
+    pv.style.background = ENGINE.pageBgColor(s) ? "#" + ENGINE.pageBgColor(s) : ""; pv.style.outline = s.pageFrame ? "3px double #" + T.h2line : ""; pv.style.outlineOffset = s.pageFrame ? "-12px" : "";
     var wm = s.wm ? '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>' : "";
     var pfx = Object.assign({ name: "Random.MEd", url: "" }, s.platform || {});
-    var foot = '<div class="pv-foot">صفحة 1' + (s.footBrand && s.rights === false ? ' · <b>' + esc2(pfx.name) + '</b>' : "") +
+    var foot = '<div class="pv-foot"><b style="color:#' + T.h1 + '">صفحة <span style="color:#' + T.acc + '">1</span></b>' + (s.footBrand && s.rights === false ? ' · <b>' + esc2(pfx.name) + '</b>' : "") +
       (s.rights !== false || pfx.url ? "<br>" + (s.rights !== false ? "© " + new Date().getFullYear() + " <b>" + esc2(pfx.name) + "</b> — جميع الحقوق محفوظة" : "") + (pfx.url ? (s.rights !== false ? " · " : "") + '<span dir="ltr" style="color:var(--c-acc)">' + esc2(pfx.url.replace(/^https?:\/\//, "")) + "</span>" : "") : "") + "</div>";
     pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? LOGO_SRC : "", s.cover ? coverBgUrl(s) : "") + foot + backHTML(s) : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
   }
@@ -4487,6 +4539,20 @@ var ENGINE = (function () {
     a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
   }
+  /* ---- خلفيات الصفحات ---- */
+  function paintBgs() {
+    var el = $("bgs"); if (!el) return;
+    if (!el.children.length) ENGINE.PAGE_BGS.forEach(function (b) {
+      var bt = document.createElement("button"); bt.type = "button"; bt.dataset.k = b[0]; bt.setAttribute("role", "radio");
+      bt.innerHTML = "<i></i>" + b[1]; bt.onclick = function () { S.pageBg = b[0]; save(); paintBgs(); schedulePreview(); }; el.appendChild(bt);
+    });
+    Array.prototype.forEach.call(el.children, function (bt) {
+      var c = ENGINE.pageBgColor({ pageBg: bt.dataset.k, theme: S.theme, cMain: S.cMain, cAcc: S.cAcc });
+      bt.firstChild.style.background = "#" + (c || "FFFFFF"); var on = (S.pageBg || "none") === bt.dataset.k;
+      bt.classList.toggle("sel", on); bt.setAttribute("aria-checked", on ? "true" : "false");
+    });
+  }
+
   /* ---- التسمية التلقائية ---- */
   function nameVals(s, extra) { return Object.assign({ subject: s.subject, platform: platformName(s), doctor: String(s.doctor || "").trim(), num: "", title: "" }, extra || {}); }
   function textDocName(L, s) {
