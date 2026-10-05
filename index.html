@@ -187,7 +187,7 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .page .pv-cover{text-align:center;border-bottom:2px solid #eee;padding:14px 0 18px;margin-bottom:18px}
 .page .pv-cover img{height:70px;display:block;margin:0 auto 10px}
 .page .pv-cover .ct{font-size:1.8em;font-weight:700;color:var(--c-h1);line-height:1.4}
-.page .pv-cover .cs{color:#595959}
+.page .pv-cover .cs{color:#262626}
 .page .pv-cover .bar{height:4px;width:40%;margin:10px auto;background:var(--c-h2line)}
 .page .pgbreak{border-top:2px dashed #ccc;margin:22px -28px 18px;position:relative}
 .page .pgbreak::after{content:"صفحة جديدة";position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:#fff;color:#999;font-size:11px;padding:0 8px;font-family:var(--font-body)}
@@ -2275,14 +2275,14 @@ var ENGINE = (function () {
     var cover = [], tocKids = [], coverFooterKids = null, coverMargins = null;
     var CSTYLE = S.coverStyle || "classic";
     var CS = {
-      classic: { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 1500, logo: true, bar: T.h2line, foot: "7F7F7F", s: 0, e: 0 },
-      band:    { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 2600, logo: false, bar: T.h2line, foot: "7F7F7F", s: 2700, e: 0 },
-      geo:     { title: "FFFFFF", sub: "E6C27A", line: "E6E8EE", first: "FFFFFF", top: 1500, logo: true, bar: "D9A84E", foot: "C7D2E0", s: 300, e: 300 },
-      frame:   { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 1700, logo: true, bar: "A9761E", foot: "7F7F7F", s: 700, e: 700 },
-      wave:    { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 1300, logo: true, bar: T.h2line, foot: "FFFFFF", s: 200, e: 200 },
-      block:   { title: "FFFFFF", sub: "E6C27A", line: "404040", first: T.h2t, top: 0, logo: true, bar: "D9A84E", foot: "7F7F7F", s: 0, e: 0 }
+      classic: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1500, logo: true, bar: T.h2line, foot: "404040", s: 0, e: 0 },
+      band:    { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 2600, logo: false, bar: T.h2line, foot: "404040", s: 2700, e: 0 },
+      geo:     { title: "FFFFFF", sub: "F2CF86", line: "FFFFFF", first: "FFFFFF", top: 1500, logo: true, bar: "D9A84E", foot: "E6EAF0", s: 300, e: 300 },
+      frame:   { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1700, logo: true, bar: "A9761E", foot: "404040", s: 700, e: 700 },
+      wave:    { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1300, logo: true, bar: T.h2line, foot: "FFFFFF", s: 200, e: 200 },
+      block:   { title: "FFFFFF", sub: "F2CF86", line: "1A1A1A", first: T.h2t, top: 0, logo: true, bar: "D9A84E", foot: "404040", s: 0, e: 0 }
     }[CSTYLE] || null;
-    if (!CS) { CSTYLE = "classic"; CS = { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 1500, logo: true, bar: T.h2line, foot: "7F7F7F", s: 0, e: 0 }; }
+    if (!CS) { CSTYLE = "classic"; CS = { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1500, logo: true, bar: T.h2line, foot: "404040", s: 0, e: 0 }; }
     if (S.cover) {
       var cl = (S.coverLines || []).filter(function (x) { return String(x).trim(); });
       var showSub = S.showSubtitle !== false && (!cl.length || S.subtitle);
@@ -2298,7 +2298,7 @@ var ENGINE = (function () {
         o.push(P(S.coverTitle ? [] : [{ text: subject }], { pre: [GS()], align: CENTER, side: indent, size: SZ.body + 28, bold: true, color: c.title, boldColor: c.title, after: S.coverTitle ? 0 : 120, line: S.coverTitle ? 120 : 320, forceRtl: true }));
         o.push(new D.Paragraph({ bidirectional: true, spacing: { before: 60, after: 220 }, indent: ind((indent && indent.r || 0) + 2200, (indent && indent.l || 0) + 2200), border: { bottom: { style: D.BorderStyle.THICK, size: 24, color: c.bar, space: 1 } }, children: [] }));
         if (showSub) o.push(P([{ text: subTxt }], { align: CENTER, side: indent, size: SZ.body + 6, color: c.sub, after: 200, forceRtl: true }));
-        var drC = (CSTYLE === "block" || CSTYLE === "geo") ? "FFFFFF" : c.first, exC = CSTYLE === "block" ? "E6E8EE" : c.line;
+        var drC = (CSTYLE === "block" || CSTYLE === "geo") ? "FFFFFF" : c.first, exC = CSTYLE === "block" ? "FFFFFF" : c.line;
         var dr = String(S.doctor || "").trim();
         if (dr) o.push(P(parseInline(dr), { align: CENTER, side: indent, size: SZ.body + 5, bold: true, color: drC, boldColor: drC, before: 100, after: 80, line: 300, forceRtl: AR_RE.test(dr) }));
         String(S.coverExtra || "").split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 8).forEach(function (x) {
@@ -2311,7 +2311,7 @@ var ENGINE = (function () {
         var o = [];
         cl.forEach(function (line, k) { o.push(P(parseInline(String(line)), { align: CENTER, side: indent, size: SZ.body + (k === 0 ? 4 : 2), bold: k === 0, color: k === 0 ? c.first : c.line, boldColor: c.first, after: 80, line: 300 })); });
         o.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: indent ? ind(indent.r || 0, indent.l || 0) : undefined, spacing: { before: cl.length ? 360 : 200, after: 0 }, children: [GS(),
-          mkRun(cntLabel, true, {}, { size: SZ.body, color: c.line === "E6E8EE" ? "C7D2E0" : "7F7F7F" }), mkRun(cnt, false, {}, { size: SZ.body, color: c.line === "E6E8EE" ? "C7D2E0" : "7F7F7F" }), GE()] }));
+          mkRun(cntLabel, true, {}, { size: SZ.body, color: c.line === "FFFFFF" ? "E6EAF0" : "404040" }), mkRun(cnt, false, {}, { size: SZ.body, color: c.line === "FFFFFF" ? "E6EAF0" : "404040" }), GE()] }));
         return o;
       }
       var bgRun = brand.coverBg ? new D.ImageRun({ type: "png", data: brand.coverBg.data, transformation: { width: 794, height: 1123 },
@@ -2335,7 +2335,7 @@ var ENGINE = (function () {
       var fc = CS.foot, fsz = Math.max(16, SZ.body - 3);
       coverFooterKids = [];
       if (rightsOn) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, spacing: { after: 40 }, children: rightsRuns(fsz, fc) }));
-      var lk = linkRun(fsz, fc === "7F7F7F" ? T.acc : fc);
+      var lk = linkRun(fsz, fc === "404040" ? T.acc : fc);
       if (lk) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, spacing: { after: 0 }, children: [lk] }));
     }
     if (S.toc) {
@@ -2546,19 +2546,19 @@ var ENGINE = (function () {
     var h = "";
     if (S.cover && bgUrl) {
       var cl2 = (S.coverLines || []).filter(function (x) { return String(x).trim(); }), st = S.coverStyle || "classic", T = resolveTheme(S);
-      var dark = st === "geo", tc = dark ? "#fff" : "#" + T.h1, sc = dark ? "#E6C27A" : "#595959", lc = dark ? "#E6E8EE" : "#404040";
+      var dark = st === "geo", tc = dark ? "#fff" : "#" + T.h1, sc = dark ? "#F2CF86" : "#262626", lc = dark ? "#fff" : "#1A1A1A";
       var pad = { classic: "16% 10% 0", band: "26% 37% 0 6%", geo: "15% 12% 0", frame: "18% 14% 0", wave: "13% 10% 0", block: "0" }[st] || "16% 10% 0";
       var showSub = S.showSubtitle !== false && (!cl2.length || S.subtitle), sub = esc(S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات");
       var head = (logoSrc && st !== "band" ? '<img src="' + logoSrc + '" alt="" style="height:' + (st === "block" ? 54 : 66) + 'px;display:block;margin:0 auto 10px">' : "") +
         '<div class="ct" style="color:' + (st === "block" ? "#fff" : tc) + '">' + inlHTML([{ text: S.coverTitle || S.subject || "المحاضرات" }]) + '</div><div class="bar" style="background:' + (st === "block" || dark ? "#D9A84E" : "#" + T.h2line) + '"></div>' +
-        (showSub ? '<div class="cs" style="color:' + (st === "block" ? "#E6C27A" : sc) + '">' + sub + "</div>" : "") + drHTML(S, st === "block" || dark ? "#fff" : "#" + T.h2t, st === "block" ? "#E6E8EE" : lc);
+        (showSub ? '<div class="cs" style="color:' + (st === "block" ? "#F2CF86" : sc) + '">' + sub + "</div>" : "") + drHTML(S, st === "block" || dark ? "#fff" : "#" + T.h2t, st === "block" ? "#fff" : lc);
       var lines = cl2.map(function (l, k) { return '<div class="cl' + (k ? "" : " first") + '" style="color:' + (k ? lc : (dark ? "#fff" : "#" + T.h2t)) + '">' + inlHTML([{ text: l }]) + "</div>"; }).join("");
       var pf = Object.assign({ name: "Random.MEd", url: "" }, S.platform || {});
       var rights = (S.rights !== false ? "© " + new Date().getFullYear() + " " + esc(pf.name) + " — جميع الحقوق محفوظة" : "") + (pf.url ? (S.rights !== false ? "<br>" : "") + '<a href="#" onclick="return false" dir="ltr">' + esc(String(pf.url).replace(/^https?:\/\//, "")) + "</a>" : "");
       h += '<div class="pv-cover styled" style="background-image:url(' + bgUrl + ')">' +
         (st === "block" ? '<div style="background:#' + T.h1 + ';border-bottom:5px solid #D9A84E;padding:12% 8% 9%">' + head + '</div><div class="cin" style="padding:8% 10% 0">' + lines + "</div>"
           : '<div class="cin" style="padding:' + pad + '">' + head + '<div style="margin-top:4%">' + lines + "</div></div>") +
-        (rights ? '<div class="rights" style="color:' + (dark ? "#C7D2E0" : st === "wave" ? "#fff" : "#7f7f7f") + (st === "band" ? ";padding-left:0;padding-right:34%" : "") + '">' + rights + "</div>" : "") + "</div>";
+        (rights ? '<div class="rights" style="color:' + (dark ? "#E6EAF0" : st === "wave" ? "#fff" : "#404040") + (st === "band" ? ";padding-left:0;padding-right:34%" : "") + '">' + rights + "</div>" : "") + "</div>";
     } else if (S.cover) {
       var cl = (S.coverLines || []).filter(function (x) { return String(x).trim(); });
       h += '<div class="pv-cover">' + (logoSrc ? '<img src="' + logoSrc + '" alt="">' : "") + '<div class="ct">' + inlHTML([{ text: S.coverTitle || S.subject || "المحاضرات" }]) + '</div><div class="bar"></div>' +
