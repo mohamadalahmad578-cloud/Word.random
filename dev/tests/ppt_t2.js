@@ -1,0 +1,27 @@
+const __P=require('path'),__FX=__P.join(__dirname,'fixtures')+'/',__OUT=__P.join(__dirname,'out')+'/';require('fs').mkdirSync(__OUT,{recursive:true});
+const { chromium } = require(process.env.PW||'/opt/node-tools/node_modules/playwright');const fs=require('fs'),path=require('path');
+const OUT=__OUT; fs.mkdirSync(OUT,{recursive:true});
+(async()=>{const b=await chromium.launch({executablePath:(process.env.CHROME||'/opt/pw-browsers/chromium-1194/chrome-linux/chrome')});
+ const ctx=await b.newContext({viewport:{width:1366,height:900},acceptDownloads:true}); const pg=await ctx.newPage(); const errs=[];
+ pg.on('pageerror',e=>errs.push(e.message)); pg.on('console',m=>{if(m.type()==='error'&&!/ERR_FAILED/.test(m.text()))errs.push(m.text())});
+ await pg.route('**/*',r=>{const u=r.request().url();
+  if(u.includes('docx@'))return r.fulfill({body:fs.readFileSync(__P.join(__dirname,'../vendor/docx.iife.js')),contentType:'application/javascript'});
+  if(u.includes('jszip'))return r.fulfill({body:fs.readFileSync(__P.join(__dirname,'../vendor/jszip.min.js')),contentType:'application/javascript'});
+  if(u.includes('localhost:8765'))return r.fulfill({body:fs.readFileSync(path.join(__dirname,'../src/index.html')),contentType:'text/html; charset=utf-8'});
+  return r.abort();});
+ await pg.goto('http://localhost:8765/index.html'); await pg.evaluate(()=>localStorage.clear()); await pg.reload(); await pg.waitForFunction(()=>window.docx&&window.JSZip);
+ await pg.click('#modePpt'); await pg.evaluate(()=>{document.querySelectorAll('details').forEach(d=>d.open=true)});
+ await pg.fill('#pptDoctor','د. ريم الأحمد'); await pg.fill('#pptCourse','الكيمياء الحيوية الطبية'); await pg.fill('#pptUni','الجامعة السورية الخاصة — كلية الطب البشري'); await pg.fill('#pptYear','العام الدراسي 2026–2027');
+ for (const k of ['pptJoinFrag','pptSlideNums','pptGlossary','pptNotesPage']) await pg.evaluate(k=>document.getElementById(k).click(),k);
+ await pg.selectOption('#pptCovStyle', process.env.ST||'dna');
+ await pg.setInputFiles('#pptIn',[__FX+'biochem.pptx']);
+ await pg.waitForFunction(()=>document.querySelectorAll('#pptList .wfile .chips').length===1,{timeout:60000}); await pg.waitForTimeout(500);
+ console.log('report:', (await pg.textContent('#pptList')).replace(/\s+/g,' ').slice(0,600));
+ const dl=async(sel,name)=>{const [d]=await Promise.all([pg.waitForEvent('download',{timeout:120000}),pg.click(sel)]); await d.saveAs(OUT+name); await pg.waitForFunction(()=>!document.querySelector('#dlBtn').disabled&&!document.querySelector('#pdfBtn').disabled); return d.suggestedFilename();};
+ console.log('docx:', await dl('#dlBtn','bio.docx'), '|', await pg.textContent('#msg'));
+ console.log('pdf:', await dl('#pdfBtn','bio.pdf'), '|', await pg.textContent('#msg'));
+ // profile save & reload
+ await pg.click('#profSave'); console.log('profile:', await pg.textContent('#msg'));
+ await pg.fill('#pptDoctor','x'); await pg.selectOption('#profSel','د. ريم الأحمد'); await pg.waitForTimeout(300); console.log('after apply doctor=', await pg.inputValue('#pptDoctor'));
+ await pg.evaluate(()=>document.querySelector('#pvCard').scrollIntoView()); await pg.waitForTimeout(500); await (await pg.$('#pvCard')).screenshot({path:OUT+'pv.png'});
+ console.log('errors',errs); await b.close();})().catch(e=>{console.error(e);process.exit(1)});
