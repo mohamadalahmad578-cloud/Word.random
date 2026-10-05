@@ -11,3 +11,4 @@ echo "== 5) PDF بكل الأوضاع";               node pdft2.js 2>&1 | grep 
 echo "== 6) خلفيات الصفحات";                node bgt.js 2>&1 | grep -E "^(cream|sky|tint|mint)|errors" | cut -c1-100
 echo "== 7) PowerPoint";                     node ppt_t.js 2>&1 | grep -E "check:|errors"; node ppt_t2.js 2>&1 | grep -E "report|docx:|pdf:|errors" | cut -c1-160
 echo "== 8) الأغلفة (ملفات في out/cov_*.docx)"; node covers.js 2>&1 | tail -1
+echo "== هوية الملف (منصة/دكتور) بكل الأوضاع"; node idt.js 2>&1 | tail -4

@@ -1,0 +1,50 @@
+const __P=require('path'),__FX=__P.join(__dirname,'fixtures')+'/',__OUT=__P.join(__dirname,'out')+'/';require('fs').mkdirSync(__OUT,{recursive:true});
+const { chromium } = require(process.env.PW||'/opt/node-tools/node_modules/playwright');const fs=require('fs'),path=require('path');const JSZip=require(__P.join(__dirname,'../vendor/jszip.min.js'));
+const OUT=__OUT; fs.mkdirSync(OUT,{recursive:true});
+(async()=>{const b=await chromium.launch({executablePath:(process.env.CHROME||'/opt/pw-browsers/chromium-1194/chrome-linux/chrome')});
+ const vp=process.env.VP==='m'?{width:390,height:844}:{width:1366,height:900};
+ const ctx=await b.newContext({viewport:vp,acceptDownloads:true}); const pg=await ctx.newPage(); const errs=[];
+ pg.on('pageerror',e=>errs.push(e.message)); pg.on('console',m=>{if(m.type()==='error'&&!/ERR_FAILED/.test(m.text()))errs.push(m.text())});
+ await pg.route('**/*',r=>{const u=r.request().url();
+  if(u.includes('docx@'))return r.fulfill({body:fs.readFileSync(__P.join(__dirname,'../vendor/docx.iife.js')),contentType:'application/javascript'});
+  if(u.includes('jszip'))return r.fulfill({body:fs.readFileSync(__P.join(__dirname,'../vendor/jszip.min.js')),contentType:'application/javascript'});
+  if(u.includes('localhost:8765'))return r.fulfill({body:fs.readFileSync(path.join(__dirname,'../src/index.html')),contentType:'text/html; charset=utf-8'});
+  return r.abort();});
+ await pg.goto('http://localhost:8765/index.html'); await pg.evaluate(()=>localStorage.clear()); await pg.reload(); await pg.waitForFunction(()=>window.docx&&window.JSZip);
+ await pg.evaluate(()=>{document.querySelectorAll('details').forEach(d=>d.open=true)});
+ const dl=async(sel,name)=>{const [d]=await Promise.all([pg.waitForEvent('download',{timeout:120000}),pg.click(sel)]); await d.saveAs(OUT+name); await pg.waitForFunction(()=>!document.querySelector('#dlBtn').disabled&&!document.querySelector('#pdfBtn').disabled); return (await pg.textContent('#msg'));};
+ const info=async(f)=>{const z=await JSZip.loadAsync(fs.readFileSync(OUT+f));let all='';for(const n of Object.keys(z.files).filter(n=>/word\/(document|footer\d*|header\d*)\.xml/.test(n)))all+=await z.file(n).async('string');const t=all.replace(/<[^>]+>/g,' ');return {randomMed:/Random\.MEd/.test(t),doctor:/د\. ريم الأحمد/.test(t),uni:/الجامعة السورية/.test(t),course:/الكيمياء الحيوية الطبية/.test(t)};};
+ // TEXT mode
+ console.log('lbl0', await pg.textContent('#idModeLbl'), 'boxHidden', await pg.isHidden('#idDoctorBox'));
+ await pg.fill('#src', fs.readFileSync(__FX+'sample.md','utf8')); await pg.waitForTimeout(600);
+ console.log('text platform:', await dl('#dlBtn','t_plat.docx'), await info('t_plat.docx'));
+ await pg.click('#idSeg button[data-v="doctor"]');
+ await pg.fill('#pptDoctor','د. ريم الأحمد'); await pg.fill('#pptUni','الجامعة السورية الخاصة'); await pg.fill('#pptCourse','الكيمياء الحيوية الطبية');
+ console.log('lbl1', await pg.textContent('#idModeLbl'), 'boxHidden', await pg.isHidden('#idDoctorBox'));
+ await pg.click('#checkBtn'); await pg.waitForFunction(()=>/تحقق|خطأ/.test(document.querySelector('#msg').textContent),null,{timeout:90000}).catch(async()=>console.log('MSG',await pg.textContent('#msg'),errs)); console.log('text check', await pg.textContent('#msg'));
+ console.log('text doctor:', await dl('#dlBtn','t_doc.docx'), await info('t_doc.docx'));
+ console.log('text doctor pdf:', await dl('#pdfBtn','t_doc.pdf'));
+ await pg.waitForTimeout(400); await (await pg.$('#pv')).screenshot({path:OUT+'pv_text.png'});
+ // WORD mode
+ await pg.click('#modeWord'); console.log('word lbl', await pg.textContent('#idModeLbl'));
+ await pg.setInputFiles('#docxIn',[__FX+'resp_pandoc.docx']);
+ await pg.waitForFunction(()=>/كلمة/.test(document.querySelector('#wordList').textContent),null,{timeout:90000}); await pg.waitForTimeout(500);
+ console.log('word platform:', await dl('#dlBtn','w_plat.docx'), await info('w_plat.docx'));
+ await pg.click('#idSeg button[data-v="doctor"]'); console.log('word lbl', await pg.textContent('#idModeLbl'));
+ await pg.click('#pptWmSeg button[data-v="doctor"]');
+ console.log('word doctor:', await dl('#dlBtn','w_doc.docx'), await info('w_doc.docx'));
+ console.log('word doctor pdf:', await dl('#pdfBtn','w_doc.pdf'));
+ await pg.waitForTimeout(400); await (await pg.$('#pv')).screenshot({path:OUT+'pv_word.png'});
+ // PPT mode -> platform
+ await pg.click('#modePpt'); console.log('ppt lbl', await pg.textContent('#idModeLbl'));
+ await pg.setInputFiles('#pptIn',[__FX+'biochem.pptx']);
+ await pg.waitForFunction(()=>document.querySelectorAll('#pptList .wfile .chips').length===1,null,{timeout:90000});
+ console.log('ppt doctor:', await dl('#dlBtn','p_doc.docx'), await info('p_doc.docx'));
+ await pg.click('#idSeg button[data-v="platform"]'); console.log('ppt lbl', await pg.textContent('#idModeLbl'));
+ console.log('ppt platform:', await dl('#dlBtn','p_plat.docx'), await info('p_plat.docx'));
+ console.log('ppt platform pdf:', await dl('#pdfBtn','p_plat.pdf'));
+ await pg.waitForTimeout(400); await (await pg.$('#pv')).screenshot({path:OUT+'pv_ppt.png'});
+ // back to text keeps doctor
+ await pg.click('#modeText'); console.log('text lbl again', await pg.textContent('#idModeLbl'));
+ const sw=await pg.evaluate(()=>[document.documentElement.scrollWidth,innerWidth]); console.log('scroll',sw,'errors',errs);
+ await b.close();})().catch(e=>{console.error(e);process.exit(1)});

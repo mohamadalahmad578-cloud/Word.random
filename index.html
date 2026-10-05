@@ -333,7 +333,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
     <div class="main-col">
     <div class="modes" role="tablist" aria-label="طريقة الإدخال">
       <button class="mode-btn" id="modeText" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span><b>نص المحاضرات</b><small>الصق التفريغ (Markdown)</small></span></button>
-      <button class="mode-btn" id="modeWord" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13l1.5 5 2.5-4 2.5 4 1.5-5"/></svg><span><b>ملف Word جاهز</b><small>نلبّسه هوية Random.MEd</small></span></button>
+      <button class="mode-btn" id="modeWord" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13l1.5 5 2.5-4 2.5 4 1.5-5"/></svg><span><b>ملف Word جاهز</b><small>نلبّسه هوية المنصة أو الدكتور</small></span></button>
       <button class="mode-btn" id="modePpt" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M9 8h3.5a2 2 0 0 1 0 4H9V8z"/></svg><span><b>عرض PowerPoint</b><small>نحوّله لملف Word منسّق</small></span></button>
     </div>
     <section class="card" id="wordCard" aria-label="ملفات Word" hidden>
@@ -366,21 +366,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
           <b>اختر عرض PowerPoint ‎(.pptx)‎ أو أفلته هنا</b>
           <small>عنوان كل شريحة يصير عنواناً، ونقاطها وجداولها وصورها تنتقل بالترتيب — كل المعالجة على جهازك</small>
         </label>
-        <details class="sec ppt-sec" open>
-          <summary>هوية الدكتور (مستقلة عن المنصة)</summary>
-          <div class="in">
-            <div class="toggles"><label class="tg"><span>هوية مستقلة<small>بدون اسم المنصة ولا رابطها ولا غلافها الخلفي — اسم الدكتور والجامعة بدالها</small></span><span class="sw-t"><input type="checkbox" id="pptIdentity"><span></span></span></label></div>
-            <div class="prow" style="margin-top:10px"><select class="inp" id="profSel" aria-label="ملف دكتور محفوظ"><option value="">— ملفات الدكاترة المحفوظة —</option></select><button type="button" class="btn danger" id="profDel">حذف</button></div>
-            <div class="prow"><input class="inp" id="profName" dir="auto" placeholder="اسم الملف (افتراضياً اسم الدكتور)"><button type="button" class="btn" id="profSave">💾 حفظ الملف</button></div>
-            <div class="field"><label class="lbl" for="pptDoctor">اسم الدكتور ولقبه</label><input class="inp" id="pptDoctor" dir="auto" placeholder="مثال: د. ريم الأحمد"></div>
-            <div class="field"><label class="lbl" for="pptCourse">المادة</label><input class="inp" id="pptCourse" dir="auto" placeholder="مثال: الكيمياء الحيوية الطبية"></div>
-            <div class="field"><label class="lbl" for="pptUni">الجامعة / الكلية</label><input class="inp" id="pptUni" dir="auto" placeholder="مثال: الجامعة السورية الخاصة — كلية الطب البشري"></div>
-            <div class="field"><label class="lbl" for="pptYear">العام الدراسي / الدفعة <small style="font-weight:400;color:var(--ink-soft)">(اختياري)</small></label><input class="inp" id="pptYear" dir="auto" placeholder="مثال: العام الدراسي 2026–2027"></div>
-            <div class="field"><label class="lbl" for="pptFooter">نص التذييل <small style="font-weight:400;color:var(--ink-soft)">(اختياري — افتراضياً: الدكتور — الجامعة)</small></label><input class="inp" id="pptFooter" dir="auto" maxlength="120" placeholder="مثال: محاضرات د. ريم الأحمد — الكيمياء الحيوية"></div>
-            <div class="field"><span class="lbl">شعار الدكتور / الجامعة</span><div class="prow"><label class="btn">⬆ رفع الشعار<input type="file" id="pptOwnLogo" accept="image/*" class="sr"></label><img id="pptOwnLogoThumb" class="mini-thumb" alt="الشعار"><button type="button" class="btn danger" id="pptOwnLogoDel">إزالة</button></div><small class="hint">يظهر عند تفعيل «الشعار» تحت. بدون شعار مرفوع يُستخدم شعار المنصة.</small></div>
-            <div class="toggles"><label class="tg"><span>«جميع الحقوق محفوظة»<small>تُضاف لسطر التذييل باسم الجامعة/الدكتور</small></span><span class="sw-t"><input type="checkbox" id="pptRights"><span></span></span></label><label class="tg"><span>غلاف خلفي<small>بالشعار واسم الجامعة</small></span><span class="sw-t"><input type="checkbox" id="pptBack"><span></span></span></label><label class="tg"><span>ألوان العرض تلقائياً<small>نقرأ ألوان قالب الـ PowerPoint ونلوّن الملف فيها</small></span><span class="sw-t"><input type="checkbox" id="pptAutoColors"><span></span></span></label></div>
-          </div>
-        </details>
+        
         <details class="sec ppt-sec">
           <summary>تنظيف الشرائح</summary>
           <div class="in toggles"><label class="tg"><span>دمج الشرائح المكمّلة<small>شرائح بنفس العنوان أو «تابع» تصير قسماً واحداً بلا تكرار العنوان</small></span><span class="sw-t"><input type="checkbox" id="pptMergeCont"><span></span></span></label><label class="tg"><span>حذف النصوص المكررة على الشرائح<small>اسم المادة/الدكتور المكتوب على كل شريحة (موجود على الغلاف)</small></span><span class="sw-t"><input type="checkbox" id="pptStripRepeat"><span></span></span></label><label class="tg"><span>حذف شرائح «شكراً» و«أسئلة؟»<small>الشرائح بلا محتوى</small></span><span class="sw-t"><input type="checkbox" id="pptDropEmpty"><span></span></span></label><label class="tg"><span>ضم النقاط المقطوعة<small>نقطة مقسومة على سطرين تُضم لجملة واحدة</small></span><span class="sw-t"><input type="checkbox" id="pptJoinFrag"><span></span></span></label><small class="hint">التقرير تحت كل عرض يذكر بالضبط عدد الكلمات المحذوفة وأمثلة منها.</small></div>
@@ -391,7 +377,6 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
         </details>
         <div class="ppt-opts">
           <div class="toggles">
-            <label class="tg"><span>شعار المنصة<small>على الغلاف والترويسة والغلاف الخلفي — مطفأ افتراضياً</small></span><span class="sw-t"><input type="checkbox" id="pptLogo"><span></span></span></label>
             <label class="tg"><span>ملاحظات المتحدث<small>تظهر بصندوق أزرق بعد محتوى كل شريحة</small></span><span class="sw-t"><input type="checkbox" id="pptNotes"><span></span></span></label>
             <label class="tg"><span>صفحة الغلاف</span><span class="sw-t"><input type="checkbox" id="pptCover"><span></span></span></label>
           </div>
@@ -401,11 +386,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
             <div class="prow"><label class="btn">⬆ رفع صورة الغلاف<input type="file" id="pptCovImg" accept="image/*" class="sr"></label><img id="pptCovThumb" class="mini-thumb" alt="صورة الغلاف"><button type="button" class="btn danger" id="pptCovDel">إزالة</button></div>
             <div class="toggles"><label class="tg"><span>الصورة فقط بدون نصوص<small>الصورة تُمدّ لتملأ صفحة A4 ويُقص الزائد من الأطراف</small></span><span class="sw-t"><input type="checkbox" id="pptImageOnly"><span></span></span></label></div>
           </div>
-          <div class="field"><span class="lbl">العلامة المائية للعروض</span><div class="seg" id="pptWmSeg"><button type="button" data-v="none">بدون</button><button type="button" data-v="doctor">اسم الدكتور/ة</button><button type="button" data-v="logo">الشعار</button><button type="button" data-v="text">نص</button><button type="button" data-v="image">صورة</button></div></div>
-          <div class="field" id="pptWmTextRow"><input class="inp" id="pptWmText" dir="auto" maxlength="60" placeholder="مثال: خاص بطلاب الدفعة 2026"></div>
-          <div class="field" id="pptWmImgRow"><div class="prow"><label class="btn">⬆ رفع صورة العلامة<input type="file" id="pptWmImg" accept="image/*" class="sr"></label><img id="pptWmThumb" class="mini-thumb" alt="العلامة المائية"><button type="button" class="btn danger" id="pptWmDel">إزالة</button></div></div>
-          <div class="sl" id="pptWmOpRow"><label for="pptWmOp">الشفافية</label><input type="range" id="pptWmOp" min="3" max="25" step="1"><output id="pptWmOpV"></output></div>
-          <small class="hint">هذه الإعدادات للعروض فقط. الألوان والخطوط والخلفيات والغلاف الخلفي مشتركة من لوحة الإعدادات.</small>
+          <small class="hint">إعدادات غلاف العروض. الهوية (المنصة أو الدكتور) والعلامة المائية من قسم «هوية الملف» في لوحة الإعدادات.</small>
         </div>
         <div class="merge-box" id="pptMergeBox"><div class="toggles"><label class="tg"><span>دمج العروض بكتاب واحد<small>غلاف وفهرس موحّد بترتيب العروض هنا</small></span><span class="sw-t"><input type="checkbox" id="pptMerge"><span></span></span></label></div></div>
         <div id="pptList" class="wlist"></div>
@@ -444,6 +425,29 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
           <div class="field"><label class="lbl" for="doctor">اسم الدكتور <small style="font-weight:400;color:var(--ink-soft)">(اختياري — يظهر على الغلاف)</small></label><input class="inp" id="doctor" dir="auto" placeholder="مثال: د. أحمد الخطيب"></div>
           <div class="field"><label class="lbl" for="coverExtra">سطور إضافية للغلاف <small style="font-weight:400;color:var(--ink-soft)">(سطر لكل معلومة: الجامعة، السنة، الدفعة…)</small></label><textarea class="inp" id="coverExtra" dir="auto" rows="2" placeholder="جامعة دمشق — كلية الطب البشري&#10;السنة الثالثة 2026"></textarea></div>
         </div>
+<details class="sec" id="idSec" open>
+          <summary>هوية الملف <span class="pill" id="idModeLbl"></span></summary>
+          <div class="in">
+            <div class="seg" id="idSeg" role="radiogroup" aria-label="هوية الملف"><button type="button" data-v="platform">منصة Random.MEd</button><button type="button" data-v="doctor">من دكتور/ة</button></div>
+            <small class="hint" id="idPlatHint">الملف بهوية المنصة: الشعار والعلامة المائية والحقوق من قسم «هوية Random.MEd والعلامة المائية».</small>
+            <div id="idDoctorBox">
+            <div class="prow" style="margin-top:10px"><select class="inp" id="profSel" aria-label="ملف دكتور محفوظ"><option value="">— ملفات الدكاترة المحفوظة —</option></select><button type="button" class="btn danger" id="profDel">حذف</button></div>
+            <div class="prow"><input class="inp" id="profName" dir="auto" placeholder="اسم الملف (افتراضياً اسم الدكتور)"><button type="button" class="btn" id="profSave">💾 حفظ الملف</button></div>
+            <div class="field"><label class="lbl" for="pptDoctor">اسم الدكتور ولقبه</label><input class="inp" id="pptDoctor" dir="auto" placeholder="مثال: د. ريم الأحمد"></div>
+            <div class="field"><label class="lbl" for="pptCourse">المادة</label><input class="inp" id="pptCourse" dir="auto" placeholder="مثال: الكيمياء الحيوية الطبية"></div>
+            <div class="field"><label class="lbl" for="pptUni">الجامعة / الكلية</label><input class="inp" id="pptUni" dir="auto" placeholder="مثال: الجامعة السورية الخاصة — كلية الطب البشري"></div>
+            <div class="field"><label class="lbl" for="pptYear">العام الدراسي / الدفعة <small style="font-weight:400;color:var(--ink-soft)">(اختياري)</small></label><input class="inp" id="pptYear" dir="auto" placeholder="مثال: العام الدراسي 2026–2027"></div>
+            <div class="field"><label class="lbl" for="pptFooter">نص التذييل <small style="font-weight:400;color:var(--ink-soft)">(اختياري — افتراضياً: الدكتور — الجامعة)</small></label><input class="inp" id="pptFooter" dir="auto" maxlength="120" placeholder="مثال: محاضرات د. ريم الأحمد — الكيمياء الحيوية"></div>
+            <div class="field"><span class="lbl">شعار الدكتور / الجامعة</span><div class="prow"><label class="btn">⬆ رفع الشعار<input type="file" id="pptOwnLogo" accept="image/*" class="sr"></label><img id="pptOwnLogoThumb" class="mini-thumb" alt="الشعار"><button type="button" class="btn danger" id="pptOwnLogoDel">إزالة</button></div><small class="hint">يظهر عند تفعيل «الشعار» تحت. بدون شعار مرفوع يُستخدم شعار المنصة.</small></div>
+            <div class="toggles"><label class="tg"><span>«جميع الحقوق محفوظة»<small>تُضاف لسطر التذييل باسم الجامعة/الدكتور</small></span><span class="sw-t"><input type="checkbox" id="pptRights"><span></span></span></label><label class="tg"><span>غلاف خلفي<small>بالشعار واسم الجامعة</small></span><span class="sw-t"><input type="checkbox" id="pptBack"><span></span></span></label><label class="tg"><span>ألوان العرض تلقائياً<small>نقرأ ألوان قالب الـ PowerPoint ونلوّن الملف فيها</small></span><span class="sw-t"><input type="checkbox" id="pptAutoColors"><span></span></span></label></div>
+          <div class="toggles"><label class="tg"><span>إظهار الشعار<small>شعار الدكتور المرفوع (أو شعار المنصة إن لم يُرفع) على الغلاف والترويسة</small></span><span class="sw-t"><input type="checkbox" id="pptLogo"><span></span></span></label></div>
+            <div class="field"><span class="lbl">العلامة المائية</span><div class="seg" id="pptWmSeg"><button type="button" data-v="none">بدون</button><button type="button" data-v="doctor">اسم الدكتور/ة</button><button type="button" data-v="logo">الشعار</button><button type="button" data-v="text">نص</button><button type="button" data-v="image">صورة</button></div></div>
+          <div class="field" id="pptWmTextRow"><input class="inp" id="pptWmText" dir="auto" maxlength="60" placeholder="مثال: خاص بطلاب الدفعة 2026"></div>
+          <div class="field" id="pptWmImgRow"><div class="prow"><label class="btn">⬆ رفع صورة العلامة<input type="file" id="pptWmImg" accept="image/*" class="sr"></label><img id="pptWmThumb" class="mini-thumb" alt="العلامة المائية"><button type="button" class="btn danger" id="pptWmDel">إزالة</button></div></div>
+          <div class="sl" id="pptWmOpRow"><label for="pptWmOp">الشفافية</label><input type="range" id="pptWmOp" min="3" max="25" step="1"><output id="pptWmOpV"></output></div>
+          </div>
+          </div>
+        </details>
         <details class="sec" id="presetSec">
           <summary>قوالب المواد المحفوظة <span class="pill" id="psCount">0</span></summary>
           <div class="in">
@@ -4607,7 +4611,7 @@ var ENGINE = (function () {
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
     keepParas: true, origLine: true, pageBg: "none", pageFrame: false,
-    pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
+    idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
@@ -4986,6 +4990,7 @@ var ENGINE = (function () {
   function effSettings() {
     var s = JSON.parse(JSON.stringify(S));
     s.subject = String(s.subject == null ? "" : s.subject); s.subtitle = String(s.subtitle == null ? "" : s.subtitle);
+    if (S.uiMode !== "ppt" && S.uiMode !== "word") applyIdentity(s, "text");
     if (!s.subject.trim()) { var det = ""; allText().some(function (t) { det = ENGINE.detectSubject(t); return !!det; }); s.subject = det || "المحاضرات"; }
     return s;
   }
@@ -5021,18 +5026,18 @@ var ENGINE = (function () {
     if (S.uiMode === "ppt") {
       var pr = pptReady(); if (!pr.length) return Promise.resolve(null);
       var grp = S.merge && pr.length > 1 ? pr : [pr[0]], ps = pptGroupSettings(grp);
-      return pptBrand(ps).then(function (brand) { ps.brand = brand; return makeDoc(grp.map(function (f) { return f.res.lecture; }), ps); });
+      return brandFor(ps).then(function (brand) { ps.brand = brand; return makeDoc(grp.map(function (f) { return f.res.lecture; }), ps); });
     }
     if (S.uiMode === "word") {
       var ready = wordFiles.filter(function (f) { return f.status === "ready" || f.status === "done"; });
       if (!ready.length) return Promise.resolve(null);
-      if (S.merge && ready.length > 1) { var ms = mergeSettings(ready); return brandAssets(ms).then(function (brand) { return Promise.all(ready.map(function (f) { return RESTYLE.analyze(f.buf.slice(0)); })).then(function (ans) { return RESTYLE.merge(ans, ms, brand); }); }).then(function (r) { return r.blob; }); }
+      if (S.merge && ready.length > 1) { var ms = mergeSettings(ready); return brandFor(ms).then(function (brand) { return Promise.all(ready.map(function (f) { return RESTYLE.analyze(f.buf.slice(0)); })).then(function (ans) { return RESTYLE.merge(ans, ms, brand); }); }).then(function (r) { return r.blob; }); }
       var f = ready[0], ws = wordSettings(f);
-      return brandAssets(ws).then(function (brand) { return RESTYLE.analyze(f.buf.slice(0)).then(function (an) { return RESTYLE[S.method === "rebuild" ? "rebuild" : "reskin"](an, ws, brand); }); }).then(function (r) { return r.blob; });
+      return brandFor(ws).then(function (brand) { return RESTYLE.analyze(f.buf.slice(0)).then(function (an) { return RESTYLE[S.method === "rebuild" ? "rebuild" : "reskin"](an, ws, brand); }); }).then(function (r) { return r.blob; });
     }
     var L = parseAll(); if (!L.length) return Promise.resolve(null);
     var s = effSettings();
-    return brandAssets(s).then(function (brand) { s.brand = brand; return makeDoc(L, s); });
+    return brandFor(s).then(function (brand) { s.brand = brand; return makeDoc(L, s); });
   }
   // docx-preview لا يدعم الصور العائمة خلف النص: خلفيات الغلاف تصير خلفية للصفحة، والعلامة المائية تتوسط الصفحة
   function fixReal(root) {
@@ -5094,7 +5099,7 @@ var ENGINE = (function () {
     var qh = qrHref(s), qr = "";
     if (qh) { if (!qrCache[qh]) { try { qrCache[qh] = drawQR(qh).toDataURL("image/png"); } catch (e) { qrCache[qh] = ""; } } qr = qrCache[qh]; }
     var pf = platformName(s), soc = String(s.social || "").split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 8);
-    return '<div class="pv-back" style="background-image:url(' + backCache[k] + ')">' + (s.logo ? '<img class="lg" src="' + LOGO_SRC + '" alt="">' : "") + '<div class="bn" dir="auto">' + esc2(pf) + "</div>" +
+    return '<div class="pv-back" style="background-image:url(' + backCache[k] + ')">' + (s.logo ? '<img class="lg" src="' + (s._doctorId && pptOwnLogo ? pptOwnLogo.url : LOGO_SRC) + '" alt="">' : "") + '<div class="bn" dir="auto">' + esc2(pf) + "</div>" +
       (String(s.backText || "").trim() ? '<div class="bt" dir="auto">' + esc2(s.backText.trim()) + "</div>" : "") + '<div class="bb"></div>' +
       (qr ? '<img class="qr" src="' + qr + '" alt="QR"><div class="bh">امسح الرمز لزيارة المنصة</div><div class="bu">' + esc2(qh.replace(/^https?:\/\//, "").replace(/\/$/, "")) + "</div>" : "") +
       soc.map(function (x) { return '<div class="bs" dir="auto">' + esc2(x) + "</div>"; }).join("") +
@@ -5112,7 +5117,6 @@ var ENGINE = (function () {
       if (!pr.length) { pv.innerHTML = '<div class="empty">ستظهر هنا معاينة تقريبية بعد اختيار عرض PowerPoint.</div>'; return; }
       var grp = S.merge && pr.length > 1 ? pr : [pr[0]];
       s = Object.assign(s, pptGroupSettings(grp)); L = grp.map(function (f) { return f.res.lecture; });
-      pptWmUrl = s.wm ? pptWmUrlCached(s) : null;
     }
     else if (S.uiMode === "word") {
       var wf = wordFiles.filter(function (f) { return f.model; })[0];
@@ -5122,13 +5126,15 @@ var ENGINE = (function () {
       ws.coverLines = lines; ws.tocLabels = { title: "فهرس المحتويات", c1: "القسم", c2: "العناوين الفرعية" };
       s = Object.assign(s, ws); L = wf.model;
     }
+    if (s._doctorId && s.wm) pptWmUrl = pptWmUrlCached(s);
+    var lgSrc = s._doctorId && pptOwnLogo ? pptOwnLogo.url : LOGO_SRC;
     pv.style.background = ENGINE.pageBgColor(s) ? "#" + ENGINE.pageBgColor(s) : ""; pv.style.outline = s.pageFrame ? "3px double #" + T.h2line : ""; pv.style.outlineOffset = s.pageFrame ? "-12px" : "";
-    var wm = s.wm ? (pptWmUrl ? '<div class="wm" style="background-image:url(' + pptWmUrl + ');opacity:1"></div>' : '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>') : "";
+    var wm = s.wm && !(s._doctorId && !pptWmUrl) ? (pptWmUrl ? '<div class="wm" style="background-image:url(' + pptWmUrl + ');opacity:1"></div>' : '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>') : "";
     var pfx = Object.assign({ name: "Random.MEd", url: "" }, s.platform || {});
     var foot = s.footerText ? '<div class="pv-foot"><b style="color:#' + T.h1 + '">صفحة <span style="color:#' + T.acc + '">1</span></b><br>' + esc2(s.footerText) + "</div>" : '<div class="pv-foot"><b style="color:#' + T.h1 + '">صفحة <span style="color:#' + T.acc + '">1</span></b>' + (s.footBrand && s.rights === false ? ' · <b>' + esc2(pfx.name) + '</b>' : "") +
       (s.rights !== false || pfx.url ? "<br>" + (s.rights !== false ? "© " + new Date().getFullYear() + " <b>" + esc2(pfx.name) + "</b> — جميع الحقوق محفوظة" : "") + (pfx.url ? (s.rights !== false ? " · " : "") + '<span dir="ltr" style="color:var(--c-acc)">' + esc2(pfx.url.replace(/^https?:\/\//, "")) + "</span>" : "") : "") + "</div>";
-    var cbg = s.cover ? (S.uiMode === "ppt" && S.pptCovMode === "image" && pptCovImg ? pptCovImg.url : coverBgUrl(s)) : "";
-    pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? LOGO_SRC : "", cbg) + foot + backHTML(s) : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
+    var cbg = s.cover ? (s._pptImg ? pptCovImg.url : coverBgUrl(s)) : "";
+    pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? lgSrc : "", cbg) + foot + backHTML(s) : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
   }
   $("pvBtn").onclick = function () { if (S.pvReal) renderReal(); else renderPreview(); $("pvCard").scrollIntoView({ behavior: "smooth", block: "start" }); };
 
@@ -5168,7 +5174,7 @@ var ENGINE = (function () {
   }
 
   /* ---- التسمية التلقائية ---- */
-  function nameVals(s, extra) { return Object.assign({ subject: s.subject, platform: platformName(s), doctor: String(s.doctor || "").trim(), num: "", title: "" }, extra || {}); }
+  function nameVals(s, extra) { return Object.assign({ subject: s.subject, platform: s._doctorId ? (String(S.pptDoctor || "").trim() || String(S.pptUni || "").trim() || String(s.doctor || "").trim()) : platformName(s), doctor: String(s.doctor || "").trim(), num: "", title: "" }, extra || {}); }
   function textDocName(L, s) {
     var nums = L.map(function (l) { return ENGINE.lecNum(l.title); });
     return ENGINE.fileName(s.nameTpl, nameVals(s, { num: ENGINE.numLabel(nums), title: L.length === 1 ? (L[0].title ? ENGINE.plain(ENGINE.parseInline(L[0].title)) : "") : "" }));
@@ -5244,10 +5250,10 @@ var ENGINE = (function () {
     var s = m.s, T = ENGINE.resolveTheme(s);
     logoReady.then(function () { return document.fonts && document.fonts.ready ? document.fonts.ready : null; }).then(function () { return modelImages(m.L); }).then(function (images) {
       var A = { logo: logoImg.naturalWidth && s.logo !== false ? logoImg : null, images: images };
-      if (s.cover) A.cover = m.ppt && S.pptCovMode === "image" && pptCovImg ? pptCoverCanvas() : drawCover(s.coverStyle || "classic", T, platformName(s), 1, s._covLogo);
-      if (m.ppt) A.logo = s.logo ? (pptOwnLogo ? pptOwnLogo.img : (logoImg.naturalWidth ? logoImg : null)) : null;
+      if (s.cover) A.cover = s._pptImg ? pptCoverCanvas() : drawCover(s.coverStyle || "classic", T, platformName(s), 1, s._covLogo);
+      if (s._doctorId) A.logo = s.logo ? (pptOwnLogo ? pptOwnLogo.img : (logoImg.naturalWidth ? logoImg : null)) : null;
       if (s.backCover) { A.back = drawBack(T, 1); var qh = qrHref(s); if (qh) { try { A.qr = drawQR(qh); } catch (e) {} } }
-      if (s.wm) A.wm = m.ppt ? pptWmCanvas(s) : drawWatermark(s);
+      if (s.wm) A.wm = s._doctorId ? pptWmCanvas(s) : drawWatermark(s);
       return new Promise(function (r) { setTimeout(r, 30); }).then(function () {
         return RMED_PDF.build(m, A, { scale: 1.8, quality: 0.8, title: m.name, onEncode: function (i, n) { prog(10 + Math.round(85 * i / n)); } });
       });
@@ -5323,7 +5329,7 @@ var ENGINE = (function () {
     if (!L.length) return show("err", "لا يوجد نص لتحويله. الصق نص محاضرة أولاً.");
     busy = true; $("dlBtn").disabled = $("dlBtn2").disabled = true; $("report").className = "report"; show("info", "جارٍ تجهيز الملف…"); prog(10);
     var s = effSettings();
-    ensureLibs().then(tick).then(function () { return brandAssets(s); }).then(function (brand) {
+    ensureLibs().then(tick).then(function () { return brandFor(s); }).then(function (brand) {
       s.brand = brand; prog(35);
       if (s.mode === "split" && L.length > 1) {
         var zip = new JSZip(), chain = Promise.resolve(), names = uniq(L.map(function (lec, i) { return lecDocName(lec, i, s); }));
@@ -5351,7 +5357,7 @@ var ENGINE = (function () {
     show("info", "جارٍ توليد الملف ومقارنة الكلمات…"); prog(20);
     var s = effSettings(), inTok = [];
     texts.forEach(function (t) { inTok = inTok.concat(ENGINE.inputTokens(t)); });
-    ensureLibs().then(function () { return brandAssets(s); }).then(function (brand) { s.brand = brand; return makeDoc(L, s); })
+    ensureLibs().then(function () { return brandFor(s); }).then(function (brand) { s.brand = brand; return makeDoc(L, s); })
       .then(function (b) { prog(60); return JSZip.loadAsync(b); })
       .then(function (z) { return z.file("word/document.xml").async("string"); })
       .then(function (xml) {
@@ -5376,7 +5382,7 @@ var ENGINE = (function () {
     S.uiMode = m === "word" || m === "ppt" ? m : "text"; save();
     [["modeText", "text"], ["modeWord", "word"], ["modePpt", "ppt"]].forEach(function (p) { $(p[0]).classList.toggle("sel", S.uiMode === p[1]); $(p[0]).setAttribute("aria-selected", S.uiMode === p[1]); });
     $("textCard").hidden = S.uiMode !== "text"; $("wordCard").hidden = S.uiMode !== "word"; $("pptCard").hidden = S.uiMode !== "ppt";
-    $("report").className = "report"; hide(); schedulePreview(); paintName();
+    $("report").className = "report"; hide(); schedulePreview(); paintName(); paintId();
   }
   $("modeText").onclick = function () { setUiMode("text"); };
   $("modeWord").onclick = function () { setUiMode("word"); };
@@ -5408,7 +5414,7 @@ var ENGINE = (function () {
     var s = JSON.parse(JSON.stringify(S));
     s.userSubject = !!S.subject.trim();
     if (!s.userSubject) s.subject = (f.genTitle || f.header || f.title || baseName(f.name)).slice(0, 120);
-    return s;
+    return applyIdentity(s, "word");
   }
   function recommend(st) { return st && (st.math || st.charts) ? "reskin" : null; }
   function repHTML(f) {
@@ -5490,7 +5496,7 @@ var ENGINE = (function () {
     busy = true; $("dlBtn").disabled = $("dlBtn2").disabled = true; show("info", save ? "جارٍ تنسيق الملفات…" : "جارٍ التنسيق والتحقق من الكلمات…"); prog(8);
     var method = S.method === "rebuild" ? "rebuild" : "reskin", outs = [];
     if (S.merge && ready.length > 1) return mergeWord(ready, save, nErr);
-    ensureLibs().then(function () { return brandAssets(S); }).then(function (brand) {
+    ensureLibs().then(function () { return brandFor(wordSettings(ready[0])); }).then(function (brand) {
       var chain = Promise.resolve();
       ready.forEach(function (f, i) {
         chain = chain.then(function () {
@@ -5524,14 +5530,14 @@ var ENGINE = (function () {
   var mergeResult = null;
   function mergeSettings(list) {
     var s = wordSettings(list[0]);
-    if (!s.userSubject) s.subject = (list[0].header || "").slice(0, 120) || "المحاضرات";
+    if (!s.userSubject && !s._courseSubj) s.subject = (list[0].header || "").slice(0, 120) || "المحاضرات";
     return s;
   }
   function mergeWord(ready, save, nErr) {
     busy = true; $("dlBtn").disabled = $("dlBtn2").disabled = true; show("info", "جارٍ دمج " + ready.length + " ملف بكتاب واحد…"); prog(10);
     var s = mergeSettings(ready);
     ready.forEach(function (f) { f.status = "working"; f.result = null; }); renderWordList();
-    return ensureLibs().then(function () { return brandAssets(s); }).then(function (brand) {
+    return ensureLibs().then(function () { return brandFor(s); }).then(function (brand) {
       return Promise.all(ready.map(function (f) { return RESTYLE.analyze(f.buf.slice(0)); })).then(function (ans) { prog(40); return RESTYLE.merge(ans, s, brand); });
     }).then(function (r) {
       prog(90);
@@ -5589,7 +5595,7 @@ var ENGINE = (function () {
     var mode = S.pptWm || "logo", a = Math.max(0.02, Math.min(0.35, (S.pptWmOpacity || 8) / 100));
     if (mode === "none") return null;
     var c = document.createElement("canvas"), g;
-    if (mode === "logo" && S.pptIdentity !== false) { // شعار الدكتور (أو المنصة إن لم يُرفع) بلا نص المنصة
+    if (mode === "logo" && s._doctorId) { // شعار الدكتور (أو المنصة إن لم يُرفع) بلا نص المنصة
       if (!pptOwnLogo) return null; // بلا شعار للدكتور: لا علامة مائية بشعار المنصة
       var li = pptOwnLogo.img, kk = Math.min(1, 700 / Math.max(li.naturalWidth || 1, li.naturalHeight || 1));
       c.width = Math.max(1, Math.round((li.naturalWidth || 214) * kk)); c.height = Math.max(1, Math.round((li.naturalHeight || 180) * kk)); g = c.getContext("2d"); g.globalAlpha = a; g.drawImage(li, 0, 0, c.width, c.height); return c;
@@ -5609,39 +5615,67 @@ var ENGINE = (function () {
   var wmCache = {};
   function pptWmUrlCached(s) { var k = [S.pptWm, S.pptWmText, S.pptDoctor, S.pptCourse, S.pptWmOpacity, platformName(s), s.rights, pptWmImgObj ? pptWmImgObj.url.length : 0].join("|"); if (!(k in wmCache)) { var c = pptWmCanvas(s); wmCache[k] = c ? c.toDataURL("image/png") : null; } return wmCache[k]; }
   function canvasJpeg(c) { return new Promise(function (r) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { r(new Uint8Array(ab)); }); }, "image/jpeg", 0.9); }); }
-  function pptBrand(s) {
-    return brandAssets(Object.assign({}, s, { wm: false, cover: s.cover && !(S.pptCovMode === "image" && pptCovImg) })).then(function (out) {
+
+  /* هوية الملف: منصة أو دكتور/ة — لكل وضع اختياره (نص / Word / عروض) */
+  function idDoctor(mode) { mode = mode || S.uiMode; return mode === "ppt" ? S.pptIdentity !== false : mode === "word" ? S.idWord === "doctor" : S.idText === "doctor"; }
+  function applyIdentity(s, mode) {
+    if (!idDoctor(mode)) { s._doctorId = false; if (mode === "ppt") s._covLogo = s.logo ? logoImg : null; else delete s._covLogo; return s; }
+    var dr = String(S.pptDoctor || "").trim(), un = String(S.pptUni || "").trim(), yr = String(S.pptYear || "").trim(), cr = String(S.pptCourse || "").trim();
+    s._doctorId = true;
+    if (cr && !s.userSubject && !String(S.subject || "").trim()) { s.subject = cr; s._courseSubj = true; }
+    s.platform = { name: un || dr || "", url: "" }; s.footBrand = false; s.backCover = !!S.pptBack; s.rights = false;
+    s.doctor = dr || String(S.doctor || "").trim();
+    var ex = []; if (mode === "text") ex = String(S.coverExtra || "").split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean);
+    if (yr && ex.indexOf(yr) < 0) ex.push(yr); s.coverExtra = ex.join("\n");
+    s.coverBigName = un; s.showSubtitle = !!String(S.subtitle || "").trim();
+    var ft = String(S.pptFooter || "").trim() || [dr, un].filter(Boolean).join(" — ");
+    if (S.pptRights) ft = (ft ? ft + "  ·  " : "") + "© " + new Date().getFullYear() + (un || dr ? " " + (un || dr) : "") + " — جميع الحقوق محفوظة";
+    s.footerText = ft;
+    s.logo = !!S.pptLogo; s.wm = (S.pptWm || "logo") !== "none"; s.wmOpacity = S.pptWmOpacity || 8;
+    s._covLogo = s.logo ? (pptOwnLogo ? pptOwnLogo.img : logoImg) : null;
+    return s;
+  }
+  function brandFor(s) {
+    var doc = !!s._doctorId;
+    if (!doc && !s._pptImg) return brandAssets(s);
+    return brandAssets(Object.assign({}, s, doc ? { wm: false, logo: false } : {}, { cover: s.cover && !s._pptImg })).then(function (out) {
       var jobs = [];
-      if (s.logo && pptOwnLogo) { var oc = document.createElement("canvas"), oi = pptOwnLogo.img; oc.width = oi.naturalWidth; oc.height = oi.naturalHeight; oc.getContext("2d").drawImage(oi, 0, 0); jobs.push(canvasPng(oc).then(function (u) { out.logo = { data: u, w: oi.naturalWidth, h: oi.naturalHeight }; })); }
-      if (s.cover && S.pptCovMode === "image" && pptCovImg) jobs.push(canvasJpeg(pptCoverCanvas()).then(function (u) { out.coverBg = { data: u, w: 1240, h: 1754, type: "jpg" }; }));
-      var wc = s.wm ? pptWmCanvas(s) : null; if (wc) jobs.push(canvasPng(wc).then(function (u) { out.wm = { data: u, w: 660, h: Math.round(660 * wc.height / wc.width) }; }));
+      if (doc && s.logo) {
+        if (pptOwnLogo) { var oc = document.createElement("canvas"), oi = pptOwnLogo.img; oc.width = oi.naturalWidth; oc.height = oi.naturalHeight; oc.getContext("2d").drawImage(oi, 0, 0); jobs.push(canvasPng(oc).then(function (u) { out.logo = { data: u, w: oi.naturalWidth, h: oi.naturalHeight }; })); }
+        else out.logo = { data: ENGINE.b64ToBytes(LOGO_B64), w: logoImg.naturalWidth || 214, h: logoImg.naturalHeight || 180 };
+      }
+      if (s._pptImg && pptCovImg) jobs.push(canvasJpeg(pptCoverCanvas()).then(function (u) { out.coverBg = { data: u, w: 1240, h: 1754, type: "jpg" }; }));
+      var wc = doc && s.wm ? pptWmCanvas(s) : null; if (wc) jobs.push(canvasPng(wc).then(function (u) { out.wm = { data: u, w: 660, h: Math.round(660 * wc.height / wc.width) }; }));
       return Promise.all(jobs).then(function () { return out; });
     });
+  }
+  function paintId() {
+    var m = S.uiMode, d = idDoctor(m);
+    Array.prototype.forEach.call($("idSeg").children, function (b) { b.classList.toggle("sel", b.dataset.v === (d ? "doctor" : "platform")); b.setAttribute("aria-checked", b.dataset.v === (d ? "doctor" : "platform")); });
+    $("idDoctorBox").hidden = !d; $("idPlatHint").hidden = d;
+    $("idModeLbl").textContent = (m === "ppt" ? "العروض" : m === "word" ? "ملف Word" : "النص") + ": " + (d ? "دكتور/ة" : "المنصة");
+    $("pptAutoColorsRow") && ($("pptAutoColorsRow").hidden = m !== "ppt");
+  }
+  Array.prototype.forEach.call($("idSeg").children, function (b) { b.onclick = function () { setIdentity(b.dataset.v === "doctor"); }; });
+  function setIdentity(doc) {
+    var m = S.uiMode; if (m === "ppt") S.pptIdentity = doc; else if (m === "word") S.idWord = doc ? "doctor" : "platform"; else S.idText = doc ? "doctor" : "platform";
+    save(); paintId(); paintPpt(); pptResult = null; clearResults(); renderPptList(); schedulePreview(); paintName();
   }
   function pptReady() { return pptFiles.filter(function (f) { return f.res && f.status !== "error" && f.status !== "reading"; }); }
   function pptGroupSettings(grp) {
     var s = JSON.parse(JSON.stringify(S));
     s.userSubject = !!String(S.subject || "").trim();
     if (!s.userSubject) s.subject = (grp[0].res.title || baseName(grp[0].name)).slice(0, 120) || "العرض";
-    s.logo = !!S.pptLogo; s.cover = S.pptCover !== false; s.coverStyle = S.pptCoverStyle || "classic";
-    s._covLogo = s.logo ? (pptOwnLogo ? pptOwnLogo.img : logoImg) : null;
+    s.cover = S.pptCover !== false; s.coverStyle = S.pptCoverStyle || "classic";
     if (S.pptAutoColors !== false && grp[0].res.theme && window.RMED_PPTX) { var pc = RMED_PPTX.pickColors(grp[0].res.theme); if (pc) { s.theme = "custom"; s.cMain = pc.main; s.cAcc = pc.acc; } }
-    if (S.pptIdentity !== false) { // هوية الدكتور بدل المنصة
-      var dr = String(S.pptDoctor || "").trim(), un = String(S.pptUni || "").trim(), yr = String(S.pptYear || "").trim(), cr = String(S.pptCourse || "").trim();
-      if (cr && !s.userSubject) s.subject = cr;
-      s.platform = { name: un || dr || "", url: "" }; s.footBrand = false; s.backCover = !!S.pptBack; s.rights = false;
-      s.doctor = dr; s.coverExtra = yr; s.coverBigName = un; s.showSubtitle = !!String(S.subtitle || "").trim();
-      var ft = String(S.pptFooter || "").trim() || [dr, un].filter(Boolean).join(" — ");
-      if (S.pptRights) ft = (ft ? ft + "  ·  " : "") + "© " + new Date().getFullYear() + (un || dr ? " " + (un || dr) : "") + " — جميع الحقوق محفوظة";
-      s.footerText = ft;
-    }
+    applyIdentity(s, "ppt");
+    s._pptImg = !!(s.cover && S.pptCovMode === "image" && pptCovImg);
     s.coverImageOnly = !!(S.pptCovMode === "image" && pptCovImg && S.pptImageOnly);
-    s.wm = (S.pptWm || "logo") !== "none"; s.wmOpacity = S.pptWmOpacity || 8;
     s.tocLabels = { title: "فهرس المحتويات", c1: "العرض", c2: "عناوين الشرائح", count: "عدد العروض: " };
     return s;
   }
   function pptNum(f) { var n = ENGINE.lecNum(f.res ? f.res.title : ""); if (n == null) n = ENGINE.lecNum(baseName(f.name), true); return n; }
-  function pptName(grp, s) { var ex = { num: ENGINE.numLabel(grp.map(pptNum)), title: grp.length === 1 ? (grp[0].res.title || baseName(grp[0].name)) : "" }; if (S.pptIdentity !== false) ex.platform = String(S.pptDoctor || "").trim() || String(S.pptUni || "").trim(); return ENGINE.fileName(S.nameTpl, nameVals(s, ex)); }
+  function pptName(grp, s) { var ex = { num: ENGINE.numLabel(grp.map(pptNum)), title: grp.length === 1 ? (grp[0].res.title || baseName(grp[0].name)) : "" }; return ENGINE.fileName(S.nameTpl, nameVals(s, ex)); }
   function parsePpt(f) {
     f.status = "reading"; renderPptList();
     return ensureLibs().then(function () { return RMED_PPTX.parse(f.buf.slice(0), { notes: S.pptNotes !== false, mergeCont: !!S.pptMergeCont, stripRepeat: !!S.pptStripRepeat, dropEmpty: !!S.pptDropEmpty, joinFrag: !!S.pptJoinFrag, slideNums: !!S.pptSlideNums, glossary: !!S.pptGlossary, notesPage: !!S.pptNotesPage }); })
@@ -5703,7 +5737,7 @@ var ENGINE = (function () {
     groups.forEach(function (grp, gi) {
       chain = chain.then(function () {
         var s = pptGroupSettings(grp);
-        return ensureLibs().then(function () { return pptBrand(s); }).then(function (brand) {
+        return ensureLibs().then(function () { return brandFor(s); }).then(function (brand) {
           s.brand = brand; return makeDoc(grp.map(function (f) { return f.res.lecture; }), s);
         }).then(function (blob) {
           return JSZip.loadAsync(blob).then(function (z) { return z.file("word/document.xml").async("string"); }).then(function (xml) {
@@ -5735,7 +5769,7 @@ var ENGINE = (function () {
   [["pptLogo", "pptLogo"], ["pptCover", "pptCover"], ["pptImageOnly", "pptImageOnly"], ["pptMerge", "merge"]].forEach(function (p) { $(p[0]).onchange = function () { S[p[1]] = this.checked; save(); paintPpt(); pptResult = null; renderPptList(); schedulePreview(); }; });
   $("pptNotes").onchange = function () { S.pptNotes = this.checked; save(); paintPpt(); pptFiles.forEach(function (f) { if (f.buf) parsePpt(f); }); };
   ["pptMergeCont", "pptStripRepeat", "pptDropEmpty", "pptJoinFrag", "pptSlideNums", "pptGlossary", "pptNotesPage"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); pptFiles.forEach(function (f) { if (f.buf) parsePpt(f); }); }; });
-  ["pptIdentity", "pptRights", "pptBack", "pptAutoColors"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); paintPpt(); renderPptList(); schedulePreview(); }; });
+  ["pptRights", "pptBack", "pptAutoColors"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); paintPpt(); renderPptList(); schedulePreview(); }; });
   ["pptDoctor", "pptCourse", "pptUni", "pptYear", "pptFooter"].forEach(function (k) { $(k).oninput = function () { S[k] = this.value; save(); schedulePreview(); paintName(); paintPpt(); }; });
   $("pptOwnLogo").onchange = function (e) { var f = e.target.files[0]; e.target.value = ""; if (f) fileToDataUrl(f, 600).then(function (u) { S.pptLogo = true; save(); setPptImage("logo", u); }).catch(function () { show("err", "تعذّرت قراءة الصورة."); }); };
   $("pptOwnLogoDel").onclick = function () { setPptImage("logo", null); };
@@ -5755,6 +5789,7 @@ var ENGINE = (function () {
     var p = loadProfs()[this.value]; $("profDel").disabled = !this.value; if (!p) return;
     var c = cleanSettings(p); PROF_FIELDS.forEach(function (f) { if (c[f] !== undefined) S[f] = c[f]; });
     ["pptDoctor", "pptCourse", "pptUni", "pptYear", "pptFooter"].forEach(function (k) { $(k).value = S[k] || ""; });
+    if (S.uiMode === "ppt") S.pptIdentity = true; else if (S.uiMode === "word") S.idWord = "doctor"; else S.idText = "doctor";
     save(); setPptImage("logo", typeof p._logo === "string" && /^data:image\//.test(p._logo) ? p._logo : null);
     if (typeof p._cover === "string" && /^data:image\//.test(p._cover)) setPptImage("cover", p._cover); if (typeof p._wm === "string" && /^data:image\//.test(p._wm)) setPptImage("wm", p._wm);
     paintSettings(); paintPpt(); renderPptList(); schedulePreview(); show("ok", "تم تطبيق ملف «" + this.value + "»");
@@ -5778,10 +5813,10 @@ var ENGINE = (function () {
     $("pptWmTextRow").hidden = S.pptWm !== "text"; $("pptWmImgRow").hidden = S.pptWm !== "image"; $("pptWmOpRow").hidden = S.pptWm === "none";
     $("pptWmThumb").classList.toggle("on", !!pptWmImgObj); if (pptWmImgObj) $("pptWmThumb").src = pptWmImgObj.url; $("pptWmDel").hidden = !pptWmImgObj;
     $("pptWmText").value = S.pptWmText || ""; $("pptWmOp").value = S.pptWmOpacity || 8; $("pptWmOpV").textContent = (S.pptWmOpacity || 8) + "%";
-    ["pptIdentity", "pptRights", "pptBack", "pptAutoColors", "pptMergeCont", "pptStripRepeat", "pptDropEmpty", "pptJoinFrag", "pptSlideNums", "pptGlossary", "pptNotesPage"].forEach(function (k) { $(k).checked = k === "pptIdentity" || k === "pptAutoColors" ? S[k] !== false : !!S[k]; });
+    ["pptRights", "pptBack", "pptAutoColors", "pptMergeCont", "pptStripRepeat", "pptDropEmpty", "pptJoinFrag", "pptSlideNums", "pptGlossary", "pptNotesPage"].forEach(function (k) { $(k).checked = k === "pptAutoColors" ? S[k] !== false : !!S[k]; });
     ["pptDoctor", "pptCourse", "pptUni", "pptYear", "pptFooter"].forEach(function (k) { if (document.activeElement !== $(k)) $(k).value = S[k] || ""; });
     $("pptOwnLogoThumb").classList.toggle("on", !!pptOwnLogo); if (pptOwnLogo) $("pptOwnLogoThumb").src = pptOwnLogo.url; $("pptOwnLogoDel").hidden = !pptOwnLogo;
-    paintProfs();
+    paintProfs(); paintId();
   }
   paintPpt();
   setUiMode(S.uiMode);
