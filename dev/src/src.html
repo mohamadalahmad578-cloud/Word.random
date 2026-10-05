@@ -2087,10 +2087,10 @@ var ENGINE = (function () {
       ws.coverLines = lines; ws.tocLabels = { title: "فهرس المحتويات", c1: "القسم", c2: "العناوين الفرعية" };
       s = Object.assign(s, ws); L = wf.model;
     }
-    if (s._doctorId && s.wm) pptWmUrl = pptWmUrlCached(s);
+    var pptWmFull = false; if (s._doctorId && s.wm) { pptWmUrl = pptWmUrlCached(s); pptWmFull = S.pptWm === "doctor" || S.pptWm === "text"; }
     var lgSrc = s._doctorId && pptOwnLogo ? pptOwnLogo.url : LOGO_SRC;
     pv.style.background = ENGINE.pageBgColor(s) ? "#" + ENGINE.pageBgColor(s) : ""; pv.style.outline = s.pageFrame ? "3px double #" + T.h2line : ""; pv.style.outlineOffset = s.pageFrame ? "-12px" : "";
-    var wm = s.wm && !(s._doctorId && !pptWmUrl) ? (pptWmUrl ? '<div class="wm" style="background-image:url(' + pptWmUrl + ');opacity:1"></div>' : '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>') : "";
+    var wm = s.wm && !(s._doctorId && !pptWmUrl) ? (pptWmUrl ? '<div class="wm" style="background-image:url(' + pptWmUrl + ');opacity:1' + (pptWmFull ? ';background-size:100% auto;background-position:center top' : '') + '"></div>' : '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>') : "";
     var pfx = Object.assign({ name: "Random.MEd", url: "" }, s.platform || {});
     var foot = s.footerText ? '<div class="pv-foot"><b style="color:#' + T.h1 + '">صفحة <span style="color:#' + T.acc + '">1</span></b><br>' + esc2(s.footerText) + "</div>" : '<div class="pv-foot"><b style="color:#' + T.h1 + '">صفحة <span style="color:#' + T.acc + '">1</span></b>' + (s.footBrand && s.rights === false ? ' · <b>' + esc2(pfx.name) + '</b>' : "") +
       (s.rights !== false || pfx.url ? "<br>" + (s.rights !== false ? "© " + new Date().getFullYear() + " <b>" + esc2(pfx.name) + "</b> — جميع الحقوق محفوظة" : "") + (pfx.url ? (s.rights !== false ? " · " : "") + '<span dir="ltr" style="color:var(--c-acc)">' + esc2(pfx.url.replace(/^https?:\/\//, "")) + "</span>" : "") : "") + "</div>";
@@ -2585,9 +2585,13 @@ var ENGINE = (function () {
       g = c.getContext("2d"); g.globalAlpha = a; g.drawImage(im, 0, 0, c.width, c.height); return c;
     }
     var t = mode === "doctor" ? (String(S.pptDoctor || "").trim() || String(S.pptCourse || "").trim() || String(S.pptWmText || "").trim() || platformName(s)) : (String(S.pptWmText || "").trim() || platformName(s));
-    c.width = 900; c.height = 640; g = c.getContext("2d");
-    g.translate(450, 320); g.rotate(-Math.PI / 7); g.globalAlpha = a; g.fillStyle = "#7C5714"; g.textAlign = "center"; g.textBaseline = "middle"; g.direction = /[\u0600-\u06FF]/.test(t) ? "rtl" : "ltr";
-    var fz = 110; do { g.font = "700 " + fz + "px 'El Messiri','IBM Plex Sans Arabic',sans-serif"; fz -= 6; } while (g.measureText(t).width > 820 && fz > 30);
+    // النص على قطر الصفحة من الزاوية للزاوية (لوحة بنسبة A4 تُوضع بحجم الصفحة كاملة)
+    c.width = 1000; c.height = 1414; c._full = true; g = c.getContext("2d");
+    var diag = Math.sqrt(1000 * 1000 + 1414 * 1414), ang = Math.atan2(1414, 1000);
+    g.translate(500, 707); g.rotate(-ang); g.globalAlpha = a; g.fillStyle = "#7C5714"; g.textAlign = "center"; g.textBaseline = "middle"; g.direction = /[\u0600-\u06FF]/.test(t) ? "rtl" : "ltr";
+    g.font = "700 100px 'El Messiri','IBM Plex Sans Arabic',sans-serif";
+    var fz = Math.max(30, Math.min(380, 100 * diag * 0.86 / Math.max(1, g.measureText(t).width)));
+    g.font = "700 " + Math.round(fz) + "px 'El Messiri','IBM Plex Sans Arabic',sans-serif";
     g.fillText(t, 0, 0); return c;
   }
   var wmCache = {};
@@ -2623,7 +2627,7 @@ var ENGINE = (function () {
         else out.logo = { data: ENGINE.b64ToBytes(LOGO_B64), w: logoImg.naturalWidth || 214, h: logoImg.naturalHeight || 180 };
       }
       if (s._pptImg && pptCovImg) jobs.push(canvasJpeg(pptCoverCanvas()).then(function (u) { out.coverBg = { data: u, w: 1240, h: 1754, type: "jpg" }; }));
-      var wc = doc && s.wm ? pptWmCanvas(s) : null; if (wc) jobs.push(canvasPng(wc).then(function (u) { out.wm = { data: u, w: 660, h: Math.round(660 * wc.height / wc.width) }; }));
+      var wc = doc && s.wm ? pptWmCanvas(s) : null; if (wc) jobs.push(canvasPng(wc).then(function (u) { out.wm = wc._full ? { data: u, w: 794, h: 1123 } : { data: u, w: 660, h: Math.round(660 * wc.height / wc.width) }; }));
       return Promise.all(jobs).then(function () { return out; });
     });
   }
