@@ -401,7 +401,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
             <div class="prow"><label class="btn">⬆ رفع صورة الغلاف<input type="file" id="pptCovImg" accept="image/*" class="sr"></label><img id="pptCovThumb" class="mini-thumb" alt="صورة الغلاف"><button type="button" class="btn danger" id="pptCovDel">إزالة</button></div>
             <div class="toggles"><label class="tg"><span>الصورة فقط بدون نصوص<small>الصورة تُمدّ لتملأ صفحة A4 ويُقص الزائد من الأطراف</small></span><span class="sw-t"><input type="checkbox" id="pptImageOnly"><span></span></span></label></div>
           </div>
-          <div class="field"><span class="lbl">العلامة المائية للعروض</span><div class="seg" id="pptWmSeg"><button type="button" data-v="none">بدون</button><button type="button" data-v="logo">الشعار</button><button type="button" data-v="text">نص</button><button type="button" data-v="image">صورة</button></div></div>
+          <div class="field"><span class="lbl">العلامة المائية للعروض</span><div class="seg" id="pptWmSeg"><button type="button" data-v="none">بدون</button><button type="button" data-v="doctor">اسم الدكتور/ة</button><button type="button" data-v="logo">الشعار</button><button type="button" data-v="text">نص</button><button type="button" data-v="image">صورة</button></div></div>
           <div class="field" id="pptWmTextRow"><input class="inp" id="pptWmText" dir="auto" maxlength="60" placeholder="مثال: خاص بطلاب الدفعة 2026"></div>
           <div class="field" id="pptWmImgRow"><div class="prow"><label class="btn">⬆ رفع صورة العلامة<input type="file" id="pptWmImg" accept="image/*" class="sr"></label><img id="pptWmThumb" class="mini-thumb" alt="العلامة المائية"><button type="button" class="btn danger" id="pptWmDel">إزالة</button></div></div>
           <div class="sl" id="pptWmOpRow"><label for="pptWmOp">الشفافية</label><input type="range" id="pptWmOp" min="3" max="25" step="1"><output id="pptWmOpV"></output></div>
@@ -4609,7 +4609,7 @@ var ENGINE = (function () {
     keepParas: true, origLine: true, pageBg: "none", pageFrame: false,
     pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
-    pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "logo", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
+    pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
   var BAD_KEY = /^(__proto__|constructor|prototype)$/;
   // تنظيف أي إعدادات مخزنة/مستوردة: الأنواع والقيم المسموحة فقط
@@ -4631,6 +4631,7 @@ var ENGINE = (function () {
   }
   try { var saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); if (saved && typeof saved === "object") { var cs = cleanSettings(saved); Object.assign(S, cs); S.sizes = Object.assign({}, ENGINE.SIZE_DEFAULTS, cs.sizes || {}); } } catch (e) {}
   if (!ENGINE.THEMES[S.theme] && S.theme !== "custom") S.theme = "brand";
+  try { if (!localStorage.getItem("randommed.lec2docx.mig4")) { if (S.pptWm === "logo") S.pptWm = "doctor"; localStorage.setItem("randommed.lec2docx.mig4", "1"); } } catch (e) {}
   try { if (!localStorage.getItem("randommed.lec2docx.mig3")) { S.numPos = "right"; localStorage.setItem("randommed.lec2docx.mig3", "1"); } } catch (e) {}
   var clearResults = function () {};
   function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} clearResults(); }
@@ -5599,13 +5600,14 @@ var ENGINE = (function () {
       var im = pptWmImgObj.img, k = Math.min(1, 900 / Math.max(im.naturalWidth, im.naturalHeight)); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
       g = c.getContext("2d"); g.globalAlpha = a; g.drawImage(im, 0, 0, c.width, c.height); return c;
     }
-    var t = String(S.pptWmText || "").trim() || platformName(s); c.width = 900; c.height = 640; g = c.getContext("2d");
+    var t = mode === "doctor" ? (String(S.pptDoctor || "").trim() || String(S.pptCourse || "").trim() || String(S.pptWmText || "").trim() || platformName(s)) : (String(S.pptWmText || "").trim() || platformName(s));
+    c.width = 900; c.height = 640; g = c.getContext("2d");
     g.translate(450, 320); g.rotate(-Math.PI / 7); g.globalAlpha = a; g.fillStyle = "#7C5714"; g.textAlign = "center"; g.textBaseline = "middle"; g.direction = /[\u0600-\u06FF]/.test(t) ? "rtl" : "ltr";
     var fz = 110; do { g.font = "700 " + fz + "px 'El Messiri','IBM Plex Sans Arabic',sans-serif"; fz -= 6; } while (g.measureText(t).width > 820 && fz > 30);
     g.fillText(t, 0, 0); return c;
   }
   var wmCache = {};
-  function pptWmUrlCached(s) { var k = [S.pptWm, S.pptWmText, S.pptWmOpacity, platformName(s), s.rights, pptWmImgObj ? pptWmImgObj.url.length : 0].join("|"); if (!(k in wmCache)) { var c = pptWmCanvas(s); wmCache[k] = c ? c.toDataURL("image/png") : null; } return wmCache[k]; }
+  function pptWmUrlCached(s) { var k = [S.pptWm, S.pptWmText, S.pptDoctor, S.pptCourse, S.pptWmOpacity, platformName(s), s.rights, pptWmImgObj ? pptWmImgObj.url.length : 0].join("|"); if (!(k in wmCache)) { var c = pptWmCanvas(s); wmCache[k] = c ? c.toDataURL("image/png") : null; } return wmCache[k]; }
   function canvasJpeg(c) { return new Promise(function (r) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { r(new Uint8Array(ab)); }); }, "image/jpeg", 0.9); }); }
   function pptBrand(s) {
     return brandAssets(Object.assign({}, s, { wm: false, cover: s.cover && !(S.pptCovMode === "image" && pptCovImg) })).then(function (out) {
@@ -5734,7 +5736,7 @@ var ENGINE = (function () {
   $("pptNotes").onchange = function () { S.pptNotes = this.checked; save(); paintPpt(); pptFiles.forEach(function (f) { if (f.buf) parsePpt(f); }); };
   ["pptMergeCont", "pptStripRepeat", "pptDropEmpty", "pptJoinFrag", "pptSlideNums", "pptGlossary", "pptNotesPage"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); pptFiles.forEach(function (f) { if (f.buf) parsePpt(f); }); }; });
   ["pptIdentity", "pptRights", "pptBack", "pptAutoColors"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); paintPpt(); renderPptList(); schedulePreview(); }; });
-  ["pptDoctor", "pptCourse", "pptUni", "pptYear", "pptFooter"].forEach(function (k) { $(k).oninput = function () { S[k] = this.value; save(); schedulePreview(); paintName(); }; });
+  ["pptDoctor", "pptCourse", "pptUni", "pptYear", "pptFooter"].forEach(function (k) { $(k).oninput = function () { S[k] = this.value; save(); schedulePreview(); paintName(); paintPpt(); }; });
   $("pptOwnLogo").onchange = function (e) { var f = e.target.files[0]; e.target.value = ""; if (f) fileToDataUrl(f, 600).then(function (u) { S.pptLogo = true; save(); setPptImage("logo", u); }).catch(function () { show("err", "تعذّرت قراءة الصورة."); }); };
   $("pptOwnLogoDel").onclick = function () { setPptImage("logo", null); };
   /* ملفات الدكاترة: الهوية + الشعار + الغلاف + العلامة المائية + الألوان */
