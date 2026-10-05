@@ -198,6 +198,15 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .sticky-dl{position:fixed;inset-inline:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:30}
 @media (min-width:1000px){.sticky-dl{display:none}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* ---- أنماط الغلاف ---- */
+.covers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cov{border:1px solid var(--line);border-radius:12px;padding:6px;background:var(--surface-2);cursor:pointer;text-align:center;font-size:12px}
+.cov canvas{width:100%;height:auto;display:block;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.12);margin-bottom:5px;background:#fff}
+.cov.sel{border-color:var(--brass);box-shadow:0 0 0 2px color-mix(in srgb,var(--brass) 40%,transparent);font-weight:700}
+.page .pv-cover.styled{position:relative;aspect-ratio:1/1.414;border:none;padding:0;margin:0 -28px 18px;background-size:100% 100%;display:flex;flex-direction:column;justify-content:flex-start;overflow:hidden}
+.page .pv-cover.styled .cin{padding:14% 10% 0}
+.page .pv-cover .rights{position:absolute;bottom:3.5%;left:0;right:0;font-size:.72em;color:#7f7f7f}
+.page .pv-cover .rights a{color:inherit}
 /* ---- وضع ملف Word ---- */
 .main-col{display:grid;gap:12px;min-width:0}
 .modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -367,6 +376,19 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
             <label class="tg"><span>اسم Random.MEd في التذييل</span><span class="sw-t"><input type="checkbox" id="optFootBrand"><span></span></span></label>
           </div>
         </details>
+        <details class="sec" open>
+          <summary>تصميم الغلاف والحقوق</summary>
+          <div class="in">
+            <div class="covers" id="covers" role="radiogroup" aria-label="نمط الغلاف"></div>
+            <div class="toggles" style="margin-top:10px">
+              <label class="tg">صفحة الغلاف<span class="sw-t"><input type="checkbox" id="optCover"><span></span></span></label>
+              <label class="tg"><span>العنوان الفرعي على الغلاف<small>أطفئه لتلغي السطر تحت العنوان</small></span><span class="sw-t"><input type="checkbox" id="optSub"><span></span></span></label>
+              <label class="tg"><span>«جميع الحقوق محفوظة»<small>في التذييل والغلاف والعلامة المائية</small></span><span class="sw-t"><input type="checkbox" id="optRights"><span></span></span></label>
+            </div>
+            <div class="field" style="margin:12px 0 8px"><label class="lbl" for="pfName">اسم المنصة</label><input class="inp" id="pfName" placeholder="Random.MEd" dir="auto"></div>
+            <div class="field" style="margin:0"><label class="lbl" for="pfUrl">رابط المنصة <small style="font-weight:400;color:var(--ink-soft)">(اختياري — يظهر كرابط قابل للضغط)</small></label><input class="inp" id="pfUrl" type="url" inputmode="url" dir="ltr" placeholder="https://…"></div>
+          </div>
+        </details>
         <details class="sec">
           <summary>الغلاف والإخراج</summary>
           <div class="in">
@@ -379,7 +401,6 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
               <div class="seg" id="numSeg"><button data-v="right">يمين النص (عربي)</button><button data-v="left">يسار النص</button></div>
             </div>
             <div class="toggles">
-              <label class="tg">صفحة الغلاف<span class="sw-t"><input type="checkbox" id="optCover"><span></span></span></label>
               <label class="tg">فهرس المحاضرات ومحاورها<span class="sw-t"><input type="checkbox" id="optToc"><span></span></span></label>
             </div>
           </div>
@@ -887,29 +908,78 @@ var ENGINE = (function () {
 
     /* الغلاف والفهرس */
     var subject = S.subject || "المحاضرات";
-    var front = [];
+    var PF = Object.assign({ name: "Random.MEd", url: "" }, S.platform || {});
+    var rightsOn = S.rights !== false;
+    var YEAR = String(new Date().getFullYear());
+    function rightsRuns(size, color) {
+      return [mkRun("© ", false, {}, { size: size, color: color }), mkRun(YEAR + " ", false, {}, { size: size, color: color })]
+        .concat(runs([{ text: PF.name }], { size: size, color: color, bold: true })).concat(runs([{ text: " — جميع الحقوق محفوظة" }], { size: size, color: color }));
+    }
+    function linkRun(size, color) {
+      var u = String(PF.url || "").trim(); if (!u) return null;
+      var href = /^https?:\/\//i.test(u) ? u : "https://" + u;
+      return new D.ExternalHyperlink({ link: href, children: [new D.TextRun({ text: u.replace(/^https?:\/\//i, "").replace(/\/$/, ""), size: size, color: color, underline: {}, rightToLeft: false, font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })] });
+    }
+    var cover = [], tocKids = [], coverFooterKids = null, coverMargins = null;
+    var CSTYLE = S.coverStyle || "classic";
+    var CS = {
+      classic: { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 1500, logo: true, bar: T.h2line, foot: "7F7F7F", s: 0, e: 0 },
+      band:    { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 2600, logo: false, bar: T.h2line, foot: "7F7F7F", s: 2700, e: 0 },
+      geo:     { title: "FFFFFF", sub: "E6C27A", line: "E6E8EE", first: "FFFFFF", top: 1500, logo: true, bar: "D9A84E", foot: "C7D2E0", s: 300, e: 300 },
+      frame:   { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 1700, logo: true, bar: "A9761E", foot: "7F7F7F", s: 700, e: 700 },
+      wave:    { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 1300, logo: true, bar: T.h2line, foot: "FFFFFF", s: 200, e: 200 },
+      block:   { title: "FFFFFF", sub: "E6C27A", line: "404040", first: T.h2t, top: 0, logo: true, bar: "D9A84E", foot: "7F7F7F", s: 0, e: 0 }
+    }[CSTYLE] || null;
+    if (!CS) { CSTYLE = "classic"; CS = { title: T.h1, sub: "595959", line: "404040", first: T.h2t, top: 1500, logo: true, bar: T.h2line, foot: "7F7F7F", s: 0, e: 0 }; }
     if (S.cover) {
-      front.push(new D.Paragraph({ spacing: { before: brand.logo ? 1600 : 2600, after: 0 }, children: [] }));
-      var lr = logoRun(120);
-      if (lr) front.push(new D.Paragraph({ alignment: CENTER, spacing: { line: 240, lineRule: AUTO, after: 360 }, children: [lr] }));
-      if (S.coverTitle) front.push(P(parseInline(String(S.coverTitle)), { align: CENTER, size: SZ.body + 26, bold: true, color: T.h1, boldColor: T.h1, after: 120, line: 320, forceRtl: AR_RE.test(S.coverTitle) }));
-      front.push(P(S.coverTitle ? [] : [{ text: subject }], { pre: [GS()], align: CENTER, size: SZ.body + 30, bold: true, color: T.h1, boldColor: T.h1, after: S.coverTitle ? 0 : 120, line: S.coverTitle ? 120 : 320, forceRtl: true }));
-      front.push(new D.Paragraph({ spacing: { before: 0, after: 240 }, indent: ind(2400, 2400), border: { bottom: { style: D.BorderStyle.THICK, size: 24, color: T.h2line, space: 1 } }, children: [] }));
       var cl = (S.coverLines || []).filter(function (x) { return String(x).trim(); });
-      if (!cl.length || S.subtitle) front.push(P([{ text: S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات" }], { align: CENTER, size: SZ.body + 8, color: "595959", after: cl.length ? 240 : 600, forceRtl: true }));
-      front.push(markP(GE()));
-      // سطور الغلاف الأصلي (نص المستخدم — محفوظ كما هو)
-      cl.forEach(function (line, k) { front.push(P(parseInline(String(line)), { align: CENTER, size: SZ.body + (k === 0 ? 4 : 2), bold: k === 0, color: k === 0 ? T.h2t : "404040", boldColor: T.h2t, after: 80, line: 300 })); });
+      var showSub = S.showSubtitle !== false && (!cl.length || S.subtitle);
+      var subTxt = S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات";
       var cntLabel = (S.tocLabels && S.tocLabels.count) || "عدد المحاضرات: ";
-      front.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { before: cl.length ? 400 : 0, after: 0 }, children: [GS(),
-        mkRun(cntLabel, true, {}, { size: SZ.body, color: "7F7F7F" }), mkRun(String(S.tocItems ? S.tocItems.length : lectures.length), false, {}, { size: SZ.body, color: "7F7F7F" })].concat(brand.logo ? [] : [GE()]) }));
-      if (brand.logo) front.push(new D.Paragraph({ alignment: CENTER, bidirectional: false, spacing: { before: cl.length ? 1200 : 2400, after: 0 }, children: [
-        new D.TextRun({ text: "Random.MEd", size: SZ.body + 4, bold: true, color: "A9761E", font: { ascii: FE, hAnsi: FE, cs: FE } }), GE()] }));
+      var cnt = String(S.tocItems ? S.tocItems.length : lectures.length);
+      // عناصر العنوان (مولّدة) + سطر العنوان الأصلي إن وجد
+      function titleBlock(c, indent) {
+        var o = [];
+        var lr = c.logo ? logoRun(CSTYLE === "block" ? 96 : 120) : null;
+        if (lr) o.push(new D.Paragraph({ alignment: CENTER, indent: indent, spacing: { line: 240, lineRule: AUTO, after: 300 }, children: [lr] }));
+        if (S.coverTitle) o.push(P(parseInline(String(S.coverTitle)), { align: CENTER, indent: indent, size: SZ.body + 24, bold: true, color: c.title, boldColor: c.title, after: 120, line: 320, forceRtl: AR_RE.test(S.coverTitle) }));
+        o.push(P(S.coverTitle ? [] : [{ text: subject }], { pre: [GS()], align: CENTER, indent: indent, size: SZ.body + 28, bold: true, color: c.title, boldColor: c.title, after: S.coverTitle ? 0 : 120, line: S.coverTitle ? 120 : 320, forceRtl: true }));
+        o.push(new D.Paragraph({ spacing: { before: 60, after: 220 }, indent: ind((indent && indent.start || 0) + 2200, (indent && indent.end || 0) + 2200), border: { bottom: { style: D.BorderStyle.THICK, size: 24, color: c.bar, space: 1 } }, children: [] }));
+        if (showSub) o.push(P([{ text: subTxt }], { align: CENTER, indent: indent, size: SZ.body + 6, color: c.sub, after: 200, forceRtl: true }));
+        o.push(markP(GE()));
+        return o;
+      }
+      function linesBlock(c, indent) {
+        var o = [];
+        cl.forEach(function (line, k) { o.push(P(parseInline(String(line)), { align: CENTER, indent: indent, size: SZ.body + (k === 0 ? 4 : 2), bold: k === 0, color: k === 0 ? c.first : c.line, boldColor: c.first, after: 80, line: 300 })); });
+        o.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: indent, spacing: { before: cl.length ? 360 : 200, after: 0 }, children: [GS(),
+          mkRun(cntLabel, true, {}, { size: SZ.body, color: c.line === "E6E8EE" ? "C7D2E0" : "7F7F7F" }), mkRun(cnt, false, {}, { size: SZ.body, color: c.line === "E6E8EE" ? "C7D2E0" : "7F7F7F" }), GE()] }));
+        return o;
+      }
+      if (CSTYLE === "block") {
+        coverMargins = { top: 0, bottom: 1100, left: 0, right: 0, header: 0, footer: 500 };
+        var inner = titleBlock(CS, ind(1200, 1200));
+        cover.push(new D.Table({ layout: D.TableLayoutType.FIXED, width: { size: PAGE_W, type: D.WidthType.DXA }, columnWidths: [PAGE_W], visuallyRightToLeft: true, borders: noBorders,
+          rows: [new D.TableRow({ height: { value: 7600, rule: D.HeightRule.ATLEAST }, children: [new D.TableCell({ width: { size: PAGE_W, type: D.WidthType.DXA }, verticalAlign: D.VerticalAlign.CENTER, shading: shade(T.h1),
+            borders: { top: NONE, left: NONE, right: NONE, bottom: { style: D.BorderStyle.SINGLE, size: 48, color: "D9A84E" } }, margins: { top: 500, bottom: 500, left: 0, right: 0 }, children: inner })] })] }));
+        cover.push(new D.Paragraph({ spacing: { before: 0, after: 500 }, children: [] }));
+        cover = cover.concat(linesBlock(CS, ind(1418 + 400, 1418 + 400)));
+      } else {
+        var indent = (CS.s || CS.e) ? ind(CS.s, CS.e) : undefined;
+        cover.push(new D.Paragraph({ spacing: { before: CS.top, after: 0 }, children: [] }));
+        cover = cover.concat(titleBlock(CS, indent)).concat(linesBlock(CS, indent));
+      }
+      // تذييل الغلاف: الحقوق + رابط المنصة
+      var fc = CS.foot, fsz = Math.max(16, SZ.body - 3);
+      coverFooterKids = [];
+      if (rightsOn) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, spacing: { after: 40 }, children: rightsRuns(fsz, fc) }));
+      var lk = linkRun(fsz, fc === "7F7F7F" ? T.acc : fc);
+      if (lk) coverFooterKids.push(new D.Paragraph({ alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, spacing: { after: 0 }, children: [lk] }));
     }
     if (S.toc) {
       var TL = Object.assign({ title: "فهرس المحاضرات ومحاورها", c1: "المحاضرة", c2: "المحاور الرئيسية" }, S.tocLabels || {});
       var tocItems = S.tocItems || lectures.map(function (L, i) { return { label: lectureLabel(L, i), topics: lectureTopics(L) }; });
-      front.push(P([{ text: TL.title }], { pre: [GS()], pageBreakBefore: !!S.cover, size: SZ.h2 + 2, bold: true, color: "FFFFFF", boldColor: "FFFFFF", align: CENTER, after: 200, line: HLINE,
+      tocKids.push(P([{ text: TL.title }], { pre: [GS()], size: SZ.h2 + 2, bold: true, color: "FFFFFF", boldColor: "FFFFFF", align: CENTER, after: 200, line: HLINE,
         shading: shade(T.h1), border: box(T.h1, 6, 4), forceRtl: true }));
       var trs = [new D.TableRow({ tableHeader: true, cantSplit: true, children: [[TL.c1, 2300], [TL.c2, CW - 2300]].map(function (h) {
         return new D.TableCell({ width: { size: h[1], type: D.WidthType.DXA }, shading: shade(T.thead), margins: { top: 80, bottom: 80, left: 100, right: 100 },
@@ -925,9 +995,10 @@ var ENGINE = (function () {
           new D.TableCell({ width: { size: CW - 2300, type: D.WidthType.DXA }, shading: shade(i % 2 ? T.alt : "FFFFFF"), margins: { top: 80, bottom: 80, left: 100, right: 100 }, children: topicParas })
         ] }));
       });
-      front.push(new D.Table({ layout: D.TableLayoutType.FIXED, rows: trs, width: { size: CW, type: D.WidthType.DXA }, columnWidths: [2300, CW - 2300], visuallyRightToLeft: true, borders: TB() }));
-      front.push(markP(GE()));
+      tocKids.push(new D.Table({ layout: D.TableLayoutType.FIXED, rows: trs, width: { size: CW, type: D.WidthType.DXA }, columnWidths: [2300, CW - 2300], visuallyRightToLeft: true, borders: TB() }));
+      tocKids.push(markP(GE()));
     }
+    var front = cover.concat(tocKids);
 
     /* المتن */
     var body = [];
@@ -960,12 +1031,29 @@ var ENGINE = (function () {
     var fs = Math.max(16, SZ.body - 4);
     var footKids = [mkRun("صفحة ", true, {}, { size: fs, color: "7F7F7F" }),
       new D.TextRun({ children: [D.PageNumber.CURRENT], size: fs, color: "7F7F7F", font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })];
-    if (S.footBrand) { footKids.push(mkRun("   ·   ", true, {}, { size: fs, color: "BFBFBF" })); footKids.push(new D.TextRun({ text: "Random.MEd", size: fs, bold: true, color: "A9761E", font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })); }
-    var footer = new D.Footer({ children: [new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { after: 0 }, children: footKids })] });
+    if (S.footBrand && !rightsOn) { footKids.push(mkRun("   ·   ", true, {}, { size: fs, color: "BFBFBF" })); footKids.push(new D.TextRun({ text: PF.name, size: fs, bold: true, color: "A9761E", font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })); }
+    var footParas = [new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { after: 0 }, children: footKids })];
+    if (rightsOn || PF.url) {
+      var rk = rightsOn ? rightsRuns(fs - 2, "8C8C8C") : [];
+      var lk2 = linkRun(fs - 2, T.acc);
+      if (lk2) { if (rk.length) rk.push(mkRun("   ·   ", true, {}, { size: fs - 2, color: "BFBFBF" })); rk.push(lk2); }
+      footParas.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { before: 20, after: 0 }, children: rk }));
+    }
+    var footer = new D.Footer({ children: footParas });
 
     var page = { size: { width: PAGE_W, height: 16838 }, margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN, header: 709, footer: 709 } };
+    var emptyHF = function (C) { return new C({ children: [new D.Paragraph({ spacing: { after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [] })] }); };
     var sections = [];
-    if (front.length) sections.push({ properties: { page: page }, children: front });
+    if (cover.length) {
+      var chKids = [];
+      if (brand.coverBg) chKids.push(new D.ImageRun({ type: "png", data: brand.coverBg.data, transformation: { width: 794, height: 1123 },
+        floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 0 },
+          behindDocument: true, allowOverlap: true, wrap: { type: D.TextWrappingType.NONE } }, altText: { title: "خلفية الغلاف", description: PF.name, name: "coverbg" } }));
+      sections.push({ properties: { page: { size: page.size, margin: coverMargins || page.margin } },
+        headers: { default: new D.Header({ children: [new D.Paragraph({ spacing: { after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: chKids })] }) },
+        footers: { default: coverFooterKids && coverFooterKids.length ? new D.Footer({ children: coverFooterKids }) : emptyHF(D.Footer) }, children: cover });
+    }
+    if (tocKids.length) sections.push({ properties: { page: page }, headers: { default: emptyHF(D.Header) }, footers: { default: emptyHF(D.Footer) }, children: tocKids });
     sections.push({ properties: { page: Object.assign({}, page, { pageNumbers: { start: 1, formatType: D.NumberFormat.DECIMAL } }) }, headers: { default: header }, footers: { default: footer }, children: body });
     function hStyle(id, name, size, color) {
       return { id: id, name: name, basedOn: "Normal", next: "Normal", quickFormat: true,
@@ -1061,12 +1149,27 @@ var ENGINE = (function () {
     closeUl();
     return h;
   }
-  function previewHTML(lectures, S, logoSrc) {
+  function previewHTML(lectures, S, logoSrc, bgUrl) {
     var h = "";
-    if (S.cover) {
+    if (S.cover && bgUrl) {
+      var cl2 = (S.coverLines || []).filter(function (x) { return String(x).trim(); }), st = S.coverStyle || "classic", T = resolveTheme(S);
+      var dark = st === "geo", tc = dark ? "#fff" : "#" + T.h1, sc = dark ? "#E6C27A" : "#595959", lc = dark ? "#E6E8EE" : "#404040";
+      var pad = { classic: "16% 10% 0", band: "26% 37% 0 6%", geo: "15% 12% 0", frame: "18% 14% 0", wave: "13% 10% 0", block: "0" }[st] || "16% 10% 0";
+      var showSub = S.showSubtitle !== false && (!cl2.length || S.subtitle), sub = esc(S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات");
+      var head = (logoSrc && st !== "band" ? '<img src="' + logoSrc + '" alt="" style="height:' + (st === "block" ? 54 : 66) + 'px;display:block;margin:0 auto 10px">' : "") +
+        '<div class="ct" style="color:' + (st === "block" ? "#fff" : tc) + '">' + inlHTML([{ text: S.coverTitle || S.subject || "المحاضرات" }]) + '</div><div class="bar" style="background:' + (st === "block" || dark ? "#D9A84E" : "#" + T.h2line) + '"></div>' +
+        (showSub ? '<div class="cs" style="color:' + (st === "block" ? "#E6C27A" : sc) + '">' + sub + "</div>" : "");
+      var lines = cl2.map(function (l, k) { return '<div class="cl' + (k ? "" : " first") + '" style="color:' + (k ? lc : (dark ? "#fff" : "#" + T.h2t)) + '">' + inlHTML([{ text: l }]) + "</div>"; }).join("");
+      var pf = Object.assign({ name: "Random.MEd", url: "" }, S.platform || {});
+      var rights = (S.rights !== false ? "© " + new Date().getFullYear() + " " + esc(pf.name) + " — جميع الحقوق محفوظة" : "") + (pf.url ? (S.rights !== false ? "<br>" : "") + '<a href="#" onclick="return false" dir="ltr">' + esc(String(pf.url).replace(/^https?:\/\//, "")) + "</a>" : "");
+      h += '<div class="pv-cover styled" style="background-image:url(' + bgUrl + ')">' +
+        (st === "block" ? '<div style="background:#' + T.h1 + ';border-bottom:5px solid #D9A84E;padding:12% 8% 9%">' + head + '</div><div class="cin" style="padding:8% 10% 0">' + lines + "</div>"
+          : '<div class="cin" style="padding:' + pad + '">' + head + '<div style="margin-top:4%">' + lines + "</div></div>") +
+        (rights ? '<div class="rights" style="color:' + (dark ? "#C7D2E0" : st === "wave" ? "#fff" : "#7f7f7f") + (st === "band" ? ";padding-left:0;padding-right:34%" : "") + '">' + rights + "</div>" : "") + "</div>";
+    } else if (S.cover) {
       var cl = (S.coverLines || []).filter(function (x) { return String(x).trim(); });
       h += '<div class="pv-cover">' + (logoSrc ? '<img src="' + logoSrc + '" alt="">' : "") + '<div class="ct">' + inlHTML([{ text: S.coverTitle || S.subject || "المحاضرات" }]) + '</div><div class="bar"></div>' +
-        (!cl.length || S.subtitle ? '<div class="cs">' + esc(S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات") + "</div>" : "") +
+        (S.showSubtitle !== false && (!cl.length || S.subtitle) ? '<div class="cs">' + esc(S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات") + "</div>" : "") +
         cl.map(function (l, k) { return '<div class="cl' + (k ? "" : " first") + '">' + inlHTML([{ text: l }]) + "</div>"; }).join("") + "</div>";
     }
     if (S.toc && lectures.length) {
@@ -1595,7 +1698,7 @@ var ENGINE = (function () {
     // 3) الجداول
     allW(body, "tbl").forEach(function (tbl) {
       if (!tbl.parentNode) return;
-      if (!kids(tbl, "tr").length) return;
+      if (!kids(tbl, "tr").length) { var tp0 = kid(tbl, "tblPr"); if (tp0) sortPr(tp0, ORD.tblPr); return; }
       rep.tables++;
       var tblPr = ensurePr(tbl, "tblPr"), dir = tableDirection(tbl), rows = kids(tbl, "tr"), figure = hasDrawing(tbl);
       if (dir.bilingual) rep.bilingual++;
@@ -1740,15 +1843,11 @@ var ENGINE = (function () {
       }
       var jobs = [], mediaN = 0;
       function copyMedia(srcPath) { var ext = (srcPath.split(".").pop() || "png").toLowerCase(), dst = "media/rmed_" + (++mediaN) + "_" + Date.now().toString(36) + "." + ext; jobs.push(donor.file("word/" + srcPath.replace(/^\/?word\//, "")).async("uint8array").then(function (u) { zip.file("word/" + dst, u); })); return dst; }
-      // الجسم المانح: كل شيء حتى نهاية قسم الغلاف
-      var dbody = ddoc.getElementsByTagNameNS(W, "body")[0], front = [];
-      if (S2.cover || S2.toc) {
-        for (var c = dbody.firstChild; c; c = c.nextSibling) {
-          if (!isW(c)) continue;
-          front.push(c);
-          if (isW(c, "p")) { var pPr = kid(c, "pPr"); if (pPr && kid(pPr, "sectPr")) break; }
-        }
-      }
+      // الجسم المانح: كل الأقسام قبل قسم المتن (الغلاف + الفهرس)
+      var dbody = ddoc.getElementsByTagNameNS(W, "body")[0], all = [], lastSect = -1, front = [];
+      for (var c = dbody.firstChild; c; c = c.nextSibling) if (isW(c) && !isW(c, "sectPr")) all.push(c);
+      all.forEach(function (c2, i) { if (isW(c2, "p")) { var pp0 = kid(c2, "pPr"); if (pp0 && kid(pp0, "sectPr")) lastSect = i; } });
+      if ((S2.cover || S2.toc) && lastSect >= 0) front = all.slice(0, lastSect + 1);
       // إعادة ربط صور الغلاف
       front.forEach(function (node) {
         Array.prototype.forEach.call(node.getElementsByTagNameNS(ANS, "blip"), function (bl) {
@@ -1757,8 +1856,8 @@ var ENGINE = (function () {
           bl.setAttributeNS(RNS, "r:embed", addRel(rel.type, dst));
         });
       });
-      // الترويسة والتذييل
-      var hdrId = null, ftrId = null, partN = 0;
+      // كل ترويسات/تذييلات المانح (غلاف بخلفيته، فهرس فارغ، متن بالهوية)
+      var partN = 0, relMap = {};
       function copyPart(rel, kind) {
         var src = "word/" + rel.target.replace(/^\/?word\//, ""), name; do { name = "rmed" + kind + (++partN) + ".xml"; } while (zip.file("word/" + name));
         var relsSrc = src.replace(/word\//, "word/_rels/") + ".rels";
@@ -1780,22 +1879,27 @@ var ENGINE = (function () {
       }
       Object.keys(drels).forEach(function (id) {
         var rel = drels[id];
-        if (/\/header$/.test(rel.type) && !hdrId) hdrId = copyPart(rel, "Header");
-        if (/\/footer$/.test(rel.type) && !ftrId) ftrId = copyPart(rel, "Footer");
+        if (/\/header$/.test(rel.type)) relMap[id] = copyPart(rel, "Header");
+        else if (/\/footer$/.test(rel.type)) relMap[id] = copyPart(rel, "Footer");
       });
-      // إدراج الغلاف في بداية المستند
-      var first = body.firstChild;
-      front.forEach(function (node) { body.insertBefore(doc.importNode(node, true), first); });
-      // ربط كل الأقسام بالترويسة/التذييل الجديدين
-      Array.prototype.forEach.call(body.getElementsByTagNameNS(W, "sectPr"), function (sp, idx) {
-        var isFront = false;
-        for (var pp = sp.parentNode; pp; pp = pp.parentNode) if (pp.parentNode === body && front.length && isW(pp, "p") && pp === lastInserted()) isFront = true;
+      var dsp = kid(dbody, "sectPr"), hdrId = null, ftrId = null;
+      kids(dsp, "headerReference").forEach(function (h) { if ((wa(h, "type") || "default") === "default") hdrId = relMap[h.getAttributeNS(RNS, "id")]; });
+      kids(dsp, "footerReference").forEach(function (f) { if ((wa(f, "type") || "default") === "default") ftrId = relMap[f.getAttributeNS(RNS, "id")]; });
+      // إدراج الغلاف والفهرس في بداية المستند مع إعادة ربط ترويساتهما
+      var first = body.firstChild, imported = [];
+      front.forEach(function (node) {
+        var nn = doc.importNode(node, true);
+        Array.prototype.forEach.call(nn.getElementsByTagNameNS(W, "headerReference"), function (r) { var m = relMap[r.getAttributeNS(RNS, "id")]; if (m) r.setAttributeNS(RNS, "r:id", m); });
+        Array.prototype.forEach.call(nn.getElementsByTagNameNS(W, "footerReference"), function (r) { var m = relMap[r.getAttributeNS(RNS, "id")]; if (m) r.setAttributeNS(RNS, "r:id", m); });
+        body.insertBefore(nn, first); imported.push(nn);
+      });
+      // ربط أقسام المستند الأصلية بترويسة/تذييل المتن
+      Array.prototype.forEach.call(body.getElementsByTagNameNS(W, "sectPr"), function (sp) {
+        for (var q = sp.parentNode; q && q !== body; q = q.parentNode) if (imported.indexOf(q) >= 0) return;
         removeKids(sp, ["headerReference", "footerReference", "titlePg"]);
-        if (isFront) return;
         if (ftrId) { var f = mk(doc, "footerReference", { type: "default" }); f.setAttributeNS(RNS, "r:id", ftrId); sp.insertBefore(f, sp.firstChild); }
         if (hdrId) { var h = mk(doc, "headerReference", { type: "default" }); h.setAttributeNS(RNS, "r:id", hdrId); sp.insertBefore(h, sp.firstChild); }
       });
-      function lastInserted() { var k = 0, c2 = body.firstChild, last = null; while (c2 && k < front.length) { if (isW(c2)) { last = c2; k++; } c2 = c2.nextSibling; } return last; }
       zip.file("word/_rels/document.xml.rels", toXml(relsDoc));
       zip.file("[Content_Types].xml", toXml(ctDoc));
       // إلغاء ترويسات الصفحات الزوجية حتى تظهر ترويستنا في كل الصفحات
@@ -1947,7 +2051,7 @@ var ENGINE = (function () {
   var $ = function (id) { return document.getElementById(id); };
   var LS_KEY = "randommed.lec2docx.settings.v2";
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
-    cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin" };
+    cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" } };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
   try { var saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); if (saved && typeof saved === "object") { Object.assign(S, saved); S.sizes = Object.assign({}, ENGINE.SIZE_DEFAULTS, saved.sizes || {}); } } catch (e) {}
   if (!ENGINE.THEMES[S.theme] && S.theme !== "custom") S.theme = "brand";
@@ -1978,20 +2082,85 @@ var ENGINE = (function () {
   var logoImg = new Image(), logoReady = new Promise(function (r) { logoImg.onload = r; logoImg.onerror = r; });
   logoImg.src = LOGO_SRC;
   function canvasPng(c) { return new Promise(function (r) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { r(new Uint8Array(ab)); }); }, "image/png"); }); }
+  /* ---- رسم خلفيات الغلاف (Canvas) ---- */
+  var COVER_STYLES = [["classic", "كلاسيكي"], ["block", "رأس ملوّن"], ["band", "شريط جانبي"], ["geo", "داكن هندسي"], ["frame", "إطار ذهبي"], ["wave", "موجات"]];
+  function hx(c) { return "#" + String(c).replace("#", ""); }
+  function shadeHex(h, t) { h = String(h).replace("#", ""); var o = "#"; for (var i = 0; i < 3; i++) { var v = parseInt(h.substr(i * 2, 2), 16); v = t < 0 ? Math.round(v * (1 + t)) : Math.round(v + (255 - v) * t); o += ("0" + Math.max(0, Math.min(255, v)).toString(16)).slice(-2); } return o; }
+  function hexPath(g, x, y, r) { g.beginPath(); for (var k = 0; k < 6; k++) { var a = Math.PI / 3 * k + Math.PI / 6; g.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); } g.closePath(); }
+  function drawCover(style, T, name, scale) {
+    var W = Math.round(1240 * (scale || 1)), H = Math.round(1754 * (scale || 1)), c = document.createElement("canvas"); c.width = W; c.height = H;
+    var g = c.getContext("2d"), u = W / 1240, GOLD = "#D9A84E", GOLD2 = "#A9761E", P = hx(T.h1), A = hx(T.acc), L = hx(T.light);
+    g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, W, H);
+    if (style === "classic") {
+      g.fillStyle = P; g.fillRect(0, 0, W, 34 * u); g.fillStyle = GOLD; g.fillRect(0, 34 * u, W, 8 * u);
+      g.fillStyle = GOLD; g.fillRect(0, H - 42 * u, W, 8 * u); g.fillStyle = P; g.fillRect(0, H - 34 * u, W, 34 * u);
+      g.strokeStyle = shadeHex(T.light, -0.05); g.lineWidth = 2 * u; g.strokeRect(70 * u, 110 * u, W - 140 * u, H - 220 * u);
+    } else if (style === "block") {
+      g.fillStyle = L; g.globalAlpha = 0.55; g.fillRect(0, H - 120 * u, W, 120 * u); g.globalAlpha = 1;
+      g.fillStyle = GOLD; g.fillRect(0, H - 128 * u, W, 8 * u);
+    } else if (style === "band") {
+      var bw = W * 0.30, x0 = W - bw, gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, P); gr.addColorStop(1, shadeHex(T.h1, -0.45));
+      g.fillStyle = gr; g.fillRect(x0, 0, bw, H);
+      g.fillStyle = GOLD; g.fillRect(x0 - 10 * u, 0, 10 * u, H);
+      g.strokeStyle = "rgba(217,168,78,.18)"; g.lineWidth = 2 * u;
+      for (var k = 0; k < 7; k++) { g.beginPath(); g.arc(x0 + bw / 2, H * 0.78, (60 + k * 46) * u, 0, Math.PI * 2); g.stroke(); }
+      if (logoImg && logoImg.naturalWidth) { var lw = bw * 0.55, lh = lw * logoImg.naturalHeight / logoImg.naturalWidth; g.drawImage(logoImg, x0 + (bw - lw) / 2, H * 0.12, lw, lh); }
+      g.fillStyle = GOLD; g.font = "700 " + Math.round(40 * u) + "px 'El Messiri','IBM Plex Sans Arabic',sans-serif"; g.textAlign = "center"; g.direction = "ltr";
+      g.fillText(name, x0 + bw / 2, H * 0.12 + bw * 0.55 * 0.84 + 70 * u);
+      g.fillStyle = "#F7F3EA"; g.fillRect(0, 0, x0 - 10 * u, H); g.fillStyle = "#FFFFFF"; g.fillRect(40 * u, 40 * u, x0 - 90 * u, H - 80 * u);
+    } else if (style === "geo") {
+      var gg = g.createLinearGradient(0, 0, W * 0.4, H); gg.addColorStop(0, shadeHex(T.h1, 0.08)); gg.addColorStop(1, shadeHex(T.h1, -0.55));
+      g.fillStyle = gg; g.fillRect(0, 0, W, H);
+      g.strokeStyle = "rgba(217,168,78,.22)"; g.lineWidth = 2.2 * u;
+      for (var r = 0; r < 6; r++) for (var q = 0; q < 5; q++) { if ((r + q) % 2) continue; hexPath(g, (q * 104 + (r % 2) * 52) * u - 30 * u, (r * 90) * u - 20 * u, 56 * u); g.stroke(); }
+      for (r = 0; r < 6; r++) for (q = 0; q < 5; q++) { if ((r + q) % 2) continue; hexPath(g, W - (q * 104 + (r % 2) * 52) * u + 30 * u, H - (r * 90) * u + 20 * u, 56 * u); g.stroke(); }
+      g.strokeStyle = GOLD; g.lineWidth = 3 * u; g.strokeRect(56 * u, 56 * u, W - 112 * u, H - 112 * u);
+      g.lineWidth = 1 * u; g.strokeRect(70 * u, 70 * u, W - 140 * u, H - 140 * u);
+    } else if (style === "frame") {
+      g.fillStyle = "#FBF8F1"; g.fillRect(0, 0, W, H);
+      g.strokeStyle = GOLD2; g.lineWidth = 7 * u; g.strokeRect(48 * u, 48 * u, W - 96 * u, H - 96 * u);
+      g.lineWidth = 2 * u; g.strokeRect(68 * u, 68 * u, W - 136 * u, H - 136 * u);
+      [[68, 68], [W / u - 68, 68], [68, H / u - 68], [W / u - 68, H / u - 68]].forEach(function (p) {
+        g.save(); g.translate(p[0] * u, p[1] * u); g.rotate(Math.PI / 4); g.fillStyle = P; g.fillRect(-22 * u, -22 * u, 44 * u, 44 * u); g.fillStyle = GOLD; g.fillRect(-11 * u, -11 * u, 22 * u, 22 * u); g.restore();
+      });
+      g.fillStyle = P; g.fillRect(W / 2 - 160 * u, 48 * u - 4 * u, 320 * u, 8 * u); g.fillRect(W / 2 - 160 * u, H - 48 * u - 4 * u, 320 * u, 8 * u);
+    } else if (style === "wave") {
+      function wave(y0, amp, color, alpha, ph) { g.globalAlpha = alpha; g.fillStyle = color; g.beginPath(); g.moveTo(0, H); g.lineTo(0, y0); for (var x = 0; x <= W; x += 10 * u) g.lineTo(x, y0 + Math.sin(x / W * Math.PI * 2 + ph) * amp); g.lineTo(W, H); g.closePath(); g.fill(); g.globalAlpha = 1; }
+      wave(H - 230 * u, 30 * u, L, 1, 0.3); wave(H - 185 * u, 26 * u, A, 0.85, 1.6); wave(H - 140 * u, 20 * u, P, 1, 2.6);
+      g.globalAlpha = 1; g.fillStyle = L; g.beginPath(); g.arc(W - 40 * u, 40 * u, 210 * u, 0, Math.PI * 2); g.fill();
+      g.fillStyle = A; g.globalAlpha = 0.25; g.beginPath(); g.arc(W - 40 * u, 40 * u, 130 * u, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
+      g.fillStyle = GOLD; g.beginPath(); g.arc(90 * u, 210 * u, 14 * u, 0, Math.PI * 2); g.fill();
+    }
+    return c;
+  }
+
+  function platformName(s) { return ((s.platform && s.platform.name) || "Random.MEd").trim() || "Random.MEd"; }
+  // العلامة المائية: الشعار + سطر الحقوق
+  function drawWatermark(s) {
+    var W = logoImg.naturalWidth || 214, H = logoImg.naturalHeight || 180, cw = 760, lh = Math.round(cw * 0.62 * H / W), rights = s.rights !== false;
+    var c = document.createElement("canvas"); c.width = cw; c.height = lh + (rights ? 150 : 20);
+    var g = c.getContext("2d"); g.globalAlpha = Math.max(0.02, Math.min(0.3, (s.wmOpacity || 7) / 100));
+    g.drawImage(logoImg, (cw - cw * 0.62) / 2, 0, cw * 0.62, lh);
+    if (rights) {
+      g.fillStyle = "#7C5714"; g.textAlign = "center";
+      g.font = "700 46px 'El Messiri','IBM Plex Sans Arabic',sans-serif"; g.direction = "ltr"; g.fillText("© " + platformName(s), cw / 2, lh + 62);
+      g.font = "500 34px 'IBM Plex Sans Arabic','Segoe UI',sans-serif"; g.direction = "rtl"; g.fillText("جميع الحقوق محفوظة", cw / 2, lh + 116);
+    }
+    return c;
+  }
   function brandAssets(s) {
-    if (!s.logo && !s.wm) return Promise.resolve({});
-    return logoReady.then(function () {
+    var needCover = s.cover && s.coverStyle && s.coverStyle !== "none";
+    if (!s.logo && !s.wm && !needCover) return Promise.resolve({});
+    return logoReady.then(function () { return document.fonts && document.fonts.ready ? document.fonts.ready : null; }).then(function () {
       var out = {}, W = logoImg.naturalWidth || 214, H = logoImg.naturalHeight || 180, jobs = [];
       if (s.logo) out.logo = { data: ENGINE.b64ToBytes(LOGO_B64), w: W, h: H };
-      if (s.wm) {
-        var c = document.createElement("canvas"); c.width = W * 2; c.height = H * 2;
-        var g = c.getContext("2d"); g.globalAlpha = Math.max(0.02, Math.min(0.3, (s.wmOpacity || 7) / 100)); g.drawImage(logoImg, 0, 0, c.width, c.height);
-        jobs.push(canvasPng(c).then(function (u) { out.wm = { data: u, w: 380, h: Math.round(380 * H / W) }; }));
-      }
+      if (s.wm) { var wc = drawWatermark(s); jobs.push(canvasPng(wc).then(function (u) { out.wm = { data: u, w: 380, h: Math.round(380 * wc.height / wc.width) }; })); }
+      if (needCover) jobs.push(canvasPng(drawCover(s.coverStyle, ENGINE.resolveTheme(s), platformName(s))).then(function (u) { out.coverBg = { data: u, w: 1240, h: 1754 }; }));
       return Promise.all(jobs).then(function () { return out; });
     });
   }
 
+  window.RMED_brand = brandAssets; // للاختبار الآلي
   /* ---- الحالة ---- */
   var lectures = [{ text: "" }], active = 0;
   function isDarkNow() { return S.dark === null ? matchMedia("(prefers-color-scheme: dark)").matches : S.dark; }
@@ -2079,7 +2248,7 @@ var ENGINE = (function () {
   Object.keys(ENGINE.THEMES).forEach(function (k) { addThemeBtn(k, ENGINE.THEMES[k], ENGINE.THEMES[k].name); });
   var customBtn = addThemeBtn("custom", ENGINE.customTheme(S.cMain, S.cAcc), "مخصص 🎨");
   function refreshCustomSwatch() { var T = ENGINE.customTheme(S.cMain, S.cAcc), is = customBtn.querySelectorAll("i"); [T.h1, T.h2line, T.h2bg, T.h3].forEach(function (c, i) { is[i].style.background = "#" + c; }); }
-  $("cMain").oninput = function () { S.cMain = this.value; refreshCustomSwatch(); save(); schedulePreview(); };
+  $("cMain").oninput = function () { S.cMain = this.value; refreshCustomSwatch(); save(); if (S.theme === "custom") paintCoverThumbs(); schedulePreview(); };
   $("cAcc").oninput = function () { S.cAcc = this.value; refreshCustomSwatch(); save(); schedulePreview(); };
 
   var SL = [["body", "المتن", 9, 16], ["table", "الجداول", 8, 15], ["h1", "عنوان المحاضرة", 13, 28], ["h2", "قسم (##)", 11, 22], ["h3", "عنوان فرعي (###)", 10, 19], ["h4", "عنوان (####)", 10, 18]];
@@ -2095,7 +2264,33 @@ var ENGINE = (function () {
   segBind("modeSeg", "mode"); segBind("numSeg", "numPos"); segBind("lhSeg", "lineSpacing", Number);
   $("subj").oninput = function () { S.subject = this.value; save(); schedulePreview(); };
   $("subt").oninput = function () { S.subtitle = this.value; save(); schedulePreview(); };
-  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optFootBrand", "footBrand"]].forEach(function (p) {
+  if (!S.platform || typeof S.platform !== "object") S.platform = { name: "Random.MEd", url: "" };
+  // معاينات صغيرة لأنماط الغلاف
+  var coverThumbs = {};
+  COVER_STYLES.forEach(function (cs) {
+    var b = document.createElement("button"); b.type = "button"; b.className = "cov"; b.dataset.k = cs[0]; b.setAttribute("role", "radio");
+    var cv = document.createElement("canvas"); cv.width = 124; cv.height = 175; b.appendChild(cv); b.appendChild(document.createTextNode(cs[1]));
+    b.onclick = function () { S.coverStyle = cs[0]; if (!S.cover) S.cover = true; save(); paintSettings(); schedulePreview(); };
+    coverThumbs[cs[0]] = cv; $("covers").appendChild(b);
+  });
+  function paintCoverThumbs() {
+    var T = ENGINE.resolveTheme(S), nm = platformName(S);
+    logoReady.then(function () {
+      COVER_STYLES.forEach(function (cs) {
+        var cv = coverThumbs[cs[0]], g = cv.getContext("2d"), big = drawCover(cs[0], T, nm, 0.25);
+        g.clearRect(0, 0, cv.width, cv.height); g.drawImage(big, 0, 0, cv.width, cv.height);
+        // تلميح للنص
+        var dark = cs[0] === "geo", y = cs[0] === "block" ? 22 : cs[0] === "band" ? 52 : cs[0] === "wave" ? 40 : 46, x0 = cs[0] === "band" ? 8 : 26, x1 = cs[0] === "band" ? 78 : 98;
+        if (cs[0] === "block") { g.fillStyle = "#" + T.h1; g.fillRect(0, 0, cv.width, 62); g.fillStyle = "#D9A84E"; g.fillRect(0, 62, cv.width, 3); }
+        g.fillStyle = dark || cs[0] === "block" ? "rgba(255,255,255,.92)" : "#" + T.h1; g.fillRect(x0, y, x1 - x0, 7);
+        g.fillStyle = cs[0] === "block" || dark ? "#D9A84E" : "#" + T.h2line; g.fillRect(x0 + 18, y + 12, x1 - x0 - 36, 2);
+        g.fillStyle = dark ? "rgba(255,255,255,.5)" : "rgba(0,0,0,.25)"; g.fillRect(x0 + 10, (cs[0] === "block" ? 80 : y + 22), x1 - x0 - 20, 3); g.fillRect(x0 + 16, (cs[0] === "block" ? 88 : y + 30), x1 - x0 - 32, 3);
+      });
+    });
+  }
+  $("pfName").oninput = function () { S.platform.name = this.value; save(); paintCoverThumbs(); schedulePreview(); };
+  $("pfUrl").oninput = function () { S.platform.url = this.value.trim(); save(); schedulePreview(); };
+  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"]].forEach(function (p) {
     $(p[0]).onchange = function () { S[p[1]] = this.checked; save(); paintSettings(); schedulePreview(); };
   });
   $("wmOp").oninput = function () { S.wmOpacity = +this.value; $("wmOpV").textContent = this.value + "%"; save(); schedulePreview(); };
@@ -2108,6 +2303,10 @@ var ENGINE = (function () {
     $("subj").value = S.subject; $("subt").value = S.subtitle;
     $("optCover").checked = S.cover; $("optToc").checked = S.toc; $("optLogo").checked = S.logo; $("optWm").checked = S.wm; $("optFootBrand").checked = S.footBrand;
     $("wmOp").value = S.wmOpacity; $("wmOpV").textContent = S.wmOpacity + "%"; $("wmRow").style.opacity = S.wm ? 1 : 0.45; $("wmOp").disabled = !S.wm;
+    $("optSub").checked = S.showSubtitle !== false; $("optRights").checked = S.rights !== false;
+    $("pfName").value = S.platform.name || ""; $("pfUrl").value = S.platform.url || "";
+    Array.prototype.forEach.call($("covers").children, function (b) { var on = b.dataset.k === (S.coverStyle || "classic"); b.classList.toggle("sel", on && S.cover); b.setAttribute("aria-checked", on && S.cover ? "true" : "false"); });
+    paintCoverThumbs();
   }
   paintSettings();
 
@@ -2133,6 +2332,13 @@ var ENGINE = (function () {
   /* ---- المعاينة ---- */
   var pvTimer = null;
   function schedulePreview() { clearTimeout(pvTimer); pvTimer = setTimeout(renderPreview, 150); }
+  var bgCache = {};
+  function coverBgUrl(s) {
+    if (!logoImg.naturalWidth) { logoReady.then(schedulePreview); return ""; }
+    var T = ENGINE.resolveTheme(s), key = [s.coverStyle, T.h1, T.acc, T.light, T.h2line, platformName(s)].join("|");
+    if (!bgCache[key]) bgCache[key] = drawCover(s.coverStyle || "classic", T, platformName(s), 0.5).toDataURL("image/png");
+    return bgCache[key];
+  }
   function renderPreview() {
     var pv = $("pv"), s = effSettings(), T = ENGINE.resolveTheme(s);
     var map = { "--c-h1": T.h1, "--c-h2bg": T.h2bg, "--c-h2line": T.h2line, "--c-h2t": T.h2t, "--c-h3": T.h3, "--c-h4": T.h4, "--c-bold": T.bold, "--c-thead": T.thead, "--c-fc": T.fc, "--c-alt": T.alt, "--c-border": T.border, "--c-acc": T.acc, "--c-light": T.light, "--c-outro": T.outro };
@@ -2149,8 +2355,10 @@ var ENGINE = (function () {
       s = Object.assign(s, ws); L = wf.model;
     }
     var wm = s.wm ? '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>' : "";
-    var foot = '<div class="pv-foot">صفحة 1' + (s.footBrand ? ' · <b>Random.MEd</b>' : "") + "</div>";
-    pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? LOGO_SRC : "") + foot : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
+    var pfx = Object.assign({ name: "Random.MEd", url: "" }, s.platform || {});
+    var foot = '<div class="pv-foot">صفحة 1' + (s.footBrand && s.rights === false ? ' · <b>' + esc2(pfx.name) + '</b>' : "") +
+      (s.rights !== false || pfx.url ? "<br>" + (s.rights !== false ? "© " + new Date().getFullYear() + " <b>" + esc2(pfx.name) + "</b> — جميع الحقوق محفوظة" : "") + (pfx.url ? (s.rights !== false ? " · " : "") + '<span dir="ltr" style="color:var(--c-acc)">' + esc2(pfx.url.replace(/^https?:\/\//, "")) + "</span>" : "") : "") + "</div>";
+    pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? LOGO_SRC : "", s.cover ? coverBgUrl(s) : "") + foot : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
   }
   $("pvBtn").onclick = function () { renderPreview(); $("pvCard").scrollIntoView({ behavior: "smooth", block: "start" }); };
 
