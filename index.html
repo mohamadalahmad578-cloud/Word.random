@@ -853,7 +853,7 @@ var ENGINE = (function () {
     function imgPara(im, maxW, align) {
       var w = im.w || 300, h = im.h || 200, m = maxW || IMG_MAX;
       if (w > m) { h = Math.round(h * m / w); w = m; }
-      return new D.Paragraph({ alignment: align || CENTER, spacing: { before: 60, after: 120, line: 240, lineRule: AUTO }, children: [new D.ImageRun({ type: im.type || "png", data: im.data, transformation: { width: w, height: h }, altText: { title: im.alt || "صورة", description: im.alt || "صورة", name: "img" } })] });
+      return new D.Paragraph({ bidirectional: true, alignment: align, spacing: { before: 60, after: 120, line: 240, lineRule: AUTO }, children: [new D.ImageRun({ type: im.type || "png", data: im.data, transformation: { width: w, height: h }, altText: { title: im.alt || "صورة", description: im.alt || "صورة", name: "img" } })] });
     }
     function preBlock(lines) {
       return lines.map(function (l) {
@@ -1579,8 +1579,10 @@ var ENGINE = (function () {
       var hadBidi = !!kid(pPr, "bidi");
       if (rtl && !hadBidi) rep.bidiFixed++;
       if (!rtl && hadBidi && LAT_RE.test(txt)) rep.ltrFixed++;
-      setDir(pPr, rtl || (!LAT_RE.test(txt) && hadBidi));
+      var imgOnly = it.drawing && !txt.trim();
+      setDir(pPr, rtl || imgOnly || (!LAT_RE.test(txt) && hadBidi));
       var jc = kid(pPr, "jc"), jv = jc ? wa(jc, "val") : null;
+      if (imgOnly) { removeKids(pPr, ["jc"]); jv = null; } // الصور على اليمين
       if (jv !== "center") { removeKids(pPr, ["jc"]); if (txt.trim().length > 60 && !it.drawing && !/\*\*/.test(txt)) place(pPr, mk(doc, "jc", { val: "both" }), ORD.pPr); }
       setSpacing(pPr, LINE);
       var imp = txt.indexOf(IMP) >= 0;
@@ -1599,6 +1601,8 @@ var ENGINE = (function () {
       if (dir.bilingual) rep.bilingual++;
       removeKids(tblPr, ["tblStyle", "tblLook"]);
       if (dir.rtl) place(tblPr, mk(doc, "bidiVisual"), ORD.tblPr); else removeKids(tblPr, ["bidiVisual"]);
+      // الجدول نفسه على يمين الصفحة دائماً (حتى الجداول ثنائية اللغة اليسارية الأعمدة)
+      if (!kid(tblPr, "tblpPr")) { removeKids(tblPr, ["tblInd", "jc"]); if (!dir.rtl) place(tblPr, mk(doc, "jc", { val: "right" }), ORD.tblPr); }
       var firstRow = rows[0], headRow = false;
       if (rows.length >= 2 && firstRow) {
         var trPr0 = kid(firstRow, "trPr"), hdr = trPr0 && kid(trPr0, "tblHeader");
@@ -1629,7 +1633,7 @@ var ENGINE = (function () {
             place(tcPr, mk(doc, "vAlign", { val: "center" }), ORD.tcPr);
           }
           kids(tc, "p").forEach(function (p) {
-            var pPr = ensurePr(p, "pPr"), t = paraText(p), rtl = AR.test(t);
+            var pPr = ensurePr(p, "pPr"), t = paraText(p), rtl = AR.test(t) || (hasDrawing(p) && !t.trim());
             setDir(pPr, rtl);
             cleanParaDeco(pPr);
             var jc = kid(pPr, "jc"); if (head) place(pPr, mk(doc, "jc", { val: "center" }), ORD.pPr); else if (jc && wa(jc, "val") !== "center") pPr.removeChild(jc);
