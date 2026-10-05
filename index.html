@@ -198,6 +198,49 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .sticky-dl{position:fixed;inset-inline:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);z-index:30}
 @media (min-width:1000px){.sticky-dl{display:none}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* ---- وضع ملف Word ---- */
+.main-col{display:grid;gap:12px;min-width:0}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mode-btn{display:flex;align-items:center;gap:10px;text-align:start;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);cursor:pointer;box-shadow:var(--shadow);min-height:62px}
+.mode-btn svg{width:26px;height:26px;flex:none;color:var(--brass-deep)}
+.mode-btn b{display:block;font-family:var(--font-display);font-size:15px}
+.mode-btn small{display:block;color:var(--ink-soft);font-size:12px;line-height:1.4}
+.mode-btn.sel{border-color:var(--brass);box-shadow:0 0 0 2px color-mix(in srgb,var(--brass) 40%,transparent),var(--shadow);background:var(--brass-soft)}
+.wdrop{display:grid;place-items:center;gap:4px;text-align:center;padding:26px 16px;border:2px dashed var(--line);border-radius:14px;background:var(--surface-2);cursor:pointer;transition:.2s}
+.wdrop:hover,.wdrop.over{border-color:var(--brass);background:var(--brass-soft)}
+.wdrop svg{width:34px;height:34px;color:var(--brass-deep)}
+.wdrop small{color:var(--ink-soft)}
+.methods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.method{position:relative;text-align:start;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;line-height:1.5}
+.method b{display:block;font-size:14px;margin-bottom:3px}
+.method small{display:block;color:var(--ink-soft);font-size:12px}
+.method em{position:absolute;top:-9px;inset-inline-end:10px;font-style:normal;font-size:11px;background:var(--teal);color:#fff;padding:1px 8px;border-radius:999px}
+.method.sel{border-color:var(--brass);box-shadow:0 0 0 2px color-mix(in srgb,var(--brass) 40%,transparent);background:var(--surface)}
+@media (max-width:520px){.methods{grid-template-columns:1fr}.mode-btn small{display:none}.method small{font-size:11.5px}}
+:root[data-theme="dark"] .method em{color:#08231d}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .method em{color:#08231d}}
+.wdrop:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:2px}
+.btn{min-height:40px}
+.wlist{display:grid;gap:10px;margin-top:12px}
+.wfile{border:1px solid var(--line);border-radius:13px;padding:12px;background:var(--surface)}
+.wfile .top{display:flex;align-items:center;gap:8px}
+.wfile .nm{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:right;flex:1;min-width:0}
+.wfile .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line)}
+.chip.ok{background:var(--teal-soft);color:var(--teal);border-color:transparent}
+.chip.warn{background:var(--rose-soft);color:var(--rose);border-color:transparent}
+.wfile .note{font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6}
+.wfile .note.warn{color:var(--rose)}
+.wfile .rep{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px;font-size:13px}
+.wfile .rep ul{margin:4px 0 0;padding-inline-start:20px}
+.wfile .rep .res{font-weight:700}
+.wfile .rep .res.ok{color:var(--teal)}
+.wfile .rep .res.bad{color:var(--rose)}
+.icon-x{width:40px;height:40px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;color:var(--rose);flex:none}
+.wfile .spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--brass);border-radius:50%;animation:sp 0.8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.page .pv-cover .cl{color:#404040;font-size:.95em}
+.page .pv-cover .cl.first{font-weight:700;color:var(--c-h2t)}
 /* ---- تحسينات الوصول واللمس ---- */
 .inp::placeholder,textarea#src::placeholder{color:var(--ink-soft);opacity:1}
 .btn:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:2px}
@@ -239,7 +282,31 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 
 <main class="wrap">
   <div class="layout">
-    <section class="card" aria-label="المحاضرات">
+    <div class="main-col">
+    <div class="modes" role="tablist" aria-label="طريقة الإدخال">
+      <button class="mode-btn" id="modeText" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span><b>نص المحاضرات</b><small>الصق التفريغ (Markdown)</small></span></button>
+      <button class="mode-btn" id="modeWord" role="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13l1.5 5 2.5-4 2.5 4 1.5-5"/></svg><span><b>ملف Word جاهز</b><small>نلبّسه هوية Random.MEd</small></span></button>
+    </div>
+    <section class="card" id="wordCard" aria-label="ملفات Word" hidden>
+      <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span><h2>ملفات Word</h2><span class="pill" id="wordCount">0</span></div>
+      <div class="card-b">
+        <label class="wdrop" id="wdrop">
+          <input type="file" id="docxIn" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple class="sr">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+          <b>اختر ملف Word ‎(.docx)‎ أو أفلته هنا</b>
+          <small>يمكن اختيار عدة ملفات — كل المعالجة على جهازك</small>
+        </label>
+        <div class="field" style="margin:14px 0 6px">
+          <span class="lbl">طريقة التنسيق</span>
+          <div class="methods">
+            <button type="button" class="method" data-m="reskin"><b>إعادة تلبيس</b><small>نغيّر الشكل بس: ألوان، خطوط، جداول، عناوين، شعار — والنص والصور والترتيب متل ما هي</small><em>موصى به</em></button>
+            <button type="button" class="method" data-m="rebuild"><b>إعادة بناء</b><small>نسحب المحتوى ونعيد توليده بتصميم الموقع الموحّد (متل ملفات النص تماماً)</small></button>
+          </div>
+        </div>
+        <div id="wordList" class="wlist"></div>
+      </div>
+    </section>
+    <section class="card" id="textCard" aria-label="المحاضرات">
       <div class="card-h"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span><h2>المحاضرات</h2><span class="pill" id="lecCount">0</span><div class="spacer"></div><span class="pill hide-sm">الترتيب هنا = الترتيب في الملف</span></div>
       <div class="tabs" id="tabs" role="tablist"></div>
       <div class="editor">
@@ -261,6 +328,7 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
         </details>
       </div>
     </section>
+    </div>
 
     <aside class="side">
       <section class="card" aria-label="الإعدادات">
@@ -399,7 +467,7 @@ var ENGINE = (function () {
     });
     return res;
   }
-  function plain(inl) { return inl.map(function (s) { return s.text; }).join(""); }
+  function plain(inl) { return inl.map(function (s) { return s.text || ""; }).join(""); }
 
   function classify(raw) {
     var indent = raw.match(/^[ \t]*/)[0].replace(/\t/g, "    ").length;
@@ -544,7 +612,7 @@ var ENGINE = (function () {
     if (m) return m[0];
     return t ? t.replace(/\*/g, "") : "المحاضرة " + (idx + 1);
   }
-  function lectureTopics(L) { return L.blocks.filter(function (b) { return b.t === "h" && b.level === 2; }).map(function (b) { return plain(b.inl); }); }
+  function lectureTopics(L) { return L.blocks.filter(function (b) { return b.t === "h" && b.level === 2 && !b.twin; }).map(function (b) { return plain(b.inl); }); }
   function detectSubject(text) {
     var m = String(text || "").match(/مادة\s*\**\s*["«“]([^"»”\n]{2,80})["»”]/);
     if (m) return m[1].trim();
@@ -570,8 +638,9 @@ var ENGINE = (function () {
     return tokens(out.join("\n"));
   }
   function decodeXml(s) { return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, function (_, d) { return String.fromCharCode(+d); }).replace(/&amp;/g, "&"); }
-  function xmlTokens(xml) {
-    var k = xml.indexOf('w:name="BODY_START"'); if (k >= 0) xml = xml.slice(k);
+  function xmlTokens(xml, opt) {
+    xml = xml.replace(/w:name="RMEDGEN\d+"[\s\S]*?w:name="RMEDEND\d+"/g, "").replace(/<mc:Fallback>[\s\S]*?<\/mc:Fallback>/g, "");
+    var k = xml.indexOf('w:name="BODY_START"'); if (k >= 0 && !(opt && opt.all)) xml = xml.slice(k);
     var parts = [], re = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>|<\/w:p>|<w:tab\/>|<w:br\/>/g, m;
     while ((m = re.exec(xml))) parts.push(m[1] !== undefined ? decodeXml(m[1]) : " ");
     return tokens(parts.join(""));
@@ -651,6 +720,7 @@ var ENGINE = (function () {
       else { p.rightToLeft = false; p.language = { value: "en-US", bidirectional: "ar-SA" }; if (!emoji) p.font = { ascii: FE, hAnsi: FE, cs: FE, eastAsia: FE }; }
       if (o.bold || st.b || st.tag) { p.bold = true; p.boldComplexScript = true; }
       if (st.i || o.italic) { p.italics = true; p.italicsComplexScript = true; }
+      if (st.sup) p.superScript = true; else if (st.sub) p.subScript = true;
       var color = o.color;
       if (st.b && o.boldColor) color = o.boldColor;
       if (st.tag) { color = "FFFFFF"; p.shading = shade("C00000"); }
@@ -662,11 +732,15 @@ var ENGINE = (function () {
       inl.forEach(function (st) { splitDir(st.text).forEach(function (seg) { arr.push(mkRun(seg.t, o.ltr ? false : seg.rtl, st, o, seg.emoji)); }); });
       return arr;
     }
+    var gk = 0;
+    function GS() { return new D.Bookmark({ id: "RMEDGEN" + (++gk), children: [] }); }
+    function GE() { return new D.Bookmark({ id: "RMEDEND" + gk, children: [] }); }
+    function markP(b) { return new D.Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [b] }); }
     function P(inl, o) {
       o = o || {};
       var txt = plain(inl), rtl = o.forceRtl || AR_RE.test(txt) || !txt.trim();
       var opts = {
-        children: (o.pre || []).concat(runs(inl, { ltr: !rtl, size: o.size || SZ.body, color: o.color, boldColor: o.boldColor === undefined ? T.bold : o.boldColor, bold: o.bold, italic: o.italic })),
+        children: (o.pre || []).concat(runs(inl.filter(function (x) { return x.text !== undefined; }), { ltr: !rtl, size: o.size || SZ.body, color: o.color, boldColor: o.boldColor === undefined ? T.bold : o.boldColor, bold: o.bold, italic: o.italic })).concat(o.post || []),
         bidirectional: rtl,
         alignment: o.align || BOTH,
         spacing: { line: o.line || LINE, lineRule: AUTO, before: o.before || 0, after: o.after === undefined ? 100 : o.after }
@@ -674,6 +748,7 @@ var ENGINE = (function () {
       ["heading", "border", "shading", "indent", "numbering", "keepNext", "keepLines", "pageBreakBefore"].forEach(function (k) { if (o[k] !== undefined) opts[k] = o[k]; });
       // المحاذاة الافتراضية لفقرة RTL هي اليمين في كل البرامج؛ نُبقي «start» صريحة فقط للفقرة التي لا تحوي حروفاً عربية (أرقام/إنجليزي فقط)
       if (opts.alignment === START && rtl && AR_RE.test(txt)) delete opts.alignment;
+      if (opts.alignment === BOTH && /\*\*/.test(txt)) delete opts.alignment; // تجنّب خلل ضبط النص في LibreOffice مع النجوم الحرفية
       return new D.Paragraph(opts);
     }
     function impOpts(level, extra) {
@@ -703,32 +778,39 @@ var ENGINE = (function () {
     }
     var TB = function () { return { top: bd(T.border, 6), bottom: bd(T.border, 6), left: bd(T.border, 6), right: bd(T.border, 6), insideHorizontal: bd(T.border, 4), insideVertical: bd(T.border, 4) }; };
     function dataTable(rows, width) {
+      var hasSpan = rows.some(function (r) { return r.some(function (c) { return c.span > 1; }); });
+      if (hasSpan) { var expanded = rows.map(function (r) { var o = []; r.forEach(function (c) { o.push(c); for (var k = 1; k < (c.span || 1); k++) { var ph = []; ph.skip = true; o.push(ph); } }); return o; }); expanded.noHead = rows.noHead; expanded.ltrTable = rows.ltrTable; expanded.ltrCells = rows.ltrCells; rows = expanded; }
       var cw = colWidths(rows, width), n = cw.length;
       var trs = rows.map(function (r, i) {
         var cells = [];
         for (var j = 0; j < n; j++) {
-          var inl = r[j] || [], head = i === 0, fill = head ? T.thead : (j === 0 ? T.fc : (i % 2 === 0 ? T.alt : "FFFFFF"));
-          cells.push(new D.TableCell({ width: { size: cw[j], type: D.WidthType.DXA }, shading: shade(fill), margins: { top: 60, bottom: 60, left: 100, right: 100 }, verticalAlign: D.VerticalAlign.CENTER,
-            children: [P(inl, { size: SZ.table, line: TLINE, after: 0, forceRtl: true, align: head ? CENTER : START,
-              bold: head || j === 0, color: head ? "FFFFFF" : (j === 0 ? T.bold : undefined), boldColor: head ? "FFFFFF" : T.bold })] }));
+          var inl = r[j] || [];
+          if (inl.skip) continue;
+          var sp = Math.min(inl.span || 1, n - j), spW = 0; for (var q = j; q < j + sp; q++) spW += cw[q];
+          var head = i === 0 && !rows.noHead, fill = head ? T.thead : ((j === 0 && n >= 3) ? T.fc : (i % 2 === 0 ? T.alt : "FFFFFF"));
+          var cimgs = inl.filter(function (x) { return x.img; }).map(function (x) { return imgPara(x.img, Math.round(cw[j] / 15) - 14); });
+          cells.push(new D.TableCell({ width: { size: spW, type: D.WidthType.DXA }, columnSpan: sp > 1 ? sp : undefined, shading: shade(fill), margins: { top: 60, bottom: 60, left: 100, right: 100 }, verticalAlign: D.VerticalAlign.CENTER,
+            children: cimgs.concat([P(inl, { size: SZ.table, line: TLINE, after: 0, forceRtl: !rows.ltrCells || AR_RE.test(plain(inl)), align: head ? CENTER : START,
+              bold: head || (j === 0 && n >= 3), color: head ? "FFFFFF" : ((j === 0 && n >= 3) ? T.bold : undefined), boldColor: head ? "FFFFFF" : T.bold })]) }));
         }
-        return new D.TableRow({ children: cells, cantSplit: true, tableHeader: i === 0 });
+        return new D.TableRow({ children: cells, cantSplit: true, tableHeader: i === 0 && !rows.noHead });
       });
-      return new D.Table({ layout: D.TableLayoutType.FIXED, rows: trs, width: { size: width, type: D.WidthType.DXA }, columnWidths: cw, visuallyRightToLeft: true, borders: TB() });
+      return new D.Table({ layout: D.TableLayoutType.FIXED, rows: trs, width: { size: width, type: D.WidthType.DXA }, columnWidths: cw, visuallyRightToLeft: rows.ltrTable ? false : true, borders: TB() });
     }
     function olTable(b, width) {
-      var indent = b.nested ? 400 : 0, w = width - indent, NW = 620, TW = w - NW, numLeft = S.numPos === "left";
+      var ltrList = !b.items.some(function (it) { return AR_RE.test(plain(it.inl)); });
+      var indent = b.nested ? 400 * Math.max(1, b.indentLevel || 1) : 0, w = width - indent, NW = 620, TW = w - NW, numLeft = ltrList ? true : S.numPos === "left";
       var trs = b.items.map(function (it) {
         var kids = [it.imp ? P(it.inl, impOpts(0, { indent: ind(60, 60), before: 20, after: 60 })) : P(it.inl, { after: 40 })];
         kids = kids.concat(renderBlocks(it.children, TW - 160));
         var num = new D.Paragraph({ bidirectional: false, alignment: CENTER, spacing: { line: LINE, before: 0, after: 0 },
-          children: [new D.TextRun({ text: it.num, rightToLeft: false, bold: true, boldComplexScript: true, color: T.acc, size: SZ.body, font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })] });
+          children: (it.gen ? [GS()] : []).concat([new D.TextRun({ text: it.num, rightToLeft: false, bold: true, boldComplexScript: true, color: T.acc, size: SZ.body, font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })]).concat(it.gen ? [GE()] : []) });
         var textCell = new D.TableCell({ width: { size: TW, type: D.WidthType.DXA }, borders: cellNone, margins: { top: 20, bottom: 40, left: 80, right: 80 }, children: kids });
         var numCell = new D.TableCell({ width: { size: NW, type: D.WidthType.DXA }, borders: cellNone, shading: shade(T.light), margins: { top: 20, bottom: 20, left: 40, right: 40 }, verticalAlign: D.VerticalAlign.TOP, children: [num] });
         // الجدول RTL بصرياً: الخلية الأولى تظهر يميناً
-        return new D.TableRow({ children: numLeft ? [textCell, numCell] : [numCell, textCell] });
+        return new D.TableRow({ children: ltrList ? [numCell, textCell] : (numLeft ? [textCell, numCell] : [numCell, textCell]) });
       });
-      return [new D.Table({ layout: D.TableLayoutType.FIXED, rows: trs, width: { size: w, type: D.WidthType.DXA }, columnWidths: numLeft ? [TW, NW] : [NW, TW], visuallyRightToLeft: true, borders: noBorders, indent: indent ? { size: indent, type: D.WidthType.DXA } : undefined }),
+      return [new D.Table({ layout: D.TableLayoutType.FIXED, rows: trs, width: { size: w, type: D.WidthType.DXA }, columnWidths: ltrList ? [NW, TW] : (numLeft ? [TW, NW] : [NW, TW]), visuallyRightToLeft: !ltrList, borders: noBorders, indent: indent ? { size: indent, type: D.WidthType.DXA } : undefined }),
         new D.Paragraph({ spacing: { before: 0, after: 60, line: 120 }, children: [] })];
     }
     function diagram(rows, width) {
@@ -767,6 +849,12 @@ var ENGINE = (function () {
       out.push(new D.Paragraph({ spacing: { before: 0, after: 120 }, children: [] }));
       return out;
     }
+    var IMG_MAX = 600;
+    function imgPara(im, maxW, align) {
+      var w = im.w || 300, h = im.h || 200, m = maxW || IMG_MAX;
+      if (w > m) { h = Math.round(h * m / w); w = m; }
+      return new D.Paragraph({ alignment: align || CENTER, spacing: { before: 60, after: 120, line: 240, lineRule: AUTO }, children: [new D.ImageRun({ type: im.type || "png", data: im.data, transformation: { width: w, height: h }, altText: { title: im.alt || "صورة", description: im.alt || "صورة", name: "img" } })] });
+    }
     function preBlock(lines) {
       return lines.map(function (l) {
         return new D.Paragraph({ bidirectional: false, spacing: { line: 240, after: 0 }, shading: shade("F7F7F7"), children: [new D.TextRun({ text: l, font: "Courier New", size: Math.max(14, SZ.table - 2) })] });
@@ -780,9 +868,10 @@ var ENGINE = (function () {
           case "p": out.push(b.imp ? P(b.inl, impOpts(b.level || 0)) : P(b.inl, b.level ? { indent: ind(b.level * 400) } : {})); break;
           case "li": out.push(b.imp ? P(b.inl, impOpts(b.level)) : P(b.inl, { numbering: { reference: "bul", level: b.level }, after: 60 })); break;
           case "ol": out.push.apply(out, olTable(b, width)); break;
-          case "table": out.push(dataTable(b.rows, width)); out.push(new D.Paragraph({ spacing: { before: 0, after: 120, line: 200 }, children: [] })); break;
+          case "table": if (!b.rows.length || !b.rows.some(function (r) { return r.length; })) break; var rr = b.rows.filter(function (r) { return r.length; }); rr.noHead = b.noHead; rr.ltrTable = b.ltrTable; rr.ltrCells = b.ltrTable; out.push(dataTable(rr, width)); out.push(new D.Paragraph({ spacing: { before: 0, after: 120, line: 200 }, children: [] })); break;
           case "diagram": out.push.apply(out, diagram(b.rows, width)); break;
           case "pre": out.push.apply(out, preBlock(b.lines)); break;
+          case "img": out.push(imgPara(b.img, Math.round(width / 15))); break;
         }
       });
       return out;
@@ -803,32 +892,41 @@ var ENGINE = (function () {
       front.push(new D.Paragraph({ spacing: { before: brand.logo ? 1600 : 2600, after: 0 }, children: [] }));
       var lr = logoRun(120);
       if (lr) front.push(new D.Paragraph({ alignment: CENTER, spacing: { line: 240, lineRule: AUTO, after: 360 }, children: [lr] }));
-      front.push(P([{ text: subject }], { align: CENTER, size: SZ.body + 30, bold: true, color: T.h1, boldColor: T.h1, after: 120, line: 320, forceRtl: true }));
+      if (S.coverTitle) front.push(P(parseInline(String(S.coverTitle)), { align: CENTER, size: SZ.body + 26, bold: true, color: T.h1, boldColor: T.h1, after: 120, line: 320, forceRtl: AR_RE.test(S.coverTitle) }));
+      front.push(P(S.coverTitle ? [] : [{ text: subject }], { pre: [GS()], align: CENTER, size: SZ.body + 30, bold: true, color: T.h1, boldColor: T.h1, after: S.coverTitle ? 0 : 120, line: S.coverTitle ? 120 : 320, forceRtl: true }));
       front.push(new D.Paragraph({ spacing: { before: 0, after: 240 }, indent: ind(2400, 2400), border: { bottom: { style: D.BorderStyle.THICK, size: 24, color: T.h2line, space: 1 } }, children: [] }));
-      front.push(P([{ text: S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات" }], { align: CENTER, size: SZ.body + 8, color: "595959", after: 600, forceRtl: true }));
-      front.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { after: 0 }, children: [
-        mkRun("عدد المحاضرات: ", true, {}, { size: SZ.body, color: "7F7F7F" }), mkRun(String(lectures.length), false, {}, { size: SZ.body, color: "7F7F7F" })] }));
-      if (brand.logo) front.push(new D.Paragraph({ alignment: CENTER, bidirectional: false, spacing: { before: 2400, after: 0 }, children: [
-        new D.TextRun({ text: "Random.MEd", size: SZ.body + 4, bold: true, color: "A9761E", font: { ascii: FE, hAnsi: FE, cs: FE } })] }));
+      var cl = (S.coverLines || []).filter(function (x) { return String(x).trim(); });
+      if (!cl.length || S.subtitle) front.push(P([{ text: S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات" }], { align: CENTER, size: SZ.body + 8, color: "595959", after: cl.length ? 240 : 600, forceRtl: true }));
+      front.push(markP(GE()));
+      // سطور الغلاف الأصلي (نص المستخدم — محفوظ كما هو)
+      cl.forEach(function (line, k) { front.push(P(parseInline(String(line)), { align: CENTER, size: SZ.body + (k === 0 ? 4 : 2), bold: k === 0, color: k === 0 ? T.h2t : "404040", boldColor: T.h2t, after: 80, line: 300 })); });
+      var cntLabel = (S.tocLabels && S.tocLabels.count) || "عدد المحاضرات: ";
+      front.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { before: cl.length ? 400 : 0, after: 0 }, children: [GS(),
+        mkRun(cntLabel, true, {}, { size: SZ.body, color: "7F7F7F" }), mkRun(String(S.tocItems ? S.tocItems.length : lectures.length), false, {}, { size: SZ.body, color: "7F7F7F" })].concat(brand.logo ? [] : [GE()]) }));
+      if (brand.logo) front.push(new D.Paragraph({ alignment: CENTER, bidirectional: false, spacing: { before: cl.length ? 1200 : 2400, after: 0 }, children: [
+        new D.TextRun({ text: "Random.MEd", size: SZ.body + 4, bold: true, color: "A9761E", font: { ascii: FE, hAnsi: FE, cs: FE } }), GE()] }));
     }
     if (S.toc) {
-      front.push(P([{ text: "فهرس المحاضرات ومحاورها" }], { pageBreakBefore: !!S.cover, size: SZ.h2 + 2, bold: true, color: "FFFFFF", boldColor: "FFFFFF", align: CENTER, after: 200, line: HLINE,
+      var TL = Object.assign({ title: "فهرس المحاضرات ومحاورها", c1: "المحاضرة", c2: "المحاور الرئيسية" }, S.tocLabels || {});
+      var tocItems = S.tocItems || lectures.map(function (L, i) { return { label: lectureLabel(L, i), topics: lectureTopics(L) }; });
+      front.push(P([{ text: TL.title }], { pre: [GS()], pageBreakBefore: !!S.cover, size: SZ.h2 + 2, bold: true, color: "FFFFFF", boldColor: "FFFFFF", align: CENTER, after: 200, line: HLINE,
         shading: shade(T.h1), border: box(T.h1, 6, 4), forceRtl: true }));
-      var trs = [new D.TableRow({ tableHeader: true, cantSplit: true, children: [["المحاضرة", 2300], ["المحاور الرئيسية", CW - 2300]].map(function (h) {
+      var trs = [new D.TableRow({ tableHeader: true, cantSplit: true, children: [[TL.c1, 2300], [TL.c2, CW - 2300]].map(function (h) {
         return new D.TableCell({ width: { size: h[1], type: D.WidthType.DXA }, shading: shade(T.thead), margins: { top: 80, bottom: 80, left: 100, right: 100 },
           children: [P([{ text: h[0] }], { align: CENTER, bold: true, color: "FFFFFF", boldColor: "FFFFFF", size: SZ.table + 2, after: 0, line: TLINE, forceRtl: true })] });
       }) })];
-      lectures.forEach(function (L, i) {
-        var tops = lectureTopics(L);
-        var topicParas = tops.length ? tops.map(function (t) { return P([{ text: t }], { numbering: { reference: "bul", level: 0 }, size: SZ.table, after: 20, line: TLINE, forceRtl: true }); })
+      tocItems.forEach(function (it, i) {
+        var tops = it.topics || [];
+        var topicParas = tops.length ? tops.map(function (t) { return S.tocNoNumbering ? P([{ text: "•  " + t }], { size: SZ.table, after: 20, line: TLINE, forceRtl: AR_RE.test(t) }) : P([{ text: t }], { numbering: { reference: "bul", level: 0 }, size: SZ.table, after: 20, line: TLINE, forceRtl: true }); })
           : [P([{ text: "—" }], { size: SZ.table, after: 0, forceRtl: true })];
         trs.push(new D.TableRow({ cantSplit: true, children: [
           new D.TableCell({ width: { size: 2300, type: D.WidthType.DXA }, verticalAlign: D.VerticalAlign.CENTER, shading: shade(T.fc), margins: { top: 80, bottom: 80, left: 100, right: 100 },
-            children: [P([{ text: lectureLabel(L, i) }], { align: CENTER, bold: true, color: T.bold, size: SZ.table + 1, after: 0, line: TLINE, forceRtl: true })] }),
+            children: [P([{ text: it.label }], { align: CENTER, bold: true, color: T.bold, size: SZ.table + 1, after: 0, line: TLINE, forceRtl: true })] }),
           new D.TableCell({ width: { size: CW - 2300, type: D.WidthType.DXA }, shading: shade(i % 2 ? T.alt : "FFFFFF"), margins: { top: 80, bottom: 80, left: 100, right: 100 }, children: topicParas })
         ] }));
       });
       front.push(new D.Table({ layout: D.TableLayoutType.FIXED, rows: trs, width: { size: CW, type: D.WidthType.DXA }, columnWidths: [2300, CW - 2300], visuallyRightToLeft: true, borders: TB() }));
+      front.push(markP(GE()));
     }
 
     /* المتن */
@@ -836,7 +934,7 @@ var ENGINE = (function () {
     lectures.forEach(function (L, idx) {
       var first = idx === 0, mark = first ? [new D.Bookmark({ id: "BODY_START", children: [] })] : [];
       if (L.title !== null) {
-        body.push(P(L.titleInl, { pre: mark, heading: D.HeadingLevel.HEADING_1, pageBreakBefore: !first, size: SZ.h1, bold: true, color: "FFFFFF", boldColor: "FFFFFF",
+        body.push(P(L.titleInl, { pre: mark, heading: D.HeadingLevel.HEADING_1, pageBreakBefore: !first && S.h1NewPage !== false, size: SZ.h1, bold: true, color: "FFFFFF", boldColor: "FFFFFF",
           align: CENTER, line: 320, after: 200, keepNext: true, forceRtl: true, shading: shade(T.h1), border: box(T.h1, 6, 6) }));
       } else body.push(new D.Paragraph({ pageBreakBefore: !first, spacing: { before: 0, after: 0, line: 120 }, children: mark }));
       if (L.intro) body.push(P(L.intro, { size: SZ.small, color: "404040", boldColor: "262626", after: 240, line: Math.round(LINE * 0.9), shading: shade("F2F2F2"), border: box("BFBFBF", 6, 5) }));
@@ -890,9 +988,23 @@ var ENGINE = (function () {
   /* لمسات نهائية على XML: اتجاه الصفحة RTL على مستوى القسم */
   function finalize(blobOrBuf, outType) {
     return JSZip.loadAsync(blobOrBuf).then(function (zip) {
-      return zip.file("word/document.xml").async("string").then(function (xml) {
-        xml = xml.replace(/<w:docGrid/g, "<w:bidi/><w:docGrid");
-        zip.file("word/document.xml", xml);
+      var parts = Object.keys(zip.files).filter(function (n) { return /^word\/(document|header\d*|footer\d*)\.xml$/.test(n); }).sort(function (a, b) { return a === "word/document.xml" ? -1 : b === "word/document.xml" ? 1 : a < b ? -1 : 1; });
+      var docPr = 0;
+      return Promise.all(parts.map(function (n) { return zip.file(n).async("string"); })).then(function (xs) {
+        xs.forEach(function (xml, k) {
+          var n = parts[k];
+          // معرّفات فريدة للصور والإشارات المرجعية (Word يطلب إصلاح الملف عند تكرارها)
+          xml = xml.replace(/(<wp:docPr\b[^>]*?\sid=")\d+(")/g, function (_, a, b) { return a + (++docPr) + b; });
+          if (n === "word/document.xml") {
+            var bm = 0, open = [];
+            xml = xml.replace(/<w:bookmark(Start|End)\b([^>]*?)w:id="\d+"/g, function (m, kind, mid) {
+              if (kind === "Start") { var id = ++bm; open.push(id); return "<w:bookmarkStart" + mid + 'w:id="' + id + '"'; }
+              var e = open.length ? open.shift() : ++bm; return "<w:bookmarkEnd" + mid + 'w:id="' + e + '"';
+            });
+            xml = xml.replace(/<w:docGrid/g, "<w:bidi/><w:docGrid");
+          }
+          zip.file(n, xml);
+        });
         return zip.generateAsync({ type: outType || "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", compression: "DEFLATE" });
       });
     });
@@ -900,8 +1012,11 @@ var ENGINE = (function () {
 
   /* ---------------- معاينة HTML ---------------- */
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function u8b64(u) { var s = "", CH = 0x8000; for (var i = 0; i < u.length; i += CH) s += String.fromCharCode.apply(null, u.subarray(i, i + CH)); return btoa(s); }
+  function imgHTML(im) { if (!im || !im.data) return ""; var mime = im.type === "jpg" ? "jpeg" : im.type; return '<div style="text-align:center;margin:6px 0"><img alt="" style="max-width:100%;height:auto" src="data:image/' + mime + ";base64," + u8b64(im.data) + '"></div>'; }
   function inlHTML(inl) {
     return inl.map(function (s) {
+      if (s.img) return imgHTML(s.img);
       var t = splitDir(s.text).map(function (g) { var x = esc(g.t.replace(INVIS_RE, "")); return g.rtl || g.emoji ? x : '<span class="lat">' + x + "</span>"; }).join("");
       if (s.tag) return '<b class="tagx">' + t + "</b>";
       if (s.b) t = "<b>" + t + "</b>";
@@ -940,6 +1055,7 @@ var ENGINE = (function () {
             return s + '<div class="kids">' + row.map(function (t) { return '<div class="kid">' + inlHTML([{ text: t }]) + "</div>"; }).join("") + "</div>";
           }).join("") + "</div>"; break;
         case "pre": h += "<pre>" + esc(b.lines.join("\n")) + "</pre>"; break;
+        case "img": h += imgHTML(b.img); break;
       }
     });
     closeUl();
@@ -947,9 +1063,15 @@ var ENGINE = (function () {
   }
   function previewHTML(lectures, S, logoSrc) {
     var h = "";
-    if (S.cover) h += '<div class="pv-cover">' + (logoSrc ? '<img src="' + logoSrc + '" alt="">' : "") + '<div class="ct">' + esc(S.subject || "المحاضرات") + '</div><div class="bar"></div><div class="cs">' + esc(S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات") + "</div></div>";
+    if (S.cover) {
+      var cl = (S.coverLines || []).filter(function (x) { return String(x).trim(); });
+      h += '<div class="pv-cover">' + (logoSrc ? '<img src="' + logoSrc + '" alt="">' : "") + '<div class="ct">' + inlHTML([{ text: S.coverTitle || S.subject || "المحاضرات" }]) + '</div><div class="bar"></div>' +
+        (!cl.length || S.subtitle ? '<div class="cs">' + esc(S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات") + "</div>" : "") +
+        cl.map(function (l, k) { return '<div class="cl' + (k ? "" : " first") + '">' + inlHTML([{ text: l }]) + "</div>"; }).join("") + "</div>";
+    }
     if (S.toc && lectures.length) {
-      h += '<div class="pv-h1">فهرس المحاضرات ومحاورها</div><table><tr><th style="width:30%">المحاضرة</th><th>المحاور الرئيسية</th></tr>' + lectures.map(function (L, i) {
+      var TL = Object.assign({ title: "فهرس المحاضرات ومحاورها", c1: "المحاضرة", c2: "المحاور الرئيسية" }, S.tocLabels || {});
+      h += '<div class="pv-h1">' + esc(TL.title) + '</div><table><tr><th style="width:30%">' + esc(TL.c1) + "</th><th>" + esc(TL.c2) + "</th></tr>" + lectures.map(function (L, i) {
         return "<tr" + (i % 2 ? ' class="alt"' : "") + '><td class="fc" style="text-align:center"><b>' + esc(lectureLabel(L, i)) + "</b></td><td>" + lectureTopics(L).map(function (t) { return inlHTML([{ text: t }]); }).join("<br>") + "</td></tr>";
       }).join("") + "</table>";
     }
@@ -965,7 +1087,852 @@ var ENGINE = (function () {
 
   return { THEMES: THEMES, SIZE_DEFAULTS: SIZE_DEFAULTS, resolveTheme: resolveTheme, customTheme: customTheme, parseLectures: parseLectures, build: build, finalize: finalize,
     previewHTML: previewHTML, detectSubject: detectSubject, inputTokens: inputTokens, xmlTokens: xmlTokens, compare: compare, lectureLabel: lectureLabel,
-    plain: plain, splitDir: splitDir, b64ToBytes: b64ToBytes };
+    plain: plain, splitDir: splitDir, b64ToBytes: b64ToBytes, parseInline: parseInline, tokens: tokens, AR_RE: AR_RE, IMP: IMP };
+})();
+</script>
+
+<!-- ===================== تنسيق ملفات Word الجاهزة ===================== -->
+<script id="restyle">var RESTYLE = (function () {
+  "use strict";
+  var W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+  var RNS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  var PREL = "http://schemas.openxmlformats.org/package/2006/relationships";
+  var CTNS = "http://schemas.openxmlformats.org/package/2006/content-types";
+  var WPNS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
+  var ANS = "http://schemas.openxmlformats.org/drawingml/2006/main";
+  var AR = ENGINE.AR_RE, IMP = ENGINE.IMP;
+  var XMLDECL = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  var TOC_RE = /^\s*(contents|table of contents|index|المحتويات|الفهرس|فهرس المحتويات|فهرس المحاضرات(\s+ومحاورها)?|فهرس)\s*:?\s*$/i;
+  var LAT_RE = /[A-Za-z]/;
+  var CAP_RE = /^\s*(fig(ure)?\.?|table|الشكل|شكل|جدول|صورة)\s*[\d٠-٩]/i;
+  function toXml(d) { return XMLDECL + new XMLSerializer().serializeToString(d).replace(/^<\?xml[^>]*\?>\s*/, ""); }
+
+  /* ترتيب العناصر حسب مخطط OOXML (Word صارم بالترتيب) */
+  var ORD = {
+    pPr: ["pStyle", "keepNext", "keepLines", "pageBreakBefore", "framePr", "widowControl", "numPr", "suppressLineNumbers", "pBdr", "shd", "tabs", "suppressAutoHyphens", "kinsoku", "wordWrap", "overflowPunct", "topLinePunct", "autoSpaceDE", "autoSpaceDN", "bidi", "adjustRightInd", "snapToGrid", "spacing", "ind", "contextualSpacing", "mirrorIndents", "suppressOverlap", "jc", "textDirection", "textAlignment", "textboxTightWrap", "outlineLvl", "divId", "cnfStyle", "rPr", "sectPr", "pPrChange"],
+    rPr: ["rStyle", "rFonts", "b", "bCs", "i", "iCs", "caps", "smallCaps", "strike", "dstrike", "outline", "shadow", "emboss", "imprint", "noProof", "snapToGrid", "vanish", "webHidden", "color", "spacing", "w", "kern", "position", "sz", "szCs", "highlight", "u", "effect", "bdr", "shd", "fitText", "vertAlign", "rtl", "cs", "em", "lang", "eastAsianLayout", "specVanish", "oMath", "rPrChange"],
+    tblPr: ["tblStyle", "tblpPr", "tblOverlap", "bidiVisual", "tblStyleRowBandSize", "tblStyleColBandSize", "tblW", "jc", "tblCellSpacing", "tblInd", "tblBorders", "shd", "tblLayout", "tblCellMar", "tblLook", "tblCaption", "tblDescription", "tblPrChange"],
+    tcPr: ["cnfStyle", "tcW", "gridSpan", "hMerge", "vMerge", "tcBorders", "shd", "noWrap", "tcMar", "textDirection", "tcFitText", "vAlign", "hideMark", "headers", "cellIns", "cellDel", "cellMerge", "tcPrChange"],
+    trPr: ["cnfStyle", "divId", "gridBefore", "gridAfter", "wBefore", "wAfter", "cantSplit", "trHeight", "tblHeader", "tblCellSpacing", "jc", "hidden", "ins", "del", "trPrChange"],
+    sectPr: ["headerReference", "footerReference", "footnotePr", "endnotePr", "type", "pgSz", "pgMar", "paperSrc", "pgBorders", "lnNumType", "pgNumType", "cols", "formProt", "vAlign", "noEndnote", "titlePg", "textDirection", "bidi", "rtlGutter", "docGrid", "printerSettings", "sectPrChange"]
+  };
+
+  /* ---------- أدوات DOM ---------- */
+  function isW(n, name) { return n && n.nodeType === 1 && n.namespaceURI === W && (!name || n.localName === name); }
+  function kids(el, name) { var o = []; if (!el) return o; for (var c = el.firstChild; c; c = c.nextSibling) if (isW(c, name)) o.push(c); return o; }
+  function kid(el, name) { if (!el) return null; for (var c = el.firstChild; c; c = c.nextSibling) if (isW(c, name)) return c; return null; }
+  function wa(el, name) { if (!el) return null; var v = el.getAttributeNS(W, name); return v === "" && !el.hasAttributeNS(W, name) ? null : v; }
+  function setA(el, name, val) { el.setAttributeNS(W, "w:" + name, String(val)); return el; }
+  function mk(doc, name, attrs) { var e = doc.createElementNS(W, "w:" + name); if (attrs) for (var k in attrs) setA(e, k, attrs[k]); return e; }
+  function place(parent, el, order) {
+    var name = el.localName, idx = order.indexOf(name);
+    kids(parent, name).forEach(function (o) { parent.removeChild(o); });
+    for (var c = parent.firstChild; c; c = c.nextSibling) {
+      if (isW(c) && order.indexOf(c.localName) > idx) { parent.insertBefore(el, c); return el; }
+    }
+    parent.appendChild(el); return el;
+  }
+  function sortPr(pr, order) { // ترتيب ثابت حسب المخطط؛ العناصر غير المعروفة (w14:…) في النهاية
+    var a = [];
+    for (var c = pr.firstChild; c; c = c.nextSibling) if (c.nodeType === 1) a.push(c);
+    a.forEach(function (c, i) { c.__k = isW(c) && order.indexOf(c.localName) >= 0 ? order.indexOf(c.localName) : 1000 + i; });
+    a.sort(function (x, y) { return x.__k - y.__k; }).forEach(function (c) { pr.appendChild(c); });
+  }
+  function ensurePr(el, prName) {
+    var pr = kid(el, prName);
+    if (!pr) { pr = mk(el.ownerDocument, prName); el.insertBefore(pr, el.firstChild); }
+    return pr;
+  }
+  function removeKids(parent, names) { names.forEach(function (n) { kids(parent, n).forEach(function (o) { parent.removeChild(o); }); }); }
+  function truthy(el) { if (!el) return false; var v = wa(el, "val"); return v === null || !/^(0|false|off|none)$/i.test(v); }
+  function ownerPara(n) { for (var p = n.parentNode; p; p = p.parentNode) if (isW(p, "p")) return p; return null; }
+  function inside(n, name, stop) { for (var p = n.parentNode; p && p !== stop; p = p.parentNode) if (isW(p, name)) return true; return false; }
+  function allW(el, name) { return Array.prototype.slice.call(el.getElementsByTagNameNS(W, name)); }
+
+  /* نص الفقرة (بدون النصوص المتداخلة في مربعات النص) */
+  function paraText(p) {
+    var out = "";
+    (function walk(n) {
+      for (var c = n.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType !== 1) continue;
+        if (isW(c, "txbxContent") || isW(c, "pPr") || isW(c, "rPr") || isW(c, "del") || isW(c, "delText") || isW(c, "instrText")) continue;
+        if (c.localName === "Fallback") continue;
+        if (isW(c, "t")) out += c.textContent;
+        else if (isW(c, "tab") || isW(c, "br") || isW(c, "cr")) out += " ";
+        else walk(c);
+      }
+    })(p);
+    return out;
+  }
+  function nodeText(n) { // كل النص داخل عنصر (فقرات/جداول) مع فاصل بين الفقرات
+    if (isW(n, "p")) return paraText(n) + "\n";
+    var s = "";
+    allW(n, "p").forEach(function (p) { if (!inside(p, "txbxContent", n) || true) s += paraText(p) + "\n"; });
+    return s;
+  }
+  function tokensOfNodes(nodes) { var s = ""; nodes.forEach(function (n) { s += nodeText(n) + " "; }); return ENGINE.tokens(s); }
+
+  /* ---------- الأنماط والترقيم ---------- */
+  function parseStyles(xml) {
+    var map = {}, def = { sz: null };
+    if (!xml) return { map: map, def: def };
+    var d = new DOMParser().parseFromString(xml, "application/xml");
+    var dd = d.getElementsByTagNameNS(W, "docDefaults")[0];
+    if (dd) { var sz = dd.getElementsByTagNameNS(W, "sz")[0]; if (sz) def.sz = +wa(sz, "val"); }
+    Array.prototype.forEach.call(d.getElementsByTagNameNS(W, "style"), function (s) {
+      var id = wa(s, "styleId"), nm = kid(s, "name"), bo = kid(s, "basedOn"), pPr = kid(s, "pPr"), rPr = kid(s, "rPr");
+      var o = { id: id, type: wa(s, "type"), name: nm ? (wa(nm, "val") || "") : "", basedOn: bo ? wa(bo, "val") : null };
+      var ol = pPr && kid(pPr, "outlineLvl"); if (ol) o.outline = +wa(ol, "val");
+      if (rPr) { var b = kid(rPr, "b"); if (b) o.bold = truthy(b); var z = kid(rPr, "sz"); if (z) o.sz = +wa(z, "val"); }
+      var np = pPr && kid(pPr, "numPr");
+      if (np) { o.numPr = true; var ni = kid(np, "numId"), il = kid(np, "ilvl"); o.numId = ni ? wa(ni, "val") : null; o.ilvl = il ? wa(il, "val") : "0"; }
+      map[id] = o;
+    });
+    Object.keys(map).forEach(function (id) { var s = map[id], d = 0, b = s; while (b && !b.numPr && b.basedOn && d++ < 10) b = map[b.basedOn]; if (b && b.numPr && !s.numPr) { s.numPr = true; s.numId = b.numId; s.ilvl = b.ilvl; } });
+    function res(id, key, depth) { var s = map[id]; if (!s || depth > 10) return undefined; if (s[key] !== undefined) return s[key]; return s.basedOn ? res(s.basedOn, key, depth + 1) : undefined; }
+    Object.keys(map).forEach(function (id) {
+      var s = map[id], m = /^heading\s*(\d)/i.exec(s.name) || /^Heading(\d)$/.exec(id);
+      s.level = m ? +m[1] : (res(id, "outline", 0) !== undefined && res(id, "outline", 0) < 9 ? res(id, "outline", 0) + 1 : 0);
+      s.isTitle = /^title$/i.test(s.name) || id === "Title";
+      s.isSubtitle = /^subtitle$/i.test(s.name);
+      s.rBold = !!res(id, "bold", 0); s.rSz = res(id, "sz", 0) || null;
+      s.isTocStyle = /^toc\s*\d|^toc heading/i.test(s.name);
+    });
+    return { map: map, def: def, doc: d };
+  }
+  function parseNumbering(xml) {
+    var nums = {}, abs = {};
+    if (!xml) return function () { return null; };
+    var d = new DOMParser().parseFromString(xml, "application/xml");
+    Array.prototype.forEach.call(d.getElementsByTagNameNS(W, "abstractNum"), function (a) {
+      var lv = {};
+      kids(a, "lvl").forEach(function (l) { var f = kid(l, "numFmt"), t = kid(l, "lvlText"), st = kid(l, "start"); lv[wa(l, "ilvl")] = { fmt: f ? wa(f, "val") : "decimal", text: t ? wa(t, "val") : "%1.", start: st ? +wa(st, "val") : 1 }; });
+      abs[wa(a, "abstractNumId")] = lv;
+    });
+    var meta = {};
+    Array.prototype.forEach.call(d.getElementsByTagNameNS(W, "num"), function (n) {
+      var a = kid(n, "abstractNumId"); if (!a) return;
+      var id = wa(n, "numId"), ov = {};
+      kids(n, "lvlOverride").forEach(function (o) { var so = kid(o, "startOverride"); if (so) ov[wa(o, "ilvl")] = +wa(so, "val"); });
+      nums[id] = abs[wa(a, "val")]; meta[id] = { abs: wa(a, "val"), ov: ov };
+    });
+    var f = function (numId, ilvl) { var a = nums[numId]; return a ? (a[ilvl] || a["0"] || null) : null; };
+    f.meta = function (numId) { return meta[numId] || { abs: numId, ov: {} }; };
+    return f;
+  }
+
+  /* ---------- قراءة خصائص الفقرة ---------- */
+  function pStyleId(p) { var pPr = kid(p, "pPr"), ps = pPr && kid(pPr, "pStyle"); return ps ? wa(ps, "val") : null; }
+  function runsOf(p) { // runs على مستوى الفقرة (مع الروابط والإدراجات)
+    var o = [];
+    (function walk(n) { for (var c = n.firstChild; c; c = c.nextSibling) { if (!isW(c)) { if (c.nodeType === 1 && c.localName !== "Fallback" && c.localName !== "Choice") walk(c); continue; } if (c.localName === "r") o.push(c); else if (/^(hyperlink|ins|smartTag|sdt|sdtContent|fldSimple|customXml|bdo|dir)$/.test(c.localName)) walk(c); } })(p);
+    return o;
+  }
+  function runText(r) { var s = ""; for (var c = r.firstChild; c; c = c.nextSibling) { if (isW(c, "t")) s += c.textContent; else if (isW(c, "tab") || isW(c, "br") || isW(c, "cr")) s += " "; } return s; }
+  function runBold(r, st, pst) {
+    var rPr = kid(r, "rPr"), b = rPr && (kid(rPr, "b") || kid(rPr, "bCs"));
+    if (b) return truthy(b);
+    var rs = rPr && kid(rPr, "rStyle"); if (rs && st.map[wa(rs, "val")]) return !!st.map[wa(rs, "val")].rBold || /strong/i.test(wa(rs, "val"));
+    return !!(pst && pst.rBold);
+  }
+  function runItalic(r) { var rPr = kid(r, "rPr"), i = rPr && (kid(rPr, "i") || kid(rPr, "iCs")); return !!(i && truthy(i)); }
+  function runSize(r, st, pst) { var rPr = kid(r, "rPr"), z = rPr && (kid(rPr, "sz") || kid(rPr, "szCs")); if (z) return +wa(z, "val"); return (pst && pst.rSz) || st.normSz || st.def.sz || 22; }
+  function hasDrawing(n) { return n.getElementsByTagNameNS(W, "drawing").length > 0 || n.getElementsByTagNameNS("urn:schemas-microsoft-com:vml", "imagedata").length > 0 || n.getElementsByTagNameNS(W, "pict").length > 0; }
+
+  /* ---------- التحليل ---------- */
+  function analyze(buf) {
+    return JSZip.loadAsync(buf).then(function (zip) {
+      if (!zip.file("word/document.xml")) throw new Error("هذا ليس ملف Word ‎.docx صالحاً (لا يحوي word/document.xml). ملفات ‎.doc القديمة غير مدعومة — احفظها بصيغة ‎.docx أولاً.");
+      var get = function (n) { var f = zip.file(n); return f ? f.async("string") : Promise.resolve(null); };
+      return Promise.all([get("word/document.xml"), get("word/styles.xml"), get("word/numbering.xml"), get("word/_rels/document.xml.rels"), get("[Content_Types].xml"), get("word/settings.xml")]).then(function (x) {
+        var doc = new DOMParser().parseFromString(x[0], "application/xml");
+        if (!doc.getElementsByTagNameNS(W, "body")[0]) throw new Error("صيغة Word «Strict OOXML» غير مدعومة — افتح الملف في Word واحفظه بصيغة «مستند Word ‎(*.docx)» العادية.");
+        if (doc.getElementsByTagName("parsererror").length) throw new Error("تعذّرت قراءة محتوى الملف (XML تالف).");
+        var an = { zip: zip, doc: doc, stylesXml: x[1], numberingXml: x[2], relsXml: x[3], ctXml: x[4], settingsXml: x[5] };
+        an.st = parseStyles(x[1]); an.num = parseNumbering(x[2]);
+        var nst = an.st.map.Normal || Object.keys(an.st.map).map(function (k) { return an.st.map[k]; }).filter(function (s) { return /^normal$/i.test(s.name); })[0];
+        an.st.normSz = nst && nst.rSz ? nst.rSz : (an.st.def.sz || 22);
+        an.rels = parseRels(x[3]);
+        an.body = doc.getElementsByTagNameNS(W, "body")[0];
+        classify(an);
+        return an;
+      });
+    });
+  }
+  function parseRels(xml) {
+    var m = {};
+    if (!xml) return m;
+    var d = new DOMParser().parseFromString(xml, "application/xml");
+    Array.prototype.forEach.call(d.getElementsByTagName("Relationship"), function (r) { m[r.getAttribute("Id")] = { type: r.getAttribute("Type"), target: r.getAttribute("Target"), mode: r.getAttribute("TargetMode") }; });
+    return m;
+  }
+
+  function classify(an) {
+    var st = an.st, body = an.body, items = [];
+    // عناصر المستوى الأعلى (نفتح حاويات sdt العامة)
+    (function collect(parent, container) {
+      for (var c = parent.firstChild; c; c = c.nextSibling) {
+        if (!isW(c)) continue;
+        if (c.localName === "p" || c.localName === "tbl") items.push({ node: c, kind: c.localName, container: container });
+        else if (c.localName === "sdt") {
+          var gal = c.getElementsByTagNameNS(W, "docPartGallery")[0], content = kid(c, "sdtContent");
+          if (gal && /table of contents/i.test(wa(gal, "val") || "")) items.push({ node: c, kind: "tocsdt", container: container });
+          else if (content) collect(content, c);
+        } else if (c.localName === "customXml") collect(c, container);
+      }
+    })(body, null);
+    // نصوص وخصائص
+    var sizes = [];
+    items.forEach(function (it) {
+      it.text = it.kind === "p" ? paraText(it.node) : nodeText(it.node);
+      if (it.kind !== "p") return;
+      var p = it.node, sid = pStyleId(p), s = sid ? st.map[sid] : null;
+      it.style = s; it.drawing = hasDrawing(p);
+      var pPr = kid(p, "pPr"); it.numPr = pPr && kid(pPr, "numPr");
+      var ol = pPr && kid(pPr, "outlineLvl"); if (ol && +wa(ol, "val") < 9) it.outline = +wa(ol, "val") + 1;
+      var rs = runsOf(p).filter(function (r) { return runText(r).trim(); });
+      it.allBold = rs.length > 0 && rs.every(function (r) { return runBold(r, st, s); });
+      it.maxSz = rs.reduce(function (m, r) { return Math.max(m, runSize(r, st, s)); }, 0);
+      if (!it.allBold && it.text.trim().length > 40) rs.forEach(function (r) { sizes.push(runSize(r, st, s)); });
+    });
+    sizes.sort(function (a, b) { return a - b; });
+    var bodySz = sizes.length ? sizes[Math.floor(sizes.length / 2)] : st.normSz;
+    an.bodySz = bodySz;
+    // العناوين
+    var heurSizes = [];
+    items.forEach(function (it) {
+      if (it.kind !== "p") return;
+      var t = it.text.trim(), s = it.style;
+      if (s && s.isTocStyle) { it.tocLine = true; return; }
+      if (s && s.isTitle) { it.title = true; return; }
+      if (s && s.isSubtitle) { it.subtitle = true; return; }
+      var lv = (s && s.level) || it.outline || 0;
+      if (lv && t) { it.level = Math.min(lv, 4); it.styled = true; return; }
+      // تقدير: فقرة قصيرة غامقة بالكامل وأكبر من خط المتن
+      if (t && t.length <= 160 && it.allBold && !it.drawing && !(it.numPr && !/^\d/.test(t)) && it.maxSz >= bodySz + 2 && !TOC_RE.test(t) && !CAP_RE.test(t) && !(s && /caption/i.test(s.name))) { it.heur = true; heurSizes.push(it.maxSz); }
+    });
+    var hs = heurSizes.filter(function (v, i) { return heurSizes.indexOf(v) === i; }).sort(function (a, b) { return b - a; });
+    var styledAny = items.some(function (it) { return it.styled; });
+    items.forEach(function (it) { if (it.heur) it.level = Math.min(4, hs.indexOf(it.maxSz) + (styledAny ? 2 : 1)); });
+    // مناطق مولّدة سابقاً (ملف من Random.MEd)
+    var gen = false;
+    items.forEach(function (it) {
+      var bms = Array.prototype.map.call(it.node.getElementsByTagNameNS(W, "bookmarkStart"), function (b) { return wa(b, "name") || ""; });
+      var startG = bms.some(function (n) { return /^RMEDGEN/.test(n); }), endG = bms.some(function (n) { return /^RMEDEND/.test(n); });
+      if (startG) gen = true;
+      if (gen) it.gen = true;
+      if (endG) gen = false;
+    });
+    // الفهرس
+    var tocStart = -1, tocEnd = -1, i;
+    for (i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (it.kind === "tocsdt") { it.toc = true; continue; }
+      if (it.kind === "p" && /\bTOC\b/.test(Array.prototype.map.call(it.node.getElementsByTagNameNS(W, "instrText"), function (n) { return n.textContent; }).join(" "))) {
+        var depth = 0, j = i;
+        for (; j < items.length; j++) {
+          var fcs = items[j].node.getElementsByTagNameNS(W, "fldChar");
+          Array.prototype.forEach.call(fcs, function (f) { var t = wa(f, "fldCharType"); if (t === "begin") depth++; else if (t === "end") depth--; });
+          items[j].toc = true;
+          if (depth <= 0) break;
+        }
+        i = j; continue;
+      }
+      if (it.tocLine) { it.toc = true; continue; }
+      if (tocStart < 0 && it.kind === "p" && TOC_RE.test(it.text) && it.text.trim().length < 40) {
+        // من عنوان «المحتويات» حتى أول عنوان حقيقي (بحد أقصى 120 عنصراً)
+        for (var k = i + 1; k < items.length && k < i + 120; k++) {
+          var x = items[k];
+          if (x.kind === "p" && x.level && !TOC_RE.test(x.text)) break;
+        }
+        if (k < items.length && k < i + 120) { tocStart = i; tocEnd = k; for (var q = i; q < k; q++) items[q].toc = true; }
+      }
+    }
+    // الغلاف: ما قبل الفهرس أو أول عنوان حقيقي (أو أول فاصل صفحة) إن كان قصيراً
+    var firstMain = -1, firstToc = -1, firstStyled = -1, firstHeur = -1, firstBreak = -1;
+    for (i = 0; i < items.length; i++) {
+      var y = items[i];
+      if (firstToc < 0 && y.toc && i > 0 && !items.slice(0, i).every(function (z) { return z.toc; })) firstToc = i;
+      if (firstStyled < 0 && y.styled) firstStyled = i;
+      if (firstHeur < 0 && y.heur) firstHeur = i;
+      if (firstBreak < 0 && i < 25 && (Array.prototype.some.call(y.node.getElementsByTagNameNS(W, "br"), function (b) { return wa(b, "type") === "page"; }) || (y.kind === "p" && kid(kid(y.node, "pPr") || y.node, "sectPr")))) firstBreak = i + 1;
+    }
+    var cands = [firstToc, firstStyled].filter(function (v) { return v >= 0; });
+    if (cands.length) firstMain = Math.min.apply(null, cands);
+    else if (firstBreak > 0) firstMain = firstBreak;
+    else {
+      // بلا فهرس/عناوين حقيقية/فاصل صفحة: الغلاف = ما قبل آخر عنوان تقديري يسبق أول فقرة طويلة
+      var firstLong = -1; for (i = 0; i < items.length; i++) if (items[i].kind === "p" && items[i].text.trim().length > 100) { firstLong = i; break; }
+      var lastH = -1; for (i = 0; i < (firstLong < 0 ? items.length : firstLong); i++) if (items[i].heur) lastH = i;
+      firstMain = lastH >= 2 ? lastH : firstHeur;
+    }
+    if (firstBreak > 0 && firstBreak < firstMain && firstMain - firstBreak > 3) firstMain = firstBreak;
+    an.cover = [];
+    if (firstMain > 0) {
+      var region = items.slice(0, firstMain).filter(function (it) { return !it.gen && !it.toc; });
+      var txt = region.map(function (it) { return it.text; }).join(" ");
+      var longP = region.some(function (it) { return it.kind === "p" && it.text.trim().length > 220; });
+      if (region.length <= 45 && txt.length < 1600 && !longP) { items.slice(0, firstMain).forEach(function (it) { if (it.toc) return; it.cover = true; it.level = 0; it.heur = false; }); an.cover = region; }
+    } else if (firstMain < 0) { /* لا عناوين: لا غلاف */ }
+    // مستويات العناوين التقديرية بعد استبعاد الغلاف
+    var hs2 = items.filter(function (it) { return it.heur && !it.cover; }).map(function (it) { return it.maxSz; });
+    hs2 = hs2.filter(function (v, i) { return hs2.indexOf(v) === i; }).sort(function (a, b) { return b - a; });
+    var styledBody = items.some(function (it) { return it.styled && !it.cover; });
+    items.forEach(function (it) { if (it.heur && !it.cover) it.level = Math.min(4, hs2.indexOf(it.maxSz) + (styledBody ? 2 : 1)); });
+    items.forEach(function (it) { if (it.title && !it.cover) it.level = 1; });
+    // «توأم» العنوان: سطر غامق قصير مباشرة بعد عنوان، بلغة أخرى (عنوان ثنائي اللغة) — ينسّق بنفس المستوى
+    var arD = function (t) { return (t.match(/[\u0600-\u06FF]/g) || []).length; }, laD = function (t) { return (t.match(/[A-Za-z]/g) || []).length; };
+    for (var ti = 0; ti + 1 < items.length; ti++) {
+      var hd = items[ti]; if (!hd.level || hd.cover || hd.toc || hd.kind !== "p") continue;
+      var nx = items[ti + 1]; if (!nx || nx.kind !== "p" || nx.level || nx.cover || nx.toc || nx.numPr || nx.drawing) continue;
+      var t1 = hd.text, t2 = nx.text.trim();
+      if (!t2 || t2.length > 160 || !nx.allBold || CAP_RE.test(t2)) continue;
+      var hAr = arD(t1) > laD(t1), nAr = arD(t2) > laD(t2);
+      if (hAr !== nAr) { nx.level = hd.level; nx.twin = true; ti++; }
+    }
+    an.items = items;
+    // سطور الغلاف
+    an.coverLines = [];
+    an.cover.forEach(function (it) {
+      if (it.kind === "p") { var t = it.text.replace(/\s+/g, " ").trim(); if (t) an.coverLines.push(t); }
+      else allW(it.node, "p").forEach(function (p) { var t = paraText(p).replace(/\s+/g, " ").trim(); if (t) an.coverLines.push(t); });
+    });
+    // أكبر سطر في الغلاف = عنوان المستند (يُعرض كعنوان الغلاف الكبير بدل تكراره)
+    var best = -1, bestSz = 0, li = 0;
+    an.cover.forEach(function (it) { if (it.kind !== "p") { li += allW(it.node, "p").filter(function (p) { return paraText(p).trim(); }).length; return; } if (!it.text.trim()) return; var sz = (it.maxSz || 0) + (it.allBold ? 1 : 0) + (it.title ? 100 : 0); if (sz > bestSz) { bestSz = sz; best = li; } li++; });
+    an.coverTitleIdx = best;
+    an.coverImages = an.cover.reduce(function (n, it) { return n + it.node.getElementsByTagNameNS(W, "drawing").length; }, 0);
+    // عنوان المستند
+    var tItem = items.filter(function (it) { return it.title; })[0];
+    an.title = tItem ? tItem.text.trim() : (an.coverLines[0] || "");
+    // إحصاءات
+    var heads = [0, 0, 0, 0, 0];
+    items.forEach(function (it) { if (it.level && !it.cover && !it.toc && !it.gen) heads[it.level]++; });
+    an.stats = {
+      paragraphs: items.filter(function (it) { return it.kind === "p"; }).length,
+      headings: heads, heurHeadings: items.filter(function (it) { return it.heur && !it.cover && !it.toc; }).length,
+      tables: allW(an.body, "tbl").length,
+      images: an.body.getElementsByTagNameNS(ANS, "blip").length,
+      textboxes: allW(an.body, "txbxContent").length,
+      math: an.body.getElementsByTagNameNS("http://schemas.openxmlformats.org/officeDocument/2006/math", "oMath").length,
+      lists: items.filter(function (it) { return it.numPr; }).length,
+      imp: items.filter(function (it) { return it.text.indexOf(IMP) >= 0; }).length,
+      arabic: AR.test(items.map(function (it) { return it.text; }).join(" ").slice(0, 20000)),
+      cover: an.cover.length > 0, toc: items.some(function (it) { return it.toc; }),
+      charts: an.body.getElementsByTagNameNS("http://schemas.openxmlformats.org/drawingml/2006/chart", "chart").length
+    };
+    // رموز المقارنة: كل النص ما عدا الفهرس القديم والمحتوى المولّد سابقاً
+    var ser = new XMLSerializer(), xs = function (f) { return items.filter(f).map(function (it) { return ser.serializeToString(it.node); }).join(""); };
+    an.origTokens = ENGINE.xmlTokens(xs(function (it) { return !it.toc && !it.gen; }), { all: true });
+    an.tocTokens = ENGINE.xmlTokens(xs(function (it) { return it.toc; }), { all: true }).length;
+    // ترويسة الأصل كاسم للمادة
+    an.headerText = "";
+  }
+  function headerTextOf(an) {
+    var tgt = null;
+    var sp = an.body.getElementsByTagNameNS(W, "sectPr");
+    for (var i = sp.length - 1; i >= 0 && !tgt; i--) {
+      kids(sp[i], "headerReference").forEach(function (h) { if (!tgt && (wa(h, "type") || "default") === "default") { var rel = an.rels[h.getAttributeNS(RNS, "id")]; if (rel) tgt = "word/" + rel.target.replace(/^\/?word\//, ""); } });
+    }
+    if (!tgt || !an.zip.file(tgt)) return Promise.resolve("");
+    return an.zip.file(tgt).async("string").then(function (x) {
+      var d = new DOMParser().parseFromString(x, "application/xml");
+      return Array.prototype.map.call(d.getElementsByTagNameNS(W, "p"), paraText).join(" ").replace(/\s+/g, " ").trim();
+    });
+  }
+
+  /* ---------- أداة: لغة الأعمدة في جدول ---------- */
+  function tableDirection(tbl) {
+    var rows = kids(tbl, "tr"), cols = [];
+    rows.forEach(function (tr, ri) {
+      kids(tr, "tc").forEach(function (tc, ci) {
+        var t = nodeText(tc); cols[ci] = cols[ci] || { ar: 0, la: 0 };
+        cols[ci].ar += (t.match(/[؀-ۿ]/g) || []).length; cols[ci].la += (t.match(/[A-Za-z]/g) || []).length;
+      });
+    });
+    var arCols = [], laCols = [];
+    cols.forEach(function (c, i) { if (!c) return; if (c.ar > c.la * 1.2 && c.ar > 2) arCols.push(i); else if (c.la > c.ar * 1.2 && c.la > 2) laCols.push(i); });
+    if (arCols.length && laCols.length) return { bilingual: true, rtl: Math.max.apply(null, arCols) < Math.max.apply(null, laCols) };
+    if (arCols.length) return { rtl: true };
+    if (laCols.length) return { rtl: false };
+    var all = nodeText(tbl); return { rtl: AR.test(all) };
+  }
+
+  /* ---------- إعادة التلبيس ---------- */
+  function reskin(an, S, brand) {
+    var doc = an.doc, body = an.body, st = an.st, T = ENGINE.resolveTheme(S);
+    var Z = Object.assign({}, ENGINE.SIZE_DEFAULTS, S.sizes || {});
+    var hp = function (pt) { return String(Math.round(pt * 2)); };
+    var LINE = String(Math.round(240 * (S.lineSpacing || 1.5))), TLINE = String(Math.round(240 * Math.min(1.15, S.lineSpacing || 1.5)));
+    var FA = "Simplified Arabic", FE = "Times New Roman";
+    var rep = { coverImages: S.cover ? an.coverImages : 0, headings: [0, 0, 0, 0, 0], paragraphs: 0, tables: 0, bilingual: 0, runsSplit: 0, imp: 0, bidiFixed: 0, ltrFixed: 0, images: an.stats.images, removedToc: 0, coverLines: an.coverLines.length };
+
+    function fonts(rPr, ltr) {
+      var f = mk(doc, "rFonts", ltr ? { ascii: FE, hAnsi: FE, cs: FE, eastAsia: FE } : { ascii: FE, hAnsi: FE, cs: FA, eastAsia: FA });
+      place(rPr, f, ORD.rPr);
+    }
+    function styleRun(r, o) {
+      var rPr = ensurePr(r, "rPr"), t = runText(r), ltr = !!o.ltrRun;
+      fonts(rPr, ltr);
+      if (o.size) { place(rPr, mk(doc, "sz", { val: o.size }), ORD.rPr); place(rPr, mk(doc, "szCs", { val: o.size }), ORD.rPr); }
+      var bold = o.forceBold || runBold(r, st, o.pst);
+      if (o.forceBold) { place(rPr, mk(doc, "b"), ORD.rPr); place(rPr, mk(doc, "bCs"), ORD.rPr); }
+      var col = kid(rPr, "color"), cv = col ? (wa(col, "val") || "").toUpperCase() : "";
+      if (o.color) place(rPr, mk(doc, "color", { val: o.color }), ORD.rPr);
+      else if (bold) place(rPr, mk(doc, "color", { val: T.bold }), ORD.rPr);
+      else if (col && (cv === "AUTO" || cv === "000000" || /^(1|2|3)[0-9A-F]{5}$/.test(cv) && isDarkBlueish(cv))) rPr.removeChild(col);
+      removeKids(rPr, ["rtl"]);
+      place(rPr, mk(doc, "rtl", { val: ltr ? "0" : "1" }), ORD.rPr);
+      place(rPr, mk(doc, "lang", ltr ? { val: "en-US", bidi: "ar-SA" } : { val: "ar-SA", bidi: "ar-SA" }), ORD.rPr);
+      sortPr(rPr, ORD.rPr);
+    }
+    function isDarkBlueish(hex) { var r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16); return r + g + b < 260; }
+    // تقسيم runs نصية بسيطة إلى مقاطع عربية/لاتينية
+    function splitRuns(p, rtlPara, o) {
+      runsOf(p).forEach(function (r) {
+        var simple = true, ts = [];
+        for (var c = r.firstChild; c; c = c.nextSibling) { if (!isW(c)) continue; if (c.localName === "rPr") continue; if (c.localName === "t") ts.push(c); else { simple = false; break; } }
+        if (!rtlPara) { styleRun(r, Object.assign({}, o, { ltrRun: true })); return; }
+        if (!simple || ts.length !== 1) { styleRun(r, Object.assign({}, o, { ltrRun: !AR.test(runText(r)) && LAT_RE.test(runText(r)) })); return; }
+        var text = ts[0].textContent, segs = ENGINE.splitDir(text);
+        if (o.impTag && text.indexOf(IMP) >= 0) segs = splitTag(segs);
+        if (segs.length <= 1) { styleRun(r, Object.assign({}, o, { ltrRun: segs[0] ? !segs[0].rtl : false, tag: segs[0] && segs[0].tag })); if (segs[0]) ts[0].textContent = segs[0].t; if (segs[0] && segs[0].tag) tagStyle(r); return; }
+        rep.runsSplit++;
+        segs.forEach(function (sg) {
+          var nr = r.cloneNode(true), nt = kid(nr, "t");
+          nt.textContent = sg.t; nt.setAttributeNS("http://www.w3.org/XML/1998/namespace", "xml:space", "preserve");
+          styleRun(nr, Object.assign({}, o, { ltrRun: !sg.rtl }));
+          if (sg.tag) tagStyle(nr);
+          r.parentNode.insertBefore(nr, r);
+        });
+        r.parentNode.removeChild(r);
+      });
+    }
+    function splitTag(segs) {
+      var out = [];
+      segs.forEach(function (sg) {
+        if (sg.t.indexOf(IMP) < 0) { out.push(sg); return; }
+        sg.t.split(IMP).forEach(function (part, k) { if (k > 0) out.push({ t: IMP, rtl: true, tag: true }); if (part) out.push({ t: part, rtl: sg.rtl }); });
+      });
+      return out;
+    }
+    function tagStyle(r) {
+      var rPr = ensurePr(r, "rPr");
+      place(rPr, mk(doc, "b"), ORD.rPr); place(rPr, mk(doc, "bCs"), ORD.rPr);
+      place(rPr, mk(doc, "color", { val: "FFFFFF" }), ORD.rPr);
+      place(rPr, mk(doc, "shd", { val: "clear", color: "auto", fill: "C00000" }), ORD.rPr);
+    }
+    function border(name, val, sz, color, space) { return mk(doc, name, { val: val, sz: sz, space: space || 1, color: color }); }
+    function pBox(pPr, color, sz, space, val) {
+      var b = mk(doc, "pBdr");
+      ["top", "left", "bottom", "right"].forEach(function (s) { b.appendChild(border(s, val || "single", sz, color, space)); });
+      place(pPr, b, ORD.pPr);
+    }
+    function setSpacing(pPr, line, before, after, keep) {
+      var sp = kid(pPr, "spacing"), o = { line: line, lineRule: "auto" };
+      if (before !== null && before !== undefined) o.before = before; else if (sp && wa(sp, "before")) o.before = wa(sp, "before");
+      if (after !== null && after !== undefined) o.after = after; else if (sp && wa(sp, "after")) o.after = wa(sp, "after"); else o.after = keep || "100";
+      var e = mk(doc, "spacing", o); place(pPr, e, ORD.pPr); sortPr(pPr, ORD.pPr);
+    }
+    function setDir(pPr, rtl) {
+      if (rtl) { place(pPr, mk(doc, "bidi"), ORD.pPr); }
+      else { removeKids(pPr, ["bidi"]); }
+    }
+    function cleanParaDeco(pPr) { removeKids(pPr, ["pBdr", "shd"]); }
+
+    // 1) حذف الغلاف والفهرس القديمين والمحتوى المولّد سابقاً (مع حفظ نص الغلاف في الغلاف الجديد)
+    var lastSect = kid(body, "sectPr");
+    an.items.forEach(function (it) {
+      if (!(it.toc || it.gen || (it.cover && S.cover))) return;
+      if (it.toc) rep.removedToc++;
+      var n = it.node, pPr = isW(n, "p") && kid(n, "pPr"), sp = pPr && kid(pPr, "sectPr");
+      if (sp && n.parentNode) { /* فاصل قسم داخل الغلاف: نحذفه — قسم الغلاف الجديد يحل مكانه */ }
+      if (n.parentNode) n.parentNode.removeChild(n);
+    });
+    // إن صار الجسم يبدأ بفقرة فارغة/فاصل صفحة نتركه كما هو
+
+    // 2) العناوين والفقرات
+    var bodyItems = an.items.filter(function (it) { return !(it.toc || it.gen || (it.cover && S.cover)); });
+    bodyItems.forEach(function (it) {
+      if (it.kind !== "p") return;
+      var p = it.node, pPr = ensurePr(p, "pPr"), txt = it.text, rtl = AR.test(txt);
+      if (it.level) {
+        var lv = it.level; rep.headings[lv]++;
+        place(pPr, mk(doc, "pStyle", { val: "Heading" + lv }), ORD.pPr);
+        place(pPr, mk(doc, "keepNext"), ORD.pPr);
+        setDir(pPr, rtl || !txt.trim());
+        cleanParaDeco(pPr);
+        removeKids(pPr, ["jc", "ind"]);
+        var size = hp(Z["h" + lv]), color = lv === 1 ? "FFFFFF" : lv === 2 ? T.h2t : lv === 3 ? T.h3 : T.h4;
+        if (lv === 1) { place(pPr, mk(doc, "shd", { val: "clear", color: "auto", fill: T.h1 }), ORD.pPr); pBox(pPr, T.h1, 6, 6); place(pPr, mk(doc, "jc", { val: "center" }), ORD.pPr); setSpacing(pPr, "320", "240", "200"); }
+        else if (lv === 2) {
+          place(pPr, mk(doc, "shd", { val: "clear", color: "auto", fill: T.h2bg }), ORD.pPr);
+          var b = mk(doc, "pBdr"); b.appendChild(border("top", "single", 4, T.h2bg, 1)); b.appendChild(border("left", "single", 4, T.h2bg, 1)); b.appendChild(border("bottom", "thick", 18, T.h2line, 2)); b.appendChild(border("right", "single", 4, T.h2bg, 1)); place(pPr, b, ORD.pPr);
+          setSpacing(pPr, "300", "320", "160");
+        } else if (lv === 3) { var b3 = mk(doc, "pBdr"); b3.appendChild(border("bottom", "dotted", 6, T.h3, 1)); place(pPr, b3, ORD.pPr); setSpacing(pPr, "300", "240", "120"); }
+        else setSpacing(pPr, "300", "200", "80");
+        if (!rtl && lv !== 1) removeKids(pPr, ["jc"]);
+        splitRuns(p, rtl, { size: size, color: color, forceBold: true, pst: it.style });
+        return;
+      }
+      rep.paragraphs++;
+      var hadBidi = !!kid(pPr, "bidi");
+      if (rtl && !hadBidi) rep.bidiFixed++;
+      if (!rtl && hadBidi && LAT_RE.test(txt)) rep.ltrFixed++;
+      setDir(pPr, rtl || (!LAT_RE.test(txt) && hadBidi));
+      var jc = kid(pPr, "jc"), jv = jc ? wa(jc, "val") : null;
+      if (jv !== "center") { removeKids(pPr, ["jc"]); if (txt.trim().length > 60 && !it.drawing && !/\*\*/.test(txt)) place(pPr, mk(doc, "jc", { val: "both" }), ORD.pPr); }
+      setSpacing(pPr, LINE);
+      var imp = txt.indexOf(IMP) >= 0;
+      if (imp) { rep.imp++; place(pPr, mk(doc, "shd", { val: "clear", color: "auto", fill: "FFF2CC" }), ORD.pPr); pBox(pPr, "BF9000", 8, 4); }
+      splitRuns(p, rtl, { size: hp(Z.body), pst: it.style, impTag: imp });
+    });
+    // فقرات داخل مربعات النص: خطوط واتجاه فقط
+    allW(body, "txbxContent").forEach(function (tx) { kids(tx, "p").forEach(function (p) { var pPr = ensurePr(p, "pPr"), rtl = AR.test(paraText(p)); setDir(pPr, rtl); splitRuns(p, rtl, { size: hp(Z.body) }); }); });
+
+    // 3) الجداول
+    allW(body, "tbl").forEach(function (tbl) {
+      if (!tbl.parentNode) return;
+      if (!kids(tbl, "tr").length) return;
+      rep.tables++;
+      var tblPr = ensurePr(tbl, "tblPr"), dir = tableDirection(tbl), rows = kids(tbl, "tr"), figure = hasDrawing(tbl);
+      if (dir.bilingual) rep.bilingual++;
+      removeKids(tblPr, ["tblStyle", "tblLook"]);
+      if (dir.rtl) place(tblPr, mk(doc, "bidiVisual"), ORD.tblPr); else removeKids(tblPr, ["bidiVisual"]);
+      var firstRow = rows[0], headRow = false;
+      if (rows.length >= 2 && firstRow) {
+        var trPr0 = kid(firstRow, "trPr"), hdr = trPr0 && kid(trPr0, "tblHeader");
+        var fr = allW(firstRow, "r").filter(function (r) { return runText(r).trim(); });
+        headRow = !!hdr || (fr.length > 0 && fr.every(function (r) { return runBold(r, st, null); }));
+      }
+      if (!figure) {
+        var bd = mk(doc, "tblBorders");
+        ["top", "left", "bottom", "right"].forEach(function (s) { bd.appendChild(mk(doc, s, { val: "single", sz: 6, space: 0, color: T.border })); });
+        ["insideH", "insideV"].forEach(function (s) { bd.appendChild(mk(doc, s, { val: "single", sz: 4, space: 0, color: T.border })); });
+        place(tblPr, bd, ORD.tblPr);
+        var cm = mk(doc, "tblCellMar"); cm.appendChild(mk(doc, "top", { w: 60, type: "dxa" })); cm.appendChild(mk(doc, "left", { w: 100, type: "dxa" })); cm.appendChild(mk(doc, "bottom", { w: 60, type: "dxa" })); cm.appendChild(mk(doc, "right", { w: 100, type: "dxa" }));
+        place(tblPr, cm, ORD.tblPr);
+      }
+      var ncol = Math.max.apply(null, rows.map(function (r) { return kids(r, "tc").length; }).concat([1]));
+      rows.forEach(function (tr, ri) {
+        var trPr = ensurePr(tr, "trPr");
+        place(trPr, mk(doc, "cantSplit"), ORD.trPr);
+        if (ri === 0 && headRow) place(trPr, mk(doc, "tblHeader"), ORD.trPr);
+        if (!kid(trPr, "cantSplit") && !kid(trPr, "tblHeader") && !trPr.firstChild) tr.removeChild(trPr);
+        kids(tr, "tc").forEach(function (tc, ci) {
+          var tcPr = ensurePr(tc, "tcPr"), head = ri === 0 && headRow;
+          if (!figure) {
+            removeKids(tcPr, ["tcBorders"]);
+            var fill = head ? T.thead : (ci === 0 && ncol >= 3 && !dir.bilingual ? T.fc : (ri % 2 === 0 && ri > 0 ? T.alt : (ri % 2 === 1 || !headRow ? "FFFFFF" : T.alt)));
+            if (!headRow && ri % 2 === 1) fill = (ci === 0 && ncol >= 3 && !dir.bilingual) ? T.fc : T.alt;
+            place(tcPr, mk(doc, "shd", { val: "clear", color: "auto", fill: fill }), ORD.tcPr);
+            place(tcPr, mk(doc, "vAlign", { val: "center" }), ORD.tcPr);
+          }
+          kids(tc, "p").forEach(function (p) {
+            var pPr = ensurePr(p, "pPr"), t = paraText(p), rtl = AR.test(t);
+            setDir(pPr, rtl);
+            cleanParaDeco(pPr);
+            var jc = kid(pPr, "jc"); if (head) place(pPr, mk(doc, "jc", { val: "center" }), ORD.pPr); else if (jc && wa(jc, "val") !== "center") pPr.removeChild(jc);
+            setSpacing(pPr, TLINE, "0", "0");
+            var imp = t.indexOf(IMP) >= 0; if (imp) rep.imp++;
+            splitRuns(p, rtl, { size: hp(Z.table), color: head ? "FFFFFF" : null, forceBold: head, pst: null, impTag: imp });
+          });
+        });
+      });
+    });
+
+    // 4) الأنماط: عناوين حقيقية تظهر في لوحة التنقل
+    var sdoc = an.st.doc || new DOMParser().parseFromString('<w:styles xmlns:w="' + W + '"/>', "application/xml");
+    var stylesRoot = sdoc.documentElement;
+    [1, 2, 3, 4].forEach(function (lv) {
+      var id = "Heading" + lv, ex = null;
+      Array.prototype.forEach.call(sdoc.getElementsByTagNameNS(W, "style"), function (s) { if (wa(s, "styleId") === id) ex = s; });
+      if (ex) ex.parentNode.removeChild(ex);
+      var s = mk(sdoc, "style", { type: "paragraph", styleId: id });
+      s.appendChild(mk(sdoc, "name", { val: "heading " + lv }));
+      s.appendChild(mk(sdoc, "basedOn", { val: "Normal" })); s.appendChild(mk(sdoc, "next", { val: "Normal" })); s.appendChild(mk(sdoc, "uiPriority", { val: 9 })); s.appendChild(mk(sdoc, "qFormat"));
+      var pp = mk(sdoc, "pPr"); pp.appendChild(mk(sdoc, "keepNext")); pp.appendChild(mk(sdoc, "keepLines")); pp.appendChild(mk(sdoc, "outlineLvl", { val: lv - 1 })); s.appendChild(pp);
+      var rp = mk(sdoc, "rPr"); rp.appendChild(mk(sdoc, "rFonts", { ascii: FE, hAnsi: FE, cs: FA })); rp.appendChild(mk(sdoc, "b")); rp.appendChild(mk(sdoc, "bCs"));
+      rp.appendChild(mk(sdoc, "sz", { val: hp(Z["h" + lv]) })); rp.appendChild(mk(sdoc, "szCs", { val: hp(Z["h" + lv]) })); s.appendChild(rp);
+      stylesRoot.appendChild(s);
+    });
+    an.zip.file("word/styles.xml", toXml(sdoc));
+
+    // 5) غلاف وفهرس وترويسة/تذييل الهوية من «مستند مانح» يولّده المحرك
+    var toc = buildTocItems(an);
+    var S2 = Object.assign({}, S, coverOpts(an, S), { tocItems: toc, tocNoNumbering: true,
+      tocLabels: { title: "فهرس المحتويات", c1: "القسم", c2: "العناوين الفرعية", count: "عدد الأقسام: " }, brand: brand });
+    if (!toc.length) S2.toc = false;
+    return docx.Packer.toBlob(ENGINE.build([], S2)).then(function (b) { return JSZip.loadAsync(b); }).then(function (donor) {
+      return transplant(an, donor, S2, rep);
+    }).then(function () {
+      return renumberIds(an, doc);
+    }).then(function () {
+      an.zip.file("word/document.xml", toXml(doc));
+      return an.zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", compression: "DEFLATE" });
+    }).then(function (blob) { return { blob: blob, report: rep }; });
+  }
+
+  /* معرّفات wp:docPr فريدة عبر المستند والترويسات/التذييلات، ومعرّفات إشارات مرجعية فريدة */
+  function renumberIds(an, doc) {
+    var names = Object.keys(an.zip.files).filter(function (n) { return /^word\/(header|footer|rmedHeader|rmedFooter)\w*\.xml$/.test(n); });
+    return Promise.all(names.map(function (n) { return an.zip.file(n).async("string").then(function (x) { return [n, x]; }); })).then(function (parts) {
+      var next = 1;
+      Array.prototype.forEach.call(doc.getElementsByTagNameNS(WPNS, "docPr"), function (e) { e.setAttribute("id", String(next++)); });
+      parts.forEach(function (p) {
+        var d = new DOMParser().parseFromString(p[1], "application/xml"), dp = d.getElementsByTagNameNS(WPNS, "docPr");
+        if (!dp.length) return;
+        Array.prototype.forEach.call(dp, function (e) { e.setAttribute("id", String(next++)); });
+        an.zip.file(p[0], toXml(d));
+      });
+      // الإشارات المرجعية: كل bookmarkStart يحصل على معرّف جديد ويُربط bookmarkEnd التالي المطابق له
+      var map = {}, nid = 1;
+      Array.prototype.forEach.call(doc.getElementsByTagNameNS(W, "*"), function (e) {
+        if (e.localName === "bookmarkStart") { var o = wa(e, "id"); (map[o] = map[o] || []).push(String(nid)); setA(e, "id", nid++); }
+        else if (e.localName === "bookmarkEnd") { var q = map[wa(e, "id")]; if (q && q.length) setA(e, "id", q.shift()); }
+      });
+    });
+  }
+  // إن لم يكتب المستخدم اسم المادة: سطر العنوان الأصلي يصبح عنوان الغلاف (نص أصلي غير مولّد)
+  function coverOpts(an, S) {
+    var lines = an.coverLines.slice();
+    if (!S.userSubject && an.coverTitleIdx >= 0 && lines[an.coverTitleIdx]) {
+      var t = lines.splice(an.coverTitleIdx, 1)[0];
+      return { coverLines: lines, coverTitle: t, subject: S.subject || t };
+    }
+    return { coverLines: lines };
+  }
+  function buildTocItems(an) {
+    var out = [], cur = null, items = an.items.filter(function (it) { return !(it.cover || it.toc || it.gen) && it.level && !it.twin; });
+    if (!items.length) return out;
+    var top = Math.min.apply(null, items.map(function (it) { return it.level; }));
+    items.forEach(function (it) {
+      var t = it.text.replace(/\s+/g, " ").trim(); if (!t) return;
+      if (it.level === top) { cur = { label: t, topics: [] }; out.push(cur); }
+      else if (it.level === top + 1 && cur) cur.topics.push(t);
+    });
+    return out.slice(0, 200);
+  }
+
+  /* نقل الغلاف/الفهرس والترويسة/التذييل من المستند المانح */
+  function transplant(an, donor, S2, rep) {
+    var zip = an.zip, doc = an.doc, body = an.body;
+    return Promise.all([donor.file("word/document.xml").async("string"), donor.file("word/_rels/document.xml.rels").async("string"), (zip.file("word/_rels/document.xml.rels") ? zip.file("word/_rels/document.xml.rels").async("string") : Promise.resolve('<Relationships xmlns="' + PREL + '"/>')), zip.file("[Content_Types].xml").async("string")]).then(function (x) {
+      var ddoc = new DOMParser().parseFromString(x[0], "application/xml"), drels = parseRels(x[1]);
+      var relsDoc = new DOMParser().parseFromString(x[2], "application/xml"), ctDoc = new DOMParser().parseFromString(x[3], "application/xml");
+      var relsRoot = relsDoc.documentElement, ctRoot = ctDoc.documentElement, used = {};
+      Array.prototype.forEach.call(relsRoot.getElementsByTagName("Relationship"), function (r) { used[r.getAttribute("Id")] = 1; });
+      var n = 0; function newId() { var id; do { id = "rIdRmed" + (++n); } while (used[id]); used[id] = 1; return id; }
+      function addRel(type, target) { var id = newId(), r = relsDoc.createElementNS(PREL, "Relationship"); r.setAttribute("Id", id); r.setAttribute("Type", type); r.setAttribute("Target", target); relsRoot.appendChild(r); return id; }
+      function ensureDefault(ext, type) {
+        var has = Array.prototype.some.call(ctRoot.getElementsByTagName("Default"), function (d) { return (d.getAttribute("Extension") || "").toLowerCase() === ext; });
+        if (!has) { var d = ctDoc.createElementNS(CTNS, "Default"); d.setAttribute("Extension", ext); d.setAttribute("ContentType", type); ctRoot.insertBefore(d, ctRoot.firstChild); }
+      }
+      function addOverride(part, type) { Array.prototype.slice.call(ctRoot.getElementsByTagName("Override")).forEach(function (x) { if (x.getAttribute("PartName") === part) ctRoot.removeChild(x); }); var o = ctDoc.createElementNS(CTNS, "Override"); o.setAttribute("PartName", part); o.setAttribute("ContentType", type); ctRoot.appendChild(o); }
+      ensureDefault("png", "image/png");
+      if (!Object.keys(an.rels).some(function (k) { return /\/styles$/.test(an.rels[k].type); })) {
+        addRel("http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles", "styles.xml");
+        if (!Array.prototype.some.call(ctRoot.getElementsByTagName("Override"), function (o) { return o.getAttribute("PartName") === "/word/styles.xml"; })) addOverride("/word/styles.xml", "application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml");
+      }
+      var jobs = [], mediaN = 0;
+      function copyMedia(srcPath) { var ext = (srcPath.split(".").pop() || "png").toLowerCase(), dst = "media/rmed_" + (++mediaN) + "_" + Date.now().toString(36) + "." + ext; jobs.push(donor.file("word/" + srcPath.replace(/^\/?word\//, "")).async("uint8array").then(function (u) { zip.file("word/" + dst, u); })); return dst; }
+      // الجسم المانح: كل شيء حتى نهاية قسم الغلاف
+      var dbody = ddoc.getElementsByTagNameNS(W, "body")[0], front = [];
+      if (S2.cover || S2.toc) {
+        for (var c = dbody.firstChild; c; c = c.nextSibling) {
+          if (!isW(c)) continue;
+          front.push(c);
+          if (isW(c, "p")) { var pPr = kid(c, "pPr"); if (pPr && kid(pPr, "sectPr")) break; }
+        }
+      }
+      // إعادة ربط صور الغلاف
+      front.forEach(function (node) {
+        Array.prototype.forEach.call(node.getElementsByTagNameNS(ANS, "blip"), function (bl) {
+          var rid = bl.getAttributeNS(RNS, "embed"), rel = drels[rid]; if (!rel) return;
+          var dst = copyMedia(rel.target);
+          bl.setAttributeNS(RNS, "r:embed", addRel(rel.type, dst));
+        });
+      });
+      // الترويسة والتذييل
+      var hdrId = null, ftrId = null, partN = 0;
+      function copyPart(rel, kind) {
+        var src = "word/" + rel.target.replace(/^\/?word\//, ""), name; do { name = "rmed" + kind + (++partN) + ".xml"; } while (zip.file("word/" + name));
+        var relsSrc = src.replace(/word\//, "word/_rels/") + ".rels";
+        jobs.push(donor.file(src).async("string").then(function (xml) {
+          var rf = donor.file(relsSrc);
+          var p = rf ? rf.async("string").then(function (rx) {
+            var rd = new DOMParser().parseFromString(rx, "application/xml"), inner = [];
+            Array.prototype.forEach.call(rd.getElementsByTagName("Relationship"), function (r) {
+              if (/\/image$/.test(r.getAttribute("Type"))) { var before = jobs.length; r.setAttribute("Target", copyMedia(r.getAttribute("Target"))); inner = inner.concat(jobs.slice(before)); }
+            });
+            zip.file("word/_rels/" + name + ".rels", toXml(rd));
+            return Promise.all(inner);
+          }) : Promise.resolve();
+          zip.file("word/" + name, xml);
+          return p;
+        }));
+        addOverride("/word/" + name, "application/vnd.openxmlformats-officedocument.wordprocessingml." + (kind === "Header" ? "header" : "footer") + "+xml");
+        return addRel(rel.type, name);
+      }
+      Object.keys(drels).forEach(function (id) {
+        var rel = drels[id];
+        if (/\/header$/.test(rel.type) && !hdrId) hdrId = copyPart(rel, "Header");
+        if (/\/footer$/.test(rel.type) && !ftrId) ftrId = copyPart(rel, "Footer");
+      });
+      // إدراج الغلاف في بداية المستند
+      var first = body.firstChild;
+      front.forEach(function (node) { body.insertBefore(doc.importNode(node, true), first); });
+      // ربط كل الأقسام بالترويسة/التذييل الجديدين
+      Array.prototype.forEach.call(body.getElementsByTagNameNS(W, "sectPr"), function (sp, idx) {
+        var isFront = false;
+        for (var pp = sp.parentNode; pp; pp = pp.parentNode) if (pp.parentNode === body && front.length && isW(pp, "p") && pp === lastInserted()) isFront = true;
+        removeKids(sp, ["headerReference", "footerReference", "titlePg"]);
+        if (isFront) return;
+        if (ftrId) { var f = mk(doc, "footerReference", { type: "default" }); f.setAttributeNS(RNS, "r:id", ftrId); sp.insertBefore(f, sp.firstChild); }
+        if (hdrId) { var h = mk(doc, "headerReference", { type: "default" }); h.setAttributeNS(RNS, "r:id", hdrId); sp.insertBefore(h, sp.firstChild); }
+      });
+      function lastInserted() { var k = 0, c2 = body.firstChild, last = null; while (c2 && k < front.length) { if (isW(c2)) { last = c2; k++; } c2 = c2.nextSibling; } return last; }
+      zip.file("word/_rels/document.xml.rels", toXml(relsDoc));
+      zip.file("[Content_Types].xml", toXml(ctDoc));
+      // إلغاء ترويسات الصفحات الزوجية حتى تظهر ترويستنا في كل الصفحات
+      var setF = zip.file("word/settings.xml");
+      if (setF) jobs.push(setF.async("string").then(function (sx) { zip.file("word/settings.xml", sx.replace(/<w:evenAndOddHeaders[^>]*\/>/g, "")); }));
+      return Promise.all(jobs);
+    });
+  }
+
+  /* ---------- إعادة البناء: تحويل المستند إلى نموذج المحرك ---------- */
+  function rebuildModel(an) {
+    var st = an.st, warn = { droppedImages: 0, math: an.stats.math, charts: an.stats.charts, footnotes: an.body.getElementsByTagNameNS(W, "footnoteReference").length + an.body.getElementsByTagNameNS(W, "endnoteReference").length }, imgJobs = [];
+    var counters = {}, usedOv = {};
+    function tagSplit(inl) {
+      var out = [];
+      inl.forEach(function (sg) {
+        if (!sg.text || sg.text.indexOf(IMP) < 0) { out.push(sg); return; }
+        sg.text.split(IMP).forEach(function (part, k) { if (k > 0) out.push({ text: IMP, b: true, tag: true }); if (part) out.push({ text: part, b: sg.b, i: sg.i }); });
+      });
+      return out;
+    }
+    function inlOf(p, pst, forceNoBold) { return tagSplit(inlOf0(p, pst, forceNoBold)); }
+    function inlOf0(p, pst, forceNoBold) {
+      var out = [];
+      runsOf(p).forEach(function (r) {
+        var t = runText(r); if (!t) return;
+        var seg = { text: t }; if (!forceNoBold && runBold(r, st, pst)) seg.b = true; if (runItalic(r)) seg.i = true;
+        var va = kid(kid(r, "rPr"), "vertAlign"), vv = va && wa(va, "val"); if (vv === "superscript") seg.sup = true; else if (vv === "subscript") seg.sub = true;
+        var last = out[out.length - 1];
+        if (last && !!last.b === !!seg.b && !!last.i === !!seg.i && !!last.sup === !!seg.sup && !!last.sub === !!seg.sub) last.text += t; else out.push(seg);
+      });
+      return out;
+    }
+    function imagesOf(node) {
+      var imgs = [];
+      Array.prototype.forEach.call(node.getElementsByTagNameNS(W, "drawing"), function (dr) {
+        if (inside(dr, "txbxContent", node)) return;
+        var bl = dr.getElementsByTagNameNS(ANS, "blip")[0], ext = dr.getElementsByTagNameNS(WPNS, "extent")[0];
+        if (!bl) { if (!dr.getElementsByTagNameNS(W, "txbxContent").length) warn.droppedImages++; return; }
+        var rel = an.rels[bl.getAttributeNS(RNS, "embed")]; if (!rel) { warn.droppedImages++; return; }
+        var path = "word/" + rel.target.replace(/^\/?word\//, "").replace(/^\.\.\//, ""), e = (path.split(".").pop() || "").toLowerCase();
+        var type = { png: "png", jpg: "jpg", jpeg: "jpg", gif: "gif", bmp: "bmp" }[e];
+        if (!type || !an.zip.file(path)) { warn.droppedImages++; return; }
+        var im = { type: type, w: ext ? Math.round(+ext.getAttribute("cx") / 9525) : 300, h: ext ? Math.round(+ext.getAttribute("cy") / 9525) : 200 };
+        imgJobs.push(an.zip.file(path).async("uint8array").then(function (u) { im.data = u; }));
+        imgs.push(im);
+      });
+      Array.prototype.forEach.call(node.getElementsByTagNameNS("urn:schemas-microsoft-com:vml", "imagedata"), function (v) { if (!inside(v, "Fallback", node) && !(function () { for (var q = v.parentNode; q && q !== node; q = q.parentNode) if (q.localName === "Fallback") return true; return false; })()) warn.droppedImages++; });
+      return imgs;
+    }
+    function txbxParas(node) { var o = []; allW(node, "txbxContent").filter(function (tx) { for (var q = tx.parentNode; q && q !== node; q = q.parentNode) if (q.localName === "Fallback") return false; return true; }).forEach(function (tx) { kids(tx, "p").forEach(function (p) { var t = paraText(p); if (t.trim()) o.push({ t: "p", inl: inlOf(p, null), imp: t.indexOf(IMP) >= 0 }); }); }); return o; }
+    function cellInl(tc) {
+      var segs = [];
+      kids(tc, "p").forEach(function (p, k) { var inl = inlOf(p, null); if (k > 0 && segs.length && inl.length) segs.push({ text: " " }); segs = segs.concat(inl); imagesOf(p).forEach(function (im) { segs.push({ img: im }); }); });
+      kids(tc, "tbl").forEach(function (t) { segs.push({ text: " " + nodeText(t).replace(/\s+/g, " ") }); });
+      return segs;
+    }
+    var lectures = [], cur = null, top = 99;
+    an.items.forEach(function (it) { if (!(it.cover || it.toc || it.gen) && it.level && !it.twin) top = Math.min(top, it.level); });
+    function ensureLec() { if (!cur) { cur = { title: null, titleInl: null, intro: null, outro: [], blocks: [] }; lectures.push(cur); } return cur; }
+    var olOpen = null;
+    var keepCover = an._keepCover;
+    an.items.forEach(function (it) {
+      if ((it.cover && !keepCover) || it.toc || it.gen) return;
+      if (it.kind === "tbl") {
+        olOpen = null;
+        var dir = tableDirection(it.node), rows = kids(it.node, "tr").map(function (tr) { return kids(tr, "tc").map(function (tc) { var c = cellInl(tc), tp = kid(tc, "tcPr"), gs = tp && kid(tp, "gridSpan"); if (gs && +wa(gs, "val") > 1) c.span = +wa(gs, "val"); return c; }); });
+        rows = rows.filter(function (r) { return r.length; });
+        if (!rows.length) return;
+        var fr = allW(kids(it.node, "tr")[0] || it.node, "r").filter(function (r) { return runText(r).trim(); });
+        var head = rows.length >= 2 && fr.length > 0 && fr.every(function (r) { return runBold(r, st, null); });
+        ensureLec().blocks.push({ t: "table", rows: rows, noHead: !head, ltrTable: !dir.rtl });
+        return;
+      }
+      var p = it.node, t = it.text;
+      if (it.level) {
+        olOpen = null;
+        var lv = Math.min(4, it.level - top + 1);
+        if (it.twin && lv <= 1) lv = 2;
+        if (lv <= 1) { cur = { title: t.trim(), titleInl: inlOf(p, it.style, true), intro: null, outro: [], blocks: [] }; lectures.push(cur); }
+        else ensureLec().blocks.push({ t: "h", level: lv, inl: inlOf(p, it.style, true), twin: !!it.twin });
+        imagesOf(p).forEach(function (im) { ensureLec().blocks.push({ t: "img", img: im }); });
+        return;
+      }
+      var L = ensureLec(), inl = inlOf(p, it.style), imgs = imagesOf(p), imp = t.indexOf(IMP) >= 0;
+      var styleList = !it.numPr && it.style && it.style.numPr && it.style.numId && it.style.numId !== "0";
+      if ((it.numPr || styleList) && t.trim()) {
+        var ilvl = it.numPr && kid(it.numPr, "ilvl"), nid = it.numPr && kid(it.numPr, "numId");
+        var lvN = ilvl ? +wa(ilvl, "val") : (styleList ? +(it.style.ilvl || 0) : 0), numId = nid ? wa(nid, "val") : (styleList ? it.style.numId : "0");
+        var def = an.num(numId, String(lvN)) || (it.style && it.style.numPr ? { fmt: /number/i.test(it.style.name) ? "decimal" : "bullet", text: "%1." } : null);
+        if (def && def.fmt !== "bullet" && def.fmt !== "none" && numId !== "0") {
+          var mt = an.num.meta ? an.num.meta(numId) : { abs: numId, ov: {} }, absId = mt.abs, key = absId + ":" + lvN;
+          if (mt.ov[lvN] !== undefined && !usedOv[numId + ":" + lvN]) { usedOv[numId + ":" + lvN] = 1; counters[key] = mt.ov[lvN] - 1; }
+          counters[key] = (counters[key] !== undefined ? counters[key] : (def.start || 1) - 1) + 1;
+          Object.keys(counters).forEach(function (k) { var a = k.split(":"); if (a[0] === absId && +a[1] > lvN) delete counters[k]; });
+          var label = (def.text || "%1.").replace(/%(\d)/g, function (_, d) { var c = counters[absId + ":" + (d - 1)] || 1, ld = an.num(numId, String(d - 1)) || def; return fmtNum(c, ld.fmt); });
+          var item = { num: label, inl: inl, imp: imp, children: [], gen: true };
+          if (olOpen && olOpen.numId === numId && olOpen.lvl === lvN && L.blocks[L.blocks.length - 1] === olOpen.block) olOpen.block.items.push(item);
+          else { var blk = { t: "ol", items: [item], nested: lvN > 0, indentLevel: lvN }; L.blocks.push(blk); olOpen = { numId: numId, lvl: lvN, block: blk }; }
+        } else { olOpen = null; L.blocks.push({ t: "li", level: Math.min(3, lvN), inl: inl, imp: imp }); }
+      } else if (t.trim()) {
+        olOpen = null;
+        if (/^💡/.test(t.trim())) L.outro.push(inl); else L.blocks.push({ t: "p", inl: inl, imp: imp });
+      }
+      imgs.forEach(function (im) { L.blocks.push({ t: "img", img: im }); });
+      txbxParas(p).forEach(function (b) { L.blocks.push(b); });
+    });
+    return Promise.all(imgJobs).then(function () { return { lectures: lectures, warn: warn }; });
+  }
+  function fmtNum(n, fmt) {
+    if (fmt === "lowerLetter") return String.fromCharCode(96 + ((n - 1) % 26) + 1);
+    if (fmt === "upperLetter") return String.fromCharCode(64 + ((n - 1) % 26) + 1);
+    if (fmt === "lowerRoman" || fmt === "upperRoman") { var r = roman(n); return fmt === "lowerRoman" ? r.toLowerCase() : r; }
+    if (fmt === "arabicAlpha" || fmt === "arabicAbjad") return "أبجدهوزحطيكلمنسعفصقرشتثخذضظغ".charAt((n - 1) % 28);
+    return String(n);
+  }
+  function roman(n) { var v = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1], s = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"], o = ""; for (var i = 0; i < v.length; i++) while (n >= v[i]) { o += s[i]; n -= v[i]; } return o; }
+
+  function rebuild(an, S, brand) {
+    an._keepCover = !S.cover;
+    return rebuildModel(an).then(function (m) {
+      var S2 = Object.assign({}, S, coverOpts(an, S), { brand: brand, tocLabels: { title: "فهرس المحتويات", c1: "القسم", c2: "العناوين الفرعية", count: "عدد الأقسام: " } });
+      var lecs = m.lectures.length ? m.lectures : [{ title: null, titleInl: null, intro: null, outro: [], blocks: [] }];
+      return docx.Packer.toBlob(ENGINE.build(lecs, S2)).then(function (b) { return ENGINE.finalize(b, "blob"); }).then(function (blob) {
+        var rep = { coverImages: S.cover ? an.coverImages : 0, lectures: lecs.length, warn: m.warn, images: an.stats.images - m.warn.droppedImages, coverLines: an.coverLines.length, removedToc: an.items.filter(function (it) { return it.toc; }).length };
+        return { blob: blob, report: rep, model: lecs };
+      });
+    });
+  }
+
+  /* ---------- التحقق: قبل/بعد ---------- */
+  function check(an, blob) {
+    return JSZip.loadAsync(blob).then(function (z) { return z.file("word/document.xml").async("string"); }).then(function (xml) {
+      return ENGINE.compare(an.origTokens, ENGINE.xmlTokens(xml, { all: true }));
+    });
+  }
+
+  /* نموذج للمعاينة (يُستخدم لكلا الطريقتين) */
+  function previewModel(an) { return rebuildModel(an).then(function (m) { return m.lectures; }); }
+
+  return { analyze: analyze, reskin: reskin, rebuild: rebuild, check: check, previewModel: previewModel, headerTextOf: headerTextOf };
 })();
 </script>
 
@@ -976,12 +1943,13 @@ var ENGINE = (function () {
   var $ = function (id) { return document.getElementById(id); };
   var LS_KEY = "randommed.lec2docx.settings.v2";
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
-    cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null };
+    cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin" };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
   try { var saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); if (saved && typeof saved === "object") { Object.assign(S, saved); S.sizes = Object.assign({}, ENGINE.SIZE_DEFAULTS, saved.sizes || {}); } } catch (e) {}
   if (!ENGINE.THEMES[S.theme] && S.theme !== "custom") S.theme = "brand";
   try { if (!localStorage.getItem("randommed.lec2docx.mig3")) { S.numPos = "right"; localStorage.setItem("randommed.lec2docx.mig3", "1"); } } catch (e) {}
-  function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} }
+  var clearResults = function () {};
+  function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(S)); } catch (e) {} clearResults(); }
   var LOGO_SRC = "data:image/png;base64," + LOGO_B64;
 
   /* ---- المكتبات ---- */
@@ -1075,6 +2043,8 @@ var ENGINE = (function () {
 
   /* ---- الملفات ---- */
   function addFiles(files) {
+    var dx = Array.prototype.filter.call(files, function (f) { return /\.docx$/i.test(f.name); });
+    if (dx.length) { setUiMode("word"); addDocx(dx); return; }
     files = Array.prototype.filter.call(files, function (f) { return /\.(md|txt|markdown)$/i.test(f.name) || /^text\//.test(f.type); });
     if (!files.length) return show("err", "يُقبل فقط ملفات نصية بامتداد ‎.md أو ‎.txt");
     syncActive();
@@ -1166,6 +2136,14 @@ var ENGINE = (function () {
     ["body", "table", "h1", "h2", "h3", "h4"].forEach(function (k) { pv.style.setProperty("--fs-" + k, s.sizes[k]); });
     pv.style.setProperty("--pv-lh", s.lineSpacing >= 1.5 ? 1.75 : s.lineSpacing >= 1.3 ? 1.55 : 1.4);
     var L = parseAll();
+    if (S.uiMode === "word") {
+      var wf = wordFiles.filter(function (f) { return f.model; })[0];
+      if (!wf) { pv.innerHTML = '<div class="empty">ستظهر هنا معاينة تقريبية بعد اختيار ملف Word.</div>'; return; }
+      var ws = wordSettings(wf), lines = (wf.coverLines || []).slice();
+      if (!ws.userSubject && wf.coverTitleIdx >= 0 && lines[wf.coverTitleIdx]) { ws.coverTitle = lines.splice(wf.coverTitleIdx, 1)[0]; }
+      ws.coverLines = lines; ws.tocLabels = { title: "فهرس المحتويات", c1: "القسم", c2: "العناوين الفرعية" };
+      s = Object.assign(s, ws); L = wf.model;
+    }
     var wm = s.wm ? '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>' : "";
     var foot = '<div class="pv-foot">صفحة 1' + (s.footBrand ? ' · <b>Random.MEd</b>' : "") + "</div>";
     pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? LOGO_SRC : "") + foot : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
@@ -1197,6 +2175,7 @@ var ENGINE = (function () {
 
   var busy = false;
   function download() {
+    if (S.uiMode === "word") return processWord(true);
     if (busy) return;
     var L = parseAll();
     if (!L.length) return show("err", "لا يوجد نص لتحويله. الصق نص محاضرة أولاً.");
@@ -1223,6 +2202,7 @@ var ENGINE = (function () {
 
   /* ---- التحقق من الكلمات ---- */
   $("checkBtn").onclick = function () {
+    if (S.uiMode === "word") return processWord(false);
     var texts = allText().filter(function (t) { return t.trim(); }), L = parseAll();
     if (!L.length) return show("err", "لا يوجد نص للتحقق منه.");
     show("info", "جارٍ توليد الملف ومقارنة الكلمات…"); prog(20);
@@ -1246,7 +2226,152 @@ var ENGINE = (function () {
       .catch(function (e) { prog(null); show("err", e && e.message ? e.message : "تعذّر إجراء التحقق."); });
   };
 
-  window.addEventListener("beforeunload", function (e) { syncActive(); if (lectures.some(function (l) { return l.text.trim(); })) { e.preventDefault(); e.returnValue = ""; } });
+  /* ===================== وضع ملف Word ===================== */
+  var wordFiles = [], wid = 0;
+  clearResults = function () { var ch = false; wordFiles.forEach(function (f) { if (f.result && !busy) { f.result = null; f.status = "ready"; ch = true; } }); if (ch) renderWordList(); };
+  function setUiMode(m) {
+    S.uiMode = m === "word" ? "word" : "text"; save();
+    $("modeText").classList.toggle("sel", S.uiMode === "text"); $("modeWord").classList.toggle("sel", S.uiMode === "word");
+    $("modeText").setAttribute("aria-selected", S.uiMode === "text"); $("modeWord").setAttribute("aria-selected", S.uiMode === "word");
+    $("textCard").hidden = S.uiMode !== "text"; $("wordCard").hidden = S.uiMode !== "word";
+    $("report").className = "report"; hide(); schedulePreview();
+  }
+  $("modeText").onclick = function () { setUiMode("text"); };
+  $("modeWord").onclick = function () { setUiMode("word"); };
+  Array.prototype.forEach.call(document.querySelectorAll(".method"), function (b) { b.onclick = function () { S.method = b.dataset.m; save(); paintMethods(); renderWordList(); }; });
+  function paintMethods() { Array.prototype.forEach.call(document.querySelectorAll(".method"), function (b) { b.classList.toggle("sel", b.dataset.m === S.method); }); }
+  paintMethods();
+  function fmtSize(n) { if (!n) return "فارغ"; return n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB"; }
+  function baseName(n) { return n.replace(/\.docx$/i, ""); }
+  function esc2(x) { return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function addDocx(files) {
+    files = Array.prototype.filter.call(files, function (f) { return /\.docx$/i.test(f.name); });
+    if (!files.length) return show("err", "يُقبل فقط ملفات Word بصيغة ‎.docx‎ (ملفات ‎.doc‎ القديمة: افتحها واحفظها بصيغة ‎.docx‎ أولاً).");
+    files.forEach(function (file) {
+      var f = { id: ++wid, name: file.name, size: file.size, status: "reading" };
+      wordFiles.push(f); renderWordList();
+      ensureLibs().then(function () { return file.arrayBuffer(); }).then(function (buf) { f.buf = buf; return RESTYLE.analyze(buf.slice(0)); })
+        .then(function (an) { f.stats = an.stats; f.coverLines = an.coverLines; f.coverTitleIdx = an.coverTitleIdx; f.title = an.title; f.words = an.origTokens.length; return Promise.all([RESTYLE.headerTextOf(an), RESTYLE.previewModel(an)]); })
+        .then(function (x) { f.header = x[0]; f.model = x[1]; f.status = "ready"; renderWordList(); schedulePreview(); })
+        .catch(function (e) { f.status = "error"; f.err = e && e.message && /[\u0600-\u06FF]/.test(e.message) ? e.message : "تعذّرت قراءة الملف — تأكد أنه ملف ‎.docx‎ سليم."; renderWordList(); if (window.console) console.error(e); });
+    });
+  }
+  $("docxIn").onchange = function (e) { addDocx(e.target.files); e.target.value = ""; };
+  var wdrop = $("wdrop");
+  ["dragenter", "dragover"].forEach(function (ev) { wdrop.addEventListener(ev, function (e) { e.preventDefault(); wdrop.classList.add("over"); }); });
+  ["dragleave", "drop"].forEach(function (ev) { wdrop.addEventListener(ev, function () { wdrop.classList.remove("over"); }); });
+  wdrop.addEventListener("drop", function (e) { e.preventDefault(); if (e.dataTransfer && e.dataTransfer.files.length) addDocx(e.dataTransfer.files); });
+  function wordSettings(f) {
+    var s = JSON.parse(JSON.stringify(S));
+    s.userSubject = !!S.subject.trim();
+    if (!s.userSubject) s.subject = (f.header || f.title || baseName(f.name)).slice(0, 120);
+    return s;
+  }
+  function recommend(st) { return st && (st.math || st.charts) ? "reskin" : null; }
+  function repHTML(f) {
+    var R = f.result; if (!R) return "";
+    var r = R.report, c = R.check, li = [];
+    if (R.method === "reskin") {
+      var h = r.headings, hs = h[1] + h[2] + h[3] + h[4];
+      if (hs) li.push("تلوين " + hs + " عنوان بأنماط عناوين حقيقية (تظهر في لوحة التنقل)");
+      if (r.tables) li.push("تنسيق " + r.tables + " جدول" + (r.bilingual ? " — منها " + r.bilingual + " ثنائي اللغة: الإنجليزي يسار والعربي يمين" : ""));
+      if (r.bidiFixed) li.push("تصحيح اتجاه " + r.bidiFixed + " فقرة عربية (من اليمين لليسار)");
+      if (r.ltrFixed) li.push("تصحيح " + r.ltrFixed + " فقرة إنجليزية كانت معكوسة");
+      if (r.runsSplit) li.push("فصل المصطلحات الإنجليزية والأرقام عن العربي في " + r.runsSplit + " موضع");
+      if (r.imp) li.push("إبراز " + r.imp + " نقطة [هام جداً] بإطار أصفر");
+      if (r.images) li.push("الحفاظ على " + r.images + " صورة كما هي");
+    } else {
+      li.push("إعادة بناء المحتوى في " + r.lectures + " قسم بتصميم الموقع الموحّد");
+      if (r.images) li.push("نقل " + r.images + " صورة");
+      if (r.warn.droppedImages) li.push('<span style="color:var(--rose)">' + r.warn.droppedImages + " صورة بصيغة غير مدعومة لم تُنقل — استخدم إعادة التلبيس</span>");
+      if (r.warn.math) li.push('<span style="color:var(--rose)">' + r.warn.math + " معادلة لا تُنقل بإعادة البناء — استخدم إعادة التلبيس</span>");
+    }
+    if (r.coverImages) li.push('<span style="color:var(--rose)">صور الغلاف الأصلي (' + r.coverImages + ") لم تُنقل للغلاف الجديد — أطفئ «صفحة الغلاف» إن أردتها</span>");
+    if (R.method === "rebuild" && r.warn && r.warn.footnotes) li.push('<span style="color:var(--rose)">' + r.warn.footnotes + " حاشية سفلية لا تُنقل بإعادة البناء — استخدم إعادة التلبيس</span>");
+    if (R.cover) li.push("غلاف جديد بهوية Random.MEd" + (r.coverLines ? " مع حفظ " + r.coverLines + " سطر من الغلاف الأصلي" : ""));
+    if (r.removedToc) li.push(R.toc ? "استبدال الفهرس القديم بفهرس تلقائي من العناوين" : "حذف الفهرس القديم");
+    li.push("ترويسة وتذييل جديدان" + (f.header ? " (الترويسة الأصلية صارت اسم المادة)" : ""));
+    var res = c.ok ? '<div class="res ok">✓ تحقق الكلمات: ' + c.inCount + " كلمة بدون أي فرق</div>" : '<div class="res bad">✗ تحقق الكلمات: ' + (c.missing.length + c.extra.length) + " فرق</div>" +
+      (c.missing.length ? '<div class="note warn">ناقصة: ' + c.missing.slice(0, 12).map(function (x) { return "«" + esc2(x[0]) + "»×" + x[1]; }).join("، ") + "</div>" : "") +
+      (c.extra.length ? '<div class="note warn">زائدة: ' + c.extra.slice(0, 12).map(function (x) { return "«" + esc2(x[0]) + "»×" + x[1]; }).join("، ") + "</div>" : "");
+    return '<div class="rep">' + res + "<ul>" + li.map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul></div>";
+  }
+  function renderWordList() {
+    $("wordCount").textContent = wordFiles.length;
+    var el = $("wordList");
+    el.innerHTML = wordFiles.map(function (f) {
+      var h = '<div class="wfile" data-id="' + f.id + '"><div class="top">' + (f.status === "reading" || f.status === "working" ? '<span class="spin" aria-hidden="true"></span>' : "") +
+        '<span class="nm" title="' + esc2(f.name) + '">' + esc2(f.name) + '</span><span class="pill">' + fmtSize(f.size) + '</span><button class="icon-x" data-del="' + f.id + '" aria-label="إزالة الملف">✕</button></div>';
+      if (f.status === "error") return h + '<div class="note warn">' + esc2(f.err) + "</div></div>";
+      if (f.status === "reading") return h + '<div class="note">جارٍ قراءة الملف وتحليله…</div></div>';
+      var st = f.stats, hd = st.headings[1] + st.headings[2] + st.headings[3] + st.headings[4], ch = [];
+      ch.push('<span class="chip">' + f.words + " كلمة</span>");
+      ch.push('<span class="chip">' + hd + " عنوان</span>");
+      if (st.tables) ch.push('<span class="chip">' + st.tables + " جدول</span>");
+      if (st.images) ch.push('<span class="chip">' + st.images + " صورة</span>");
+      if (st.lists) ch.push('<span class="chip">' + st.lists + " بند قائمة</span>");
+      if (st.imp) ch.push('<span class="chip">' + st.imp + " [هام جداً]</span>");
+      if (st.cover) ch.push('<span class="chip ok">غلاف ✓</span>');
+      if (st.toc) ch.push('<span class="chip ok">فهرس ✓</span>');
+      if (st.textboxes) ch.push('<span class="chip">' + st.textboxes + " مربع نص</span>");
+      if (st.math) ch.push('<span class="chip warn">' + st.math + " معادلة</span>");
+      h += '<div class="chips">' + ch.join("") + "</div>";
+      var notes = [];
+      if (!hd) notes.push("ما لقينا عناوين بالملف — رح نحافظ على ترتيبه ونلوّن الفقرات والجداول.");
+      else if (st.heurHeadings) notes.push("العناوين بالملف مو معرّفة كعناوين حقيقية، فاستنتجنا " + st.heurHeadings + " عنوان من حجم الخط والغامق.");
+      if (recommend(st) && S.method === "rebuild") notes.push('<span style="color:var(--rose)">الملف فيه معادلات/رسوم بيانية — إعادة البناء ما بتنقلها، اختار «إعادة تلبيس».</span>');
+      if (st.cover && !S.cover) notes.push("صفحة الغلاف مطفأة — رح نترك الغلاف الأصلي كما هو.");
+      if (st.cover && S.cover) notes.push("الغلاف الأصلي رح يتبدّل بغلاف Random.MEd ونحفظ سطوره (" + f.coverLines.length + " سطر)" + (st.toc ? "، والفهرس القديم بفهرس تلقائي." : "."));
+      if (notes.length) h += '<div class="note">' + notes.join("<br>") + "</div>";
+      if (f.status === "working") h += '<div class="note">جارٍ التنسيق…</div>';
+      h += repHTML(f);
+      return h + "</div>";
+    }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("[data-del]"), function (b) {
+      b.onclick = function () { var id = +b.dataset.del; wordFiles = wordFiles.filter(function (f) { return f.id !== id; }); renderWordList(); schedulePreview(); };
+    });
+  }
+  function processWord(save) {
+    if (wordFiles.some(function (f) { return f.status === "reading"; })) return show("info", "لحظة… عم نحلّل الملفات، جرّب بعد ثوانٍ.");
+    var ready = wordFiles.filter(function (f) { return f.status === "ready" || f.status === "done"; });
+    var nErr = wordFiles.filter(function (f) { return f.status === "error"; }).length;
+    if (!ready.length) return show("err", wordFiles.length ? "انتظر حتى ينتهي تحليل الملفات." : "اختر ملف Word ‎(.docx)‎ أولاً.");
+    if (busy) return;
+    busy = true; $("dlBtn").disabled = $("dlBtn2").disabled = true; show("info", save ? "جارٍ تنسيق الملفات…" : "جارٍ التنسيق والتحقق من الكلمات…"); prog(8);
+    var method = S.method === "rebuild" ? "rebuild" : "reskin", outs = [];
+    ensureLibs().then(function () { return brandAssets(S); }).then(function (brand) {
+      var chain = Promise.resolve();
+      ready.forEach(function (f, i) {
+        chain = chain.then(function () {
+          if (wordFiles.indexOf(f) < 0) return;
+          f.status = "working"; renderWordList();
+          return RESTYLE.analyze(f.buf.slice(0)).then(function (an) {
+            var s = wordSettings(f);
+            return RESTYLE[method](an, s, brand).then(function (r) {
+              return RESTYLE.check(an, r.blob).then(function (c) { if (wordFiles.indexOf(f) < 0) return; f.result = { method: method, report: r.report, check: c, cover: s.cover, toc: s.toc }; f.status = "done"; outs.push({ f: f, blob: r.blob }); });
+            });
+          }).catch(function (e) { f.status = "ready"; f.result = null; throw e; }).then(function () { renderWordList(); prog(8 + Math.round(85 * (i + 1) / ready.length)); });
+        });
+      });
+      return chain;
+    }).then(function () {
+      var bad = outs.filter(function (o) { return !o.f.result.check.ok; }).length;
+      if (save) {
+        if (outs.length === 1) saveBlob(outs[0].blob, safeName(baseName(outs[0].f.name)) + " - Random.MEd.docx");
+        else { var z = new JSZip(); outs.forEach(function (o, i) { z.file(String(i + 1).padStart(2, "0") + " - " + safeName(baseName(o.f.name)) + " - Random.MEd.docx", o.blob); }); return z.generateAsync({ type: "blob" }).then(function (b) { saveBlob(b, "Random.MEd - ملفات Word.zip"); return bad; }); }
+      }
+      return bad;
+    }).then(function (bad) {
+      prog(100); setTimeout(function () { prog(null); }, 700);
+      show(bad ? "err" : "ok", bad ? "تم التنسيق، لكن تحقق الكلمات وجد فروقاً في " + bad + " ملف — راجع التقرير." : (save ? "تم تنسيق " + outs.length + " ملف وبدأ التنزيل ✓ — تحقق الكلمات: صفر فروق." : "✓ تحقق الكلمات: صفر فروق في " + outs.length + " ملف.") + (nErr ? " — تم تجاهل " + nErr + " ملف غير صالح." : ""));
+      if (innerWidth < 1000) { var w = $("wordList"); if (w) w.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    }).catch(function (e) { prog(null); show("err", (e && e.message && /[\u0600-\u06FF]/.test(e.message)) ? e.message : "حدث خطأ أثناء تنسيق الملف: " + (e && e.message ? e.message : e)); if (window.console) console.error(e); renderWordList(); })
+      .then(function () { busy = false; $("dlBtn").disabled = $("dlBtn2").disabled = false; });
+  }
+  setUiMode(S.uiMode);
+  renderWordList();
+
+  window.addEventListener("beforeunload", function (e) { syncActive(); if (lectures.some(function (l) { return l.text.trim(); }) || wordFiles.length) { e.preventDefault(); e.returnValue = ""; } });
   renderAll();
 })();
 </script>
