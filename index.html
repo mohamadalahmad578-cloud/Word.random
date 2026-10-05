@@ -262,6 +262,7 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .page .pv-back .bs{color:#D5DCE8;font-size:.9em}
 .page .pv-back .rights{position:absolute;bottom:3.5%;left:0;right:0;font-size:.72em;color:#C7D2E0}
 textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
+.pdf-btn{width:100%;justify-content:center;margin-top:8px;min-height:44px;font-weight:700;border-color:#C0392B33;color:#A93226}
 .prow{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
 .prow>.inp{flex:1;min-width:0}
 .prow>.btn{flex:none}
@@ -464,6 +465,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
       <section class="card dl-card" aria-label="التنزيل">
         <div class="card-b actions">
           <button class="btn-main" id="dlBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>تنزيل ملف Word</button>
+          <button class="btn pdf-btn" id="pdfBtn" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 15h1.5a1.5 1.5 0 0 0 0-3H8v6M13 12v6h1a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-1"/></svg>تنزيل PDF</button>
           <div class="row2">
             <button class="btn" id="checkBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>تحقق من الكلمات</button>
             <button class="btn" id="pvBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>المعاينة</button>
@@ -2294,6 +2296,7 @@ var ENGINE = (function () {
         var o = [];
         var lr = c.logo ? logoRun(CSTYLE === "block" ? 96 : 120) : null;
         if (lr) o.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: indent ? ind(indent.r || 0, indent.l || 0) : undefined, spacing: { line: 240, lineRule: AUTO, after: 300 }, children: [lr] }));
+        if (S.coverTitle) o.headN = o.length + 1; // الشعار + عنوان الغلاف الأصلي (نص أصلي خارج علامات GEN)
         if (S.coverTitle) o.push(P(parseInline(String(S.coverTitle)), { align: CENTER, side: indent, size: SZ.body + 24, bold: true, color: c.title, boldColor: c.title, after: 120, line: 320, forceRtl: AR_RE.test(S.coverTitle) }));
         o.push(P(S.coverTitle ? [] : [{ text: subject }], { pre: [GS()], align: CENTER, side: indent, size: SZ.body + 28, bold: true, color: c.title, boldColor: c.title, after: S.coverTitle ? 0 : 120, line: S.coverTitle ? 120 : 320, forceRtl: true }));
         o.push(new D.Paragraph({ bidirectional: true, spacing: { before: 60, after: 220 }, indent: ind((indent && indent.r || 0) + 2200, (indent && indent.l || 0) + 2200), border: { bottom: { style: D.BorderStyle.THICK, size: 24, color: c.bar, space: 1 } }, children: [] }));
@@ -2314,6 +2317,25 @@ var ENGINE = (function () {
           mkRun(cntLabel, true, {}, { size: SZ.body, color: c.line === "FFFFFF" ? "E6EAF0" : "404040" }), mkRun(cnt, false, {}, { size: SZ.body, color: c.line === "FFFFFF" ? "E6EAF0" : "404040" }), GE()] }));
         return o;
       }
+      /* لوحة بيضاء (تظليل خلية من Word نفسه) خلف نصوص الغلاف: بالوضع الداكن Word يقلب اللوحة والنص معاً فيبقى مقروءاً فوق صورة الخلفية */
+      var PFILL = { classic: "FFFFFF", band: "FFFFFF", frame: "FBF8F1", wave: "FFFFFF", block: "FFFFFF" }[CSTYLE];
+      function panel(kids, sd, marg, fill) { // الهوامش الجانبية أعمدة فارغة (يمين/يسار الصفحة) بدل إزاحة الجدول — تُعرض بنفس الشكل في كل البرامج
+        var r = (sd && sd.r) || 0, l = (sd && sd.l) || 0, total = PAGE_W - 2 * marg, avail = total - r - l, cols = [], cells = [];
+        function blank(w) { return new D.TableCell({ width: { size: w, type: D.WidthType.DXA }, borders: cellNone, margins: { top: 0, bottom: 0, left: 0, right: 0 }, children: [gap()] }); }
+        if (r) { cols.push(r); cells.push(blank(r)); }
+        cols.push(avail); cells.push(new D.TableCell({ width: { size: avail, type: D.WidthType.DXA }, shading: shade(fill || PFILL), borders: cellNone, margins: { top: 40, bottom: 40, left: 80, right: 80 }, children: kids }));
+        if (l) { cols.push(l); cells.push(blank(l)); }
+        return new D.Table({ layout: D.TableLayoutType.FIXED, width: { size: total, type: D.WidthType.DXA }, columnWidths: cols, visuallyRightToLeft: true, borders: noBorders, rows: [new D.TableRow({ children: cells })] });
+      }
+      function gap(fill) { return new D.Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, shading: fill ? shade(fill) : undefined, children: [] }); }
+      function panels(c, sd, marg) { // [عنوان مولّد] [سطور الغلاف الأصلية] [العدد المولّد] — جداول منفصلة حتى تبقى سطور الأصل خارج علامات GEN
+        var lb = linesBlock(c, undefined), cntP = lb.pop(), tb = titleBlock(c, undefined), o = [];
+        if (tb.headN) { o.push(panel(tb.slice(0, tb.headN), sd, marg)); o.push(gap()); o.push(panel(tb.slice(tb.headN), sd, marg)); } else o.push(panel(tb, sd, marg));
+        o.push(gap());
+        if (lb.length) { o.push(panel(lb, sd, marg)); o.push(gap()); }
+        o.push(panel([cntP], sd, marg)); o.push(gap());
+        return o;
+      }
       var bgRun = brand.coverBg ? new D.ImageRun({ type: "png", data: brand.coverBg.data, transformation: { width: 794, height: 1123 },
         floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 0 },
           behindDocument: true, allowOverlap: true, lockAnchor: true, wrap: { type: D.TextWrappingType.NONE } }, altText: { title: "خلفية الغلاف", description: PF.name, name: "coverbg" } }) : null;
@@ -2321,22 +2343,29 @@ var ENGINE = (function () {
       if (CSTYLE === "block") {
         coverMargins = { top: 0, bottom: 1100, left: 0, right: 0, header: 0, footer: 500 };
         var inner = titleBlock(CS, { r: 1200, l: 1200 });
-        cover.push(new D.Table({ layout: D.TableLayoutType.FIXED, width: { size: PAGE_W, type: D.WidthType.DXA }, columnWidths: [PAGE_W], visuallyRightToLeft: true, borders: noBorders,
-          rows: [new D.TableRow({ height: { value: 7600, rule: D.HeightRule.ATLEAST }, children: [new D.TableCell({ width: { size: PAGE_W, type: D.WidthType.DXA }, verticalAlign: D.VerticalAlign.CENTER, shading: shade(T.h1),
-            borders: { top: NONE, left: NONE, right: NONE, bottom: { style: D.BorderStyle.SINGLE, size: 48, color: "D9A84E" } }, margins: { top: 500, bottom: 500, left: 0, right: 0 }, children: inner })] })] }));
+        var navy = function (kids, h, top, last) {
+          return new D.Table({ layout: D.TableLayoutType.FIXED, width: { size: PAGE_W, type: D.WidthType.DXA }, columnWidths: [PAGE_W], visuallyRightToLeft: true, borders: noBorders,
+            rows: [new D.TableRow({ height: h ? { value: h, rule: D.HeightRule.ATLEAST } : undefined, children: [new D.TableCell({ width: { size: PAGE_W, type: D.WidthType.DXA }, verticalAlign: D.VerticalAlign.CENTER, shading: shade(T.h1),
+              borders: { top: NONE, left: NONE, right: NONE, bottom: last ? { style: D.BorderStyle.SINGLE, size: 48, color: "D9A84E" } : NONE }, margins: { top: top ? 500 : 0, bottom: last ? 500 : 0, left: 0, right: 0 }, children: kids })] })] });
+        };
+        if (inner.headN) { cover.push(navy(inner.slice(0, inner.headN), 0, true, false)); cover.push(gap(T.h1)); cover.push(navy(inner.slice(inner.headN), 4600, false, true)); }
+        else cover.push(navy(inner, 7600, true, true));
         cover.push(new D.Paragraph({ spacing: { before: 0, after: 500 }, children: [] }));
-        cover = cover.concat(linesBlock(CS, { r: 1418 + 400, l: 1418 + 400 }));
+        var lb0 = linesBlock(CS, undefined), cnt0 = lb0.pop(), sdB = { r: 1418 + 400, l: 1418 + 400 };
+        if (lb0.length) { cover.push(panel(lb0, sdB, 0)); cover.push(gap()); }
+        cover.push(panel([cnt0], sdB, 0)); cover.push(gap());
       } else {
         var side = (CS.s || CS.e) ? { r: CS.s, l: CS.e } : undefined;
         cover.push(new D.Paragraph({ spacing: { before: CS.top, after: 0 }, children: [] }));
-        cover = cover.concat(titleBlock(CS, side)).concat(linesBlock(CS, side));
+        cover = cover.concat(PFILL ? panels(CS, side, MARGIN) : titleBlock(CS, side).concat(linesBlock(CS, side)));
       }
       // تذييل الغلاف: الحقوق + رابط المنصة
       var fc = CS.foot, fsz = Math.max(16, SZ.body - 3);
+      var ffill = CSTYLE === "block" ? mix("FFFFFF", T.light, 0.55) : (PFILL && CSTYLE !== "wave" ? PFILL : null);
       coverFooterKids = [];
-      if (rightsOn) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, spacing: { after: 40 }, children: rightsRuns(fsz, fc) }));
+      if (rightsOn) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, shading: ffill ? shade(ffill) : undefined, spacing: { after: 0 }, children: rightsRuns(fsz, fc) }));
       var lk = linkRun(fsz, fc === "404040" ? T.acc : fc);
-      if (lk) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, spacing: { after: 0 }, children: [lk] }));
+      if (lk) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: CSTYLE === "band" ? ind(CS.s, 0) : undefined, shading: ffill ? shade(ffill) : undefined, spacing: { before: 40, after: 0 }, children: [lk] }));
     }
     if (S.toc) {
       var TL = Object.assign({ title: "فهرس المحاضرات ومحاورها", c1: "المحاضرة", c2: "المحاور الرئيسية" }, S.tocLabels || {});
@@ -3984,6 +4013,104 @@ var ENGINE = (function () {
     } catch (e) { ex = "—"; }
     el.textContent = "مثال: " + ex + ".docx";
   }
+
+  /* ---- تنزيل PDF: صفحة طباعة بنفس التصميم ثم «حفظ كـ PDF» من نافذة الطباعة ---- */
+  function pageCss() {
+    var out = [];
+    Array.prototype.forEach.call(document.styleSheets, function (ss) { var rules; try { rules = ss.cssRules; } catch (e) { return; } Array.prototype.forEach.call(rules || [], function (r) { if (r.selectorText && /(^|,)\s*\.page\b/.test(r.selectorText)) out.push(r.cssText); }); });
+    return out.join("\n");
+  }
+  function pdfModel() { // يرجع {L, s} حسب الوضع
+    if (S.uiMode === "word") {
+      var ready = wordFiles.filter(function (f) { return f.model && f.status !== "error" && f.status !== "reading"; });
+      if (!ready.length) return null;
+      if (S.merge && ready.length > 1) {
+        var ms = mergeSettings(ready), all = [];
+        ready.forEach(function (f) {
+          var L = f.model.map(function (l) { return Object.assign({}, l, { blocks: l.blocks.slice() }); });
+          var cl = (f.coverLines || []).filter(function (x) { return String(x).trim(); });
+          if (cl.length) { if (!L.length) L.push({ title: null, titleInl: null, intro: null, outro: [], blocks: [] }); L[0] = Object.assign({}, L[0], { blocks: cl.map(function (t) { return { t: "p", inl: [{ text: t, b: true }] }; }).concat(L[0].blocks) }); }
+          all = all.concat(L);
+        });
+        ms.coverLines = []; ms.coverTitle = null; ms.tocLabels = { title: "فهرس المحتويات", c1: "القسم", c2: "العناوين الفرعية" };
+        return { L: all, s: ms, name: ENGINE.fileName(ms.nameTpl, nameVals(ms, { num: ENGINE.numLabel(ready.map(wordNum)) })), note: "" };
+      }
+      var f = ready[0], ws = wordSettings(f), lines = (f.coverLines || []).slice();
+      if (!ws.userSubject && f.coverTitleIdx >= 0 && lines[f.coverTitleIdx]) ws.coverTitle = lines.splice(f.coverTitleIdx, 1)[0];
+      ws.coverLines = lines; ws.tocLabels = { title: "فهرس المحتويات", c1: "القسم", c2: "العناوين الفرعية" };
+      return { L: f.model, s: ws, name: wordDocName(f, ws), note: ready.length > 1 ? "الـ PDF للملف الأول فقط — فعّل «دمج الملفات بكتاب واحد» لتطلع كلها بملف PDF واحد." : "" };
+    }
+    var L = parseAll(); if (!L.length) return null;
+    var s = effSettings(); return { L: L, s: s, name: textDocName(L, s), note: "" };
+  }
+  function pdfHTML(m, A) {
+    var s = m.s, T = ENGINE.resolveTheme(s), Z = s.sizes, pf = platformName(s), yr = new Date().getFullYear();
+    var vars = { "--c-h1": T.h1, "--c-h2bg": T.h2bg, "--c-h2line": T.h2line, "--c-h2t": T.h2t, "--c-h3": T.h3, "--c-h4": T.h4, "--c-bold": T.bold, "--c-thead": T.thead, "--c-fc": T.fc, "--c-alt": T.alt, "--c-border": T.border, "--c-acc": T.acc, "--c-light": T.light, "--c-outro": T.outro };
+    var st = Object.keys(vars).map(function (k) { return k + ":#" + vars[k]; }).join(";") + ";" + ["body", "table", "h1", "h2", "h3", "h4"].map(function (k) { return "--fs-" + k + ":" + Z[k]; }).join(";");
+    var q = function (t) { return '"' + String(t).replace(/\\/g, "").replace(/"/g, "'") + '"'; };
+    var footTxt = (s.rights !== false ? "  ·  © " + yr + " " + pf + " — جميع الحقوق محفوظة" : (s.footBrand ? "  ·  " + pf : ""));
+    var body = ENGINE.previewHTML(m.L, s, s.logo ? LOGO_SRC : "", s.cover ? A.cover : "");
+    var back = "";
+    if (s.backCover) {
+      var qh = qrHref(s), soc = String(s.social || "").split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 8);
+      back = '<div class="pv-back" style="background-image:url(' + A.back + ')">' + (s.logo ? '<img class="lg" src="' + LOGO_SRC + '" alt="">' : "") + '<div class="bn" dir="auto">' + esc2(pf) + "</div>" +
+        (String(s.backText || "").trim() ? '<div class="bt" dir="auto">' + esc2(s.backText.trim()) + "</div>" : "") + '<div class="bb"></div>' +
+        (A.qr ? '<img class="qr" src="' + A.qr + '" alt="QR"><div class="bh">امسح الرمز لزيارة المنصة</div><a class="bu" href="' + esc2(qh) + '">' + esc2(qh.replace(/^https?:\/\//, "").replace(/\/$/, "")) + "</a>" : "") +
+        soc.map(function (x) { return '<div class="bs" dir="auto">' + esc2(x) + "</div>"; }).join("") +
+        (s.rights !== false ? '<div class="rights">© ' + yr + " " + esc2(pf) + " — جميع الحقوق محفوظة</div>" : "") + "</div>";
+    }
+    var css = pageCss() + "\n" +
+      "@page{size:A4;margin:17mm 19mm 19mm;@top-center{content:" + q(s.subject) + ";font:9pt 'Noto Naskh Arabic','Simplified Arabic',serif;color:#8a8a8a}@bottom-center{content:\"صفحة \" counter(page) " + q(footTxt) + ";font:9pt 'Noto Naskh Arabic','Simplified Arabic',serif;color:#7f7f7f}}" +
+      (s.cover ? "@page:first{margin:0;@top-center{content:none}@bottom-center{content:none}}" : "") +
+      "html{background:#fff}html,body{margin:0;padding:0}body{background:transparent}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}" +
+      ".page{background:transparent;max-width:none;margin:0;padding:0;box-shadow:none;border-radius:0;font-family:'Simplified Arabic','Noto Naskh Arabic','Traditional Arabic',serif;font-size:" + Z.body + "pt;line-height:" + (s.lineSpacing >= 1.5 ? 1.75 : s.lineSpacing >= 1.3 ? 1.55 : 1.4) + "}" +
+      ".page .lat{font-family:'Times New Roman','Liberation Serif',serif}" +
+      ".page .pv-cover.styled{box-sizing:border-box;margin:0;width:210mm;height:296mm;aspect-ratio:auto;break-after:page;font-size:" + (Z.body + 2) + "pt}.page .pv-cover:not(.styled){break-after:page}" +
+      ".page .pv-cover.styled .ct{font-size:2.1em}.page .pv-cover img{height:30mm}" +
+      ".page .pgbreak{break-before:page;border:0;margin:0;height:0}.page .pgbreak::after{display:none}" +
+      ".page .pv-back{break-before:page;break-inside:avoid;box-sizing:border-box;margin:0;height:250mm;aspect-ratio:auto;border-radius:3mm;font-size:" + (Z.body + 2) + "pt}.page .pv-back img.lg{height:30mm}.page .pv-back img.qr{width:38mm;height:38mm}.page .pv-back a{text-decoration:none}" +
+      ".page .pv-h2,.page .pv-h3,.page .pv-h4,.page .pv-h1{break-after:avoid}.page tr,.page .dg,.page img{break-inside:avoid}" +
+      (s.keepParas ? ".page p,.page li,.page .pv-imp,.page .pv-intro,.page .pv-outro,.page table.ol tr{break-inside:avoid}" : "") +
+      ".wmf{position:fixed;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;z-index:-1;pointer-events:none}.wmf img{width:118mm;max-width:80%}" +
+      ".tb{position:sticky;top:0;z-index:5;background:#141B2E;color:#fff;padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;font:14px 'IBM Plex Sans Arabic',system-ui,sans-serif;direction:rtl}" +
+      ".tb button{background:#D9A84E;color:#141B2E;border:0;border-radius:10px;padding:10px 16px;font:700 14px inherit;cursor:pointer}.tb small{opacity:.85;line-height:1.5}" +
+      "@media screen{body{background:#e9e7e2}.page{max-width:210mm;margin:12px auto;padding:17mm 19mm;box-shadow:0 2px 12px rgba(0,0,0,.2)}.page .pv-cover.styled{margin:-17mm -19mm 0;width:auto;height:auto;aspect-ratio:1/1.414}.page .pgbreak{border-top:2px dashed #ccc;margin:18mm -19mm}}" +
+      "@media print{.tb{display:none}}";
+    var wm = s.wm && A.wm ? '<div class="wmf"><img src="' + A.wm + '" alt=""></div>' : "";
+    return '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc2(m.name) + "</title>" +
+      '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;700&family=El+Messiri:wght@700&family=IBM+Plex+Sans+Arabic:wght@500;700&display=swap">' +
+      "<style>" + css + "</style></head><body>" +
+      '<div class="tb"><small>من نافذة الطباعة اختر «حفظ كـ PDF» (على الآيفون: مشاركة ← حفظ في الملفات).' + (m.note ? "<br>" + esc2(m.note) : "") + '</small><button onclick="window.print()">حفظ PDF</button></div>' +
+      wm + '<div class="page" style="' + st + '">' + body + back + "</div>" +
+      "<script>window.addEventListener('load',function(){var go=function(){setTimeout(function(){window.print();},350);};(document.fonts&&document.fonts.ready?document.fonts.ready.then(go,go):go());});<\/script></body></html>";
+  }
+  function pdfAssets(s) {
+    return logoReady.then(function () { return document.fonts && document.fonts.ready ? document.fonts.ready : null; }).then(function () {
+      var T = ENGINE.resolveTheme(s), A = { cover: "", back: "", qr: "", wm: "" };
+      if (s.cover) A.cover = drawCover(s.coverStyle || "classic", T, platformName(s), 1).toDataURL("image/png");
+      if (s.backCover) { A.back = drawBack(T, 0.75).toDataURL("image/png"); var qh = qrHref(s); if (qh) { try { A.qr = drawQR(qh).toDataURL("image/png"); } catch (e) {} } }
+      if (s.wm) A.wm = drawWatermark(s).toDataURL("image/png");
+      return A;
+    });
+  }
+  $("pdfBtn").onclick = function () {
+    if (S.uiMode === "word" && wordFiles.some(function (f) { return f.status === "reading"; })) return show("info", "لحظة… عم نحلّل الملفات، جرّب بعد ثوانٍ.");
+    var m = pdfModel();
+    if (!m) return show("err", S.uiMode === "word" ? "اختر ملف Word ‎(.docx)‎ أولاً." : "لا يوجد نص لتحويله. الصق نص محاضرة أولاً.");
+    var w = null; try { w = window.open("", "_blank"); } catch (e) {}
+    if (w) { try { w.document.write('<!doctype html><meta charset="utf-8"><body style="font:16px system-ui;direction:rtl;padding:24px;background:#141B2E;color:#fff">جارٍ تجهيز ملف PDF…</body>'); } catch (e) {} }
+    show("info", "جارٍ تجهيز ملف PDF…");
+    pdfAssets(m.s).then(function (A) {
+      var html = pdfHTML(m, A);
+      if (w && !w.closed) { w.document.open(); w.document.write(html); w.document.close(); }
+      else { // النوافذ المنبثقة محظورة: نطبع من إطار مخفي
+        var fr = document.createElement("iframe"); fr.style.cssText = "position:fixed;width:0;height:0;border:0;left:-9999px"; document.body.appendChild(fr);
+        fr.contentDocument.open(); fr.contentDocument.write(html.replace(/<script>[\s\S]*?<\/script>/, "")); fr.contentDocument.close();
+        setTimeout(function () { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) {} setTimeout(function () { fr.remove(); }, 60000); }, 1200);
+      }
+      show("ok", "انفتحت نافذة الطباعة — اختر «حفظ كـ PDF»." + (m.note ? " " + m.note : ""));
+    }).catch(function (e) { show("err", "تعذّر تجهيز PDF: " + (e && e.message ? e.message : e)); if (w && !w.closed) w.close(); });
+  };
 
   /* ---- قوالب المواد المحفوظة ---- */
   var PS_KEY = "randommed.lec2docx.presets.v1", PS_SKIP = { uiMode: 1, dark: 1, pvReal: 1, merge: 1, method: 1 };
