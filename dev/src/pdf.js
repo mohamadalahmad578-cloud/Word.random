@@ -415,10 +415,13 @@ var RMED_PDF = (function () {
       frame: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 85, logo: true, bar: "A9761E", foot: "404040", r: 35, l: 35 },
       wave: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 65, logo: true, bar: T.h2line, foot: "FFFFFF", r: 10, l: 10 },
       block: { title: "FFFFFF", sub: "F2CF86", line: "1A1A1A", first: T.h2t, top: 0, logo: true, bar: "D9A84E", foot: "404040", r: 0, l: 0 },
-      dna: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 85, logo: true, bar: T.h2line, foot: "404040", r: 0, l: 130 },
+      dna: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 85, logo: true, bar: T.h2line, foot: "404040", r: 130, l: 0 },
       molecule: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 100, logo: true, bar: T.h2line, foot: "404040", r: 20, l: 20 },
       cycle: { title: "FFFFFF", sub: "F2CF86", line: "FFFFFF", first: "FFFFFF", top: 60, logo: true, bar: "D9A84E", foot: "E6EAF0", r: 15, l: 15 },
-      peptide: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 95, logo: true, bar: T.h2line, foot: "404040", r: 15, l: 15 }
+      peptide: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 95, logo: true, bar: T.h2line, foot: "404040", r: 15, l: 15 },
+      helix: { title: "FFFFFF", sub: "F2CF86", line: "FFFFFF", first: "F2CF86", top: 75, logo: true, bar: "D9A84E", foot: "E6EAF0", r: 20, l: 20 },
+      protein: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 100, logo: true, bar: "A9761E", foot: "404040", r: 20, l: 20 },
+      steroid: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 85, logo: true, bar: "A9761E", foot: "404040", r: 20, l: 20 }
     };
     function cover() {
       var st = CSMAP[S.coverStyle] ? S.coverStyle : "classic", c = CSMAP[st];
@@ -426,7 +429,7 @@ var RMED_PDF = (function () {
       var showSub = S.showSubtitle !== false && (!cl.length || S.subtitle), subTxt = S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات";
       var extra = String(S.coverExtra || "").split(/\n/).map(function (t) { return t.trim(); }).filter(Boolean).slice(0, 12), dr = String(S.doctor || "").trim();
       var cnt = (S.tocLabels && S.tocLabels.count || "عدد المحاضرات: ") + (S.tocItems ? S.tocItems.length : LL.length);
-      var dark = st === "geo" || st === "cycle", drC = st === "block" || dark ? "FFFFFF" : c.first, exC = st === "block" ? "FFFFFF" : c.line;
+      var dark = st === "geo" || st === "cycle" || st === "helix", drC = st === "block" || dark ? "FFFFFF" : c.first, exC = st === "block" ? "FFFFFF" : c.line;
       function plan(f) { // عناصر الغلاف بمقياس f
         var items = [];
         var x = MX + c.l, w = CW - c.l - c.r;
@@ -466,7 +469,7 @@ var RMED_PDF = (function () {
       });
       // التذييل: الحقوق + الرابط
       var fy = st === "peptide" ? PH - 142 : PH - 46, fc = c.foot, fr = fnt(8, false, false, true); // الببتيد: فوق السلسلة السفلية
-      var availW = st === "band" ? CW - 135 : st === "dna" ? CW - 130 : CW, cx0 = st === "band" ? MX : st === "dna" ? MX + 130 : (PW - CW) / 2;
+      var availW = st === "band" ? CW - 135 : st === "dna" ? CW - 130 : CW, cx0 = st === "band" || st === "dna" ? MX : (PW - CW) / 2;
       var bigNm = S.coverBigName !== undefined && S.coverBigName !== null ? String(S.coverBigName).trim() : pfName;
       if (bigNm) { var bigC = st === "wave" ? T.h1 : dark ? "E6C27A" : GOLD, fbig = fitFont(bigNm, Z.body + (bigNm.length > 24 ? 6 : 11), true, AR.test(bigNm), availW), wbig = width(fbig, bigNm);
         text(bigNm, cx0 + (availW - wbig) / 2, st === "wave" ? PH - 168 : fy - 22, fbig, bigC, AR.test(bigNm)); } // بالموجات: فوق الموج

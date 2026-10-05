@@ -1123,10 +1123,13 @@ var ENGINE = (function () {
       frame:   { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1700, logo: true, bar: "A9761E", foot: "404040", s: 700, e: 700 },
       wave:    { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1300, logo: true, bar: T.h2line, foot: "FFFFFF", s: 200, e: 200 },
       block:   { title: "FFFFFF", sub: "F2CF86", line: "1A1A1A", first: T.h2t, top: 0, logo: true, bar: "D9A84E", foot: "404040", s: 0, e: 0 },
-      dna:     { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1700, logo: true, bar: T.h2line, foot: "404040", s: 0, e: 2600 },
+      dna:     { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1700, logo: true, bar: T.h2line, foot: "404040", s: 2600, e: 0 },
       molecule:{ title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 2000, logo: true, bar: T.h2line, foot: "404040", s: 400, e: 400 },
       cycle:   { title: "FFFFFF", sub: "F2CF86", line: "FFFFFF", first: "FFFFFF", top: 1300, logo: true, bar: "D9A84E", foot: "E6EAF0", s: 300, e: 300 },
-      peptide: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1900, logo: true, bar: T.h2line, foot: "404040", s: 300, e: 300 }
+      peptide: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1900, logo: true, bar: T.h2line, foot: "404040", s: 300, e: 300 },
+      helix:   { title: "FFFFFF", sub: "F2CF86", line: "FFFFFF", first: "F2CF86", top: 1500, logo: true, bar: "D9A84E", foot: "E6EAF0", s: 400, e: 400 },
+      protein: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 2000, logo: true, bar: "A9761E", foot: "404040", s: 400, e: 400 },
+      steroid: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1700, logo: true, bar: "A9761E", foot: "404040", s: 400, e: 400 }
     }[CSTYLE] || null;
     if (!CS) { CSTYLE = "classic"; CS = { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1500, logo: true, bar: T.h2line, foot: "404040", s: 0, e: 0 }; }
     if (S.cover) {
@@ -1167,7 +1170,7 @@ var ENGINE = (function () {
         return o;
       }
       /* لوحة بيضاء (تظليل خلية من Word نفسه) خلف نصوص الغلاف: بالوضع الداكن Word يقلب اللوحة والنص معاً فيبقى مقروءاً فوق صورة الخلفية */
-      var PFILL = { classic: "FFFFFF", band: "FFFFFF", frame: "FBF8F1", wave: "FFFFFF", block: "FFFFFF", dna: "FFFFFF", molecule: "FFFFFF", peptide: "FFFFFF" }[CSTYLE];
+      var PFILL = { classic: "FFFFFF", band: "FFFFFF", frame: "FBF8F1", wave: "FFFFFF", block: "FFFFFF", dna: "FFFFFF", molecule: "FFFFFF", peptide: "FFFFFF", protein: "FBF8F1", steroid: "FFFFFF" }[CSTYLE];
       function panel(kids, sd, marg, fill) { // الهوامش الجانبية أعمدة فارغة (يمين/يسار الصفحة) بدل إزاحة الجدول — تُعرض بنفس الشكل في كل البرامج
         var r = (sd && sd.r) || 0, l = (sd && sd.l) || 0, total = PAGE_W - 2 * marg, avail = total - r - l, cols = [], cells = [];
         function blank(w) { return new D.TableCell({ width: { size: w, type: D.WidthType.DXA }, borders: cellNone, margins: { top: 0, bottom: 0, left: 0, right: 0 }, children: [gap()] }); }
@@ -1214,9 +1217,9 @@ var ENGINE = (function () {
       var fc = CS.foot, fsz = Math.max(16, SZ.body - 3);
       var ffill = CSTYLE === "block" ? mix("FFFFFF", T.light, 0.55) : (PFILL && CSTYLE !== "wave" ? PFILL : null);
       coverFooterKids = [];
-      var DARKC = CSTYLE === "geo" || CSTYLE === "cycle";
+      var DARKC = CSTYLE === "geo" || CSTYLE === "cycle" || CSTYLE === "helix";
       var bigC = CSTYLE === "wave" ? "FFFFFF" : DARKC ? "E6C27A" : GOLD;
-      var fInd = CSTYLE === "band" ? ind(CS.s, 0) : CSTYLE === "dna" ? ind(0, CS.e) : undefined;
+      var fInd = CSTYLE === "band" || CSTYLE === "dna" ? ind(CS.s, 0) : undefined;
       var bigName = S.coverBigName !== undefined && S.coverBigName !== null ? String(S.coverBigName) : PF.name; // في وضع العروض: اسم الجهة أو لا شيء
       if (bigName.trim()) coverFooterKids.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, indent: fInd, shading: CSTYLE === "wave" ? shade(T.h1) : ffill ? shade(ffill) : undefined, spacing: { after: 60 },
         children: runs([{ text: bigName.trim() }], { size: SZ.body + (bigName.length > 24 ? 12 : 22), bold: true, color: bigC, boldColor: bigC }) }));
@@ -1446,8 +1449,8 @@ var ENGINE = (function () {
     if (S.cover && bgUrl && S.coverImageOnly) h += '<div class="pv-cover styled" style="background-image:url(' + bgUrl + ')"></div>';
     else if (S.cover && bgUrl) {
       var cl2 = (S.coverLines || []).filter(function (x) { return String(x).trim(); }), st = S.coverStyle || "classic", T = resolveTheme(S);
-      var dark = st === "geo" || st === "cycle", tc = dark ? "#fff" : "#" + T.h1, sc = dark ? "#F2CF86" : "#262626", lc = dark ? "#fff" : "#1A1A1A";
-      var pad = { classic: "16% 10% 0", band: "26% 37% 0 6%", geo: "15% 12% 0", frame: "18% 14% 0", wave: "13% 10% 0", block: "0", dna: "18% 8% 0 34%", molecule: "20% 12% 0", cycle: "14% 12% 0", peptide: "19% 10% 0" }[st] || "16% 10% 0";
+      var dark = st === "geo" || st === "cycle" || st === "helix", tc = dark ? "#fff" : "#" + T.h1, sc = dark ? "#F2CF86" : "#262626", lc = dark ? "#fff" : "#1A1A1A";
+      var pad = { classic: "16% 10% 0", band: "26% 37% 0 6%", geo: "15% 12% 0", frame: "18% 14% 0", wave: "13% 10% 0", block: "0", dna: "18% 34% 0 8%", helix: "15% 14% 0", protein: "20% 14% 0", steroid: "18% 14% 0", molecule: "20% 12% 0", cycle: "14% 12% 0", peptide: "19% 10% 0" }[st] || "16% 10% 0";
       var showSub = S.showSubtitle !== false && (!cl2.length || S.subtitle), sub = esc(S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات");
       var head = (logoSrc && st !== "band" ? '<img src="' + logoSrc + '" alt="" style="height:' + (st === "block" ? 54 : 66) + 'px;display:block;margin:0 auto 10px">' : "") +
         '<div class="ct" style="color:' + (st === "block" ? "#fff" : tc) + '">' + inlHTML([{ text: S.coverTitle || S.subject || "المحاضرات" }]) + '</div><div class="bar" style="background:' + (st === "block" || dark ? "#D9A84E" : "#" + T.h2line) + '"></div>' +
@@ -1459,7 +1462,7 @@ var ENGINE = (function () {
       h += '<div class="pv-cover styled" style="background-image:url(' + bgUrl + ')">' +
         (st === "block" ? '<div style="background:#' + T.h1 + ';border-bottom:5px solid #D9A84E;padding:12% 8% 9%">' + head + '</div><div class="cin" style="padding:8% 10% 0">' + lines + "</div>"
           : '<div class="cin" style="padding:' + pad + '">' + head + '<div style="margin-top:4%">' + lines + "</div></div>") +
-        (rights ? '<div class="rights" style="color:' + (dark ? "#E6EAF0" : st === "wave" ? "#fff" : "#404040") + (st === "band" ? ";padding-left:0;padding-right:34%" : st === "dna" ? ";padding-left:34%;padding-right:0" : "") + '">' + rights + "</div>" : "") + "</div>";
+        (rights ? '<div class="rights" style="color:' + (dark ? "#E6EAF0" : st === "wave" ? "#fff" : "#404040") + (st === "band" ? ";padding-left:0;padding-right:34%" : st === "dna" ? ";padding-left:0;padding-right:34%" : "") + '">' + rights + "</div>" : "") + "</div>";
     } else if (S.cover) {
       var cl = (S.coverLines || []).filter(function (x) { return String(x).trim(); });
       h += '<div class="pv-cover">' + (logoSrc ? '<img src="' + logoSrc + '" alt="">' : "") + '<div class="ct">' + inlHTML([{ text: S.coverTitle || S.subject || "المحاضرات" }]) + '</div><div class="bar"></div>' +
@@ -1554,7 +1557,7 @@ var ENGINE = (function () {
   function canvasPng(c) { return new Promise(function (r) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { r(new Uint8Array(ab)); }); }, "image/png"); }); }
   /* ---- رسم خلفيات الغلاف (Canvas) ---- */
   var COVER_STYLES = [["classic", "كلاسيكي"], ["block", "رأس ملوّن"], ["band", "شريط جانبي"], ["geo", "داكن هندسي"], ["frame", "إطار ذهبي"], ["wave", "موجات"],
-    ["dna", "حلزون DNA 🧬"], ["molecule", "جزيئات ⚗️"], ["cycle", "دورة استقلابية"], ["peptide", "سلسلة ببتيدية"]];
+    ["dna", "حلزون DNA 🧬"], ["molecule", "جزيئات ⚗️"], ["cycle", "دورة استقلابية"], ["peptide", "سلسلة ببتيدية"], ["helix", "حلزون ذهبي فاخر ✨"], ["protein", "بروتين ملكي"], ["steroid", "هيكل ستيرويدي"]];
   function hx(c) { return "#" + String(c).replace("#", ""); }
   function shadeHex(h, t) { h = String(h).replace("#", ""); var o = "#"; for (var i = 0; i < 3; i++) { var v = parseInt(h.substr(i * 2, 2), 16); v = t < 0 ? Math.round(v * (1 + t)) : Math.round(v + (255 - v) * t); o += ("0" + Math.max(0, Math.min(255, v)).toString(16)).slice(-2); } return o; }
   function hexPath(g, x, y, r) { g.beginPath(); for (var k = 0; k < 6; k++) { var a = Math.PI / 3 * k + Math.PI / 6; g.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); } g.closePath(); }
@@ -1597,7 +1600,8 @@ var ENGINE = (function () {
         g.save(); g.translate(p[0] * u, p[1] * u); g.rotate(Math.PI / 4); g.fillStyle = P; g.fillRect(-22 * u, -22 * u, 44 * u, 44 * u); g.fillStyle = GOLD; g.fillRect(-11 * u, -11 * u, 22 * u, 22 * u); g.restore();
       });
       g.fillStyle = P; g.fillRect(W / 2 - 160 * u, 48 * u - 4 * u, 320 * u, 8 * u); g.fillRect(W / 2 - 160 * u, H - 48 * u - 4 * u, 320 * u, 8 * u);
-    } else if (style === "dna") { // حلزون DNA مزدوج في شريط جانبي (يسار الصفحة)
+    } else if (style === "dna") { // حلزون DNA مزدوج في شريط جانبي (يمين الصفحة — نرسمه ونعكسه أفقياً)
+      g.save(); g.translate(W, 0); g.scale(-1, 1);
       var sw2 = W * 0.30, gd = g.createLinearGradient(0, 0, sw2, 0); gd.addColorStop(0, shadeHex(T.light, -0.06)); gd.addColorStop(1, L);
       g.fillStyle = gd; g.fillRect(0, 0, sw2, H); g.fillStyle = GOLD; g.fillRect(sw2, 0, 6 * u, H);
       var cx = sw2 / 2, amp = sw2 * 0.30, per = 300 * u, BASES = [P, A, GOLD, "#2E8B7A"];
@@ -1613,6 +1617,7 @@ var ENGINE = (function () {
       });
       g.fillStyle = A; [[W - 120 * u, 120 * u, 10], [W - 80 * u, 170 * u, 6], [W - 160 * u, 190 * u, 5]].forEach(function (d) { g.beginPath(); g.arc(d[0], d[1], d[2] * u, 0, Math.PI * 2); g.fill(); });
       g.strokeStyle = shadeHex(T.light, -0.08); g.lineWidth = 2 * u; g.strokeRect(sw2 + 40 * u, 60 * u, W - sw2 - 100 * u, H - 120 * u);
+      g.restore();
     } else if (style === "molecule") { // شبكات حلقات بنزين وذرات في الزوايا
       function ring(x, y, r, col) {
         g.strokeStyle = col; g.lineWidth = 5 * u; hexPath(g, x, y, r); g.stroke();
@@ -1650,6 +1655,54 @@ var ENGINE = (function () {
       g.fillStyle = L; g.globalAlpha = 0.5; g.fillRect(0, 0, W, 250 * u); g.fillRect(0, H - 260 * u, W, 260 * u); g.globalAlpha = 1;
       chain(120 * u, 45 * u, 0, 13); chain(H - 175 * u, 40 * u, 1.7, 13);
       g.fillStyle = GOLD; g.fillRect(0, 250 * u, W, 5 * u); g.fillRect(0, H - 265 * u, W, 5 * u);
+    } else if (style === "helix") { // فاخر داكن: حلزون DNA ذهبي أفقي أسفل الصفحة + إطار ذهبي مزدوج وزخارف الزوايا
+      var gh = g.createLinearGradient(0, 0, W, H); gh.addColorStop(0, shadeHex(T.h1, -0.3)); gh.addColorStop(1, shadeHex(T.h1, -0.72)); g.fillStyle = gh; g.fillRect(0, 0, W, H);
+      var rgl = g.createRadialGradient(W / 2, H * 0.36, 30 * u, W / 2, H * 0.36, 720 * u); rgl.addColorStop(0, "rgba(217,168,78,.13)"); rgl.addColorStop(1, "rgba(217,168,78,0)"); g.fillStyle = rgl; g.fillRect(0, 0, W, H);
+      var sd = 7; function rnd() { sd = (sd * 9301 + 49297) % 233280; return sd / 233280; }
+      for (var pz = 0; pz < 90; pz++) { g.globalAlpha = 0.12 + rnd() * 0.3; g.fillStyle = GOLD; g.beginPath(); g.arc((90 + rnd() * 1060) * u, (90 + rnd() * 1000) * u, (1 + rnd() * 2.6) * u, 0, Math.PI * 2); g.fill(); }
+      g.globalAlpha = 1;
+      var hy = H * 0.755, hamp = 64 * u, hper = 430 * u, hx0 = 96 * u, hx1 = W - 96 * u;
+      for (var rx = hx0 + 10 * u; rx < hx1; rx += 24 * u) { var hph = rx / hper * Math.PI * 2, hs = Math.sin(hph); g.globalAlpha = 0.18 + 0.5 * Math.abs(Math.cos(hph)); g.strokeStyle = GOLD; g.lineWidth = 3 * u; g.beginPath(); g.moveTo(rx, hy + hs * hamp); g.lineTo(rx, hy - hs * hamp); g.stroke(); }
+      g.globalAlpha = 1; g.lineCap = "round";
+      [0, Math.PI].forEach(function (off, si) {
+        var gs = g.createLinearGradient(hx0, 0, hx1, 0); gs.addColorStop(0, "rgba(217,168,78,0)"); gs.addColorStop(0.12, si ? "#F2D79B" : GOLD); gs.addColorStop(0.88, si ? "#F2D79B" : GOLD); gs.addColorStop(1, "rgba(217,168,78,0)");
+        g.strokeStyle = gs; g.lineWidth = 6 * u; g.beginPath();
+        for (var x4 = hx0; x4 <= hx1; x4 += 6 * u) { var y4 = hy + Math.sin(x4 / hper * Math.PI * 2 + off) * hamp; if (x4 === hx0) g.moveTo(x4, y4); else g.lineTo(x4, y4); }
+        g.stroke();
+      });
+      g.strokeStyle = GOLD; g.lineWidth = 3 * u; g.strokeRect(56 * u, 56 * u, W - 112 * u, H - 112 * u); g.lineWidth = 1 * u; g.strokeRect(72 * u, 72 * u, W - 144 * u, H - 144 * u);
+      [[64, 64], [W / u - 64, 64], [64, H / u - 64], [W / u - 64, H / u - 64]].forEach(function (p) { g.save(); g.translate(p[0] * u, p[1] * u); g.rotate(Math.PI / 4); g.fillStyle = GOLD; g.fillRect(-13 * u, -13 * u, 26 * u, 26 * u); g.fillStyle = shadeHex(T.h1, -0.5); g.fillRect(-6 * u, -6 * u, 12 * u, 12 * u); g.restore(); });
+      g.fillStyle = GOLD; g.fillRect(W / 2 - 150 * u, 118 * u, 120 * u, 2 * u); g.fillRect(W / 2 + 30 * u, 118 * u, 120 * u, 2 * u); g.save(); g.translate(W / 2, 119 * u); g.rotate(Math.PI / 4); g.fillRect(-9 * u, -9 * u, 18 * u, 18 * u); g.restore();
+    } else if (style === "protein") {
+      function lerpHex(a, b, t) { var x = parseInt(a, 16), y = parseInt(b, 16), r = Math.round((x >> 16) + (((y >> 16) - (x >> 16)) * t)), gg2 = Math.round(((x >> 8) & 255) + ((((y >> 8) & 255) - ((x >> 8) & 255)) * t)), bb = Math.round((x & 255) + (((y & 255) - (x & 255)) * t)); return "#" + ((1 << 24) + (r << 16) + (gg2 << 8) + bb).toString(16).slice(1); } // ملكي كريمي: شريط بروتين (ألفا هيليكس) ملوّن بالأعلى + إطار ذهبي رفيع
+      g.fillStyle = "#FBF8F1"; g.fillRect(0, 0, W, H);
+      var py = 178 * u, prx = 34 * u, pry = 66 * u, pitch = 72 * u, px0 = 120 * u, px1 = W - 120 * u, segs = [];
+      for (var th = 0, pxx; (pxx = px0 + th / (Math.PI * 2) * pitch) <= px1; th += 0.08) segs.push([pxx + prx * Math.cos(th), py + pry * Math.sin(th), Math.cos(th + Math.PI / 2) > 0]);
+      g.lineCap = "round";
+      [false, true].forEach(function (front) {
+        for (var i5 = 1; i5 < segs.length; i5++) { if (segs[i5][2] !== front) continue; var tt = i5 / segs.length;
+          var cmx = lerpHex(T.h1, T.acc, tt); g.strokeStyle = front ? cmx : shadeHex(cmx.slice(1), 0.55); g.globalAlpha = front ? 0.95 : 0.6; g.lineWidth = (front ? 15 : 10) * u;
+          g.beginPath(); g.moveTo(segs[i5 - 1][0], segs[i5 - 1][1]); g.lineTo(segs[i5][0], segs[i5][1]); g.stroke(); }
+      });
+      g.globalAlpha = 1;
+      g.fillStyle = GOLD2; g.fillRect(W / 2 - 230 * u, 292 * u, 190 * u, 2 * u); g.fillRect(W / 2 + 40 * u, 292 * u, 190 * u, 2 * u); g.save(); g.translate(W / 2, 293 * u); g.rotate(Math.PI / 4); g.fillRect(-8 * u, -8 * u, 16 * u, 16 * u); g.restore();
+      g.strokeStyle = GOLD2; g.lineWidth = 3 * u; g.strokeRect(40 * u, 40 * u, W - 80 * u, H - 80 * u); g.lineWidth = 1 * u; g.strokeRect(54 * u, 54 * u, W - 108 * u, H - 108 * u);
+    } else if (style === "steroid") { // هيكل ستيرويدي ذهبي (حلقات A-B-C-D) بخط رفيع + إطار مزدوج بزخارف
+      g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, W, H);
+      function sterol(x0, y0, r, col, alpha, lw) {
+        var s3 = Math.sqrt(3), C = [[x0, y0], [x0 + s3 * r, y0], [x0 + s3 * r * 1.5, y0 - 1.5 * r]], pts = [];
+        g.globalAlpha = alpha; g.strokeStyle = col; g.lineWidth = lw * u; g.lineJoin = "round";
+        C.forEach(function (c0) { g.beginPath(); for (var k = 0; k < 6; k++) { var a = Math.PI / 6 + k * Math.PI / 3, vx = c0[0] + r * Math.cos(a), vy = c0[1] + r * Math.sin(a); pts.push([vx, vy]); if (k) g.lineTo(vx, vy); else g.moveTo(vx, vy); } g.closePath(); g.stroke(); });
+        var R5 = r / (2 * Math.sin(Math.PI / 5)), ap = r / (2 * Math.tan(Math.PI / 5)), dcx = C[2][0] + r * Math.cos(Math.PI / 6) + ap, dcy = C[2][1];
+        g.beginPath(); for (var k5 = 0; k5 < 5; k5++) { var a5 = Math.PI - Math.PI / 5 + k5 * 2 * Math.PI / 5, qx = dcx + R5 * Math.cos(a5), qy = dcy + R5 * Math.sin(a5); pts.push([qx, qy]); if (k5) g.lineTo(qx, qy); else g.moveTo(qx, qy); } g.closePath(); g.stroke();
+        g.beginPath(); g.moveTo(C[1][0] + r * Math.cos(-Math.PI / 6 - Math.PI / 3), C[1][1] + r * Math.sin(-Math.PI / 6 - Math.PI / 3)); g.lineTo(C[1][0] + r * Math.cos(-Math.PI / 6 - Math.PI / 3), C[1][1] + r * Math.sin(-Math.PI / 6 - Math.PI / 3) - r * 0.9); g.stroke(); // مجموعة ميثيل
+        g.beginPath(); g.moveTo(dcx + R5 * Math.cos(-Math.PI / 5 * 1), dcy + R5 * Math.sin(-Math.PI / 5)); g.lineTo(dcx + R5 * Math.cos(-Math.PI / 5) + r * 0.75, dcy + R5 * Math.sin(-Math.PI / 5) - r * 0.45); g.stroke(); // سلسلة جانبية
+        pts.forEach(function (pp, i6) { if (i6 % 3) return; g.fillStyle = i6 % 2 ? P : GOLD; g.beginPath(); g.arc(pp[0], pp[1], lw * 1.6 * u, 0, Math.PI * 2); g.fill(); });
+        g.globalAlpha = 1;
+      }
+      sterol(140 * u, H - 330 * u, 58 * u, GOLD2, 0.85, 3.5); sterol(W - 470 * u, 250 * u, 40 * u, P, 0.35, 3);
+      g.strokeStyle = GOLD2; g.lineWidth = 2.5 * u; g.strokeRect(50 * u, 50 * u, W - 100 * u, H - 100 * u); g.strokeStyle = shadeHex(T.light, -0.1); g.lineWidth = 1 * u; g.strokeRect(64 * u, 64 * u, W - 128 * u, H - 128 * u);
+      [[50, 50, 0], [W / u - 50, 50, 1], [50, H / u - 50, 3], [W / u - 50, H / u - 50, 2]].forEach(function (p) { g.save(); g.translate(p[0] * u, p[1] * u); g.rotate(p[2] * Math.PI / 2); g.strokeStyle = GOLD2; g.lineWidth = 2 * u; g.beginPath(); g.arc(0, 0, 30 * u, 0, Math.PI / 2); g.stroke(); g.fillStyle = GOLD; g.beginPath(); g.arc(0, 0, 7 * u, 0, Math.PI * 2); g.fill(); g.restore(); });
     } else if (style === "wave") {
       function wave(y0, amp, color, alpha, ph) { g.globalAlpha = alpha; g.fillStyle = color; g.beginPath(); g.moveTo(0, H); g.lineTo(0, y0); for (var x = 0; x <= W; x += 10 * u) g.lineTo(x, y0 + Math.sin(x / W * Math.PI * 2 + ph) * amp); g.lineTo(W, H); g.closePath(); g.fill(); g.globalAlpha = 1; }
       wave(H - 230 * u, 30 * u, L, 1, 0.3); wave(H - 185 * u, 26 * u, A, 0.85, 1.6); wave(H - 140 * u, 20 * u, P, 1, 2.6);
@@ -1837,7 +1890,7 @@ var ENGINE = (function () {
         var cv = coverThumbs[cs[0]], g = cv.getContext("2d"), big = drawCover(cs[0], T, nm, 0.25);
         g.clearRect(0, 0, cv.width, cv.height); g.drawImage(big, 0, 0, cv.width, cv.height);
         // تلميح للنص
-        var dark = cs[0] === "geo" || cs[0] === "cycle", y = cs[0] === "block" ? 22 : cs[0] === "band" ? 52 : cs[0] === "wave" ? 40 : cs[0] === "peptide" || cs[0] === "molecule" ? 54 : cs[0] === "cycle" ? 36 : 46, x0 = cs[0] === "band" ? 8 : cs[0] === "dna" ? 46 : 26, x1 = cs[0] === "band" ? 78 : cs[0] === "dna" ? 112 : 98;
+        var dark = cs[0] === "geo" || cs[0] === "cycle" || cs[0] === "helix", y = cs[0] === "block" ? 22 : cs[0] === "band" ? 52 : cs[0] === "wave" ? 40 : cs[0] === "peptide" || cs[0] === "molecule" || cs[0] === "protein" ? 54 : cs[0] === "cycle" ? 36 : 46, x0 = cs[0] === "band" || cs[0] === "dna" ? 8 : 26, x1 = cs[0] === "band" || cs[0] === "dna" ? 78 : 98;
         if (cs[0] === "block") { g.fillStyle = "#" + T.h1; g.fillRect(0, 0, cv.width, 62); g.fillStyle = "#D9A84E"; g.fillRect(0, 62, cv.width, 3); }
         g.fillStyle = dark || cs[0] === "block" ? "rgba(255,255,255,.92)" : "#" + T.h1; g.fillRect(x0, y, x1 - x0, 7);
         g.fillStyle = cs[0] === "block" || dark ? "#D9A84E" : "#" + T.h2line; g.fillRect(x0 + 18, y + 12, x1 - x0 - 36, 2);
