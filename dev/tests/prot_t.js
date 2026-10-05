@@ -1,0 +1,35 @@
+const __P=require('path'),__FX=__P.join(__dirname,'fixtures')+'/',__OUT=__P.join(__dirname,'out')+'/';require('fs').mkdirSync(__OUT,{recursive:true});
+const { chromium } = require(process.env.PW||'/opt/node-tools/node_modules/playwright');const fs=require('fs'),path=require('path');
+const OUT=__OUT; fs.mkdirSync(OUT,{recursive:true});
+(async()=>{const b=await chromium.launch({executablePath:(process.env.CHROME||'/opt/pw-browsers/chromium-1194/chrome-linux/chrome')});
+ const vp=process.env.VP==='m'?{width:390,height:844}:{width:1366,height:900};
+ const ctx=await b.newContext({viewport:vp,acceptDownloads:true}); const pg=await ctx.newPage(); const errs=[];
+ pg.on('pageerror',e=>errs.push(e.message)); pg.on('console',m=>{if(m.type()==='error'&&!/ERR_FAILED/.test(m.text()))errs.push(m.text())});
+ await pg.route('**/*',r=>{const u=r.request().url();
+  if(u.includes('docx@'))return r.fulfill({body:fs.readFileSync(__P.join(__dirname,'../vendor/docx.iife.js')),contentType:'application/javascript'});
+  if(u.includes('jszip'))return r.fulfill({body:fs.readFileSync(__P.join(__dirname,'../vendor/jszip.min.js')),contentType:'application/javascript'});
+  if(u.includes('localhost:8765'))return r.fulfill({body:fs.readFileSync(path.join(__dirname,'../src/index.html')),contentType:'text/html; charset=utf-8'});
+  return r.abort();});
+ await pg.goto('http://localhost:8765/index.html'); await pg.evaluate(()=>localStorage.clear()); await pg.reload(); await pg.waitForFunction(()=>window.docx&&window.JSZip);
+ await pg.evaluate(()=>{document.querySelectorAll('details').forEach(d=>d.open=true)});
+ const dl=async(sel,name)=>{const [d]=await Promise.all([pg.waitForEvent('download',{timeout:120000}),pg.click(sel)]); await d.saveAs(OUT+name); await pg.waitForFunction(()=>!document.querySelector('#dlBtn').disabled&&!document.querySelector('#pdfBtn').disabled); return (await pg.textContent('#msg'));};
+ await pg.fill('#src', fs.readFileSync(__FX+'sample.md','utf8')); await pg.waitForTimeout(500);
+ console.log('lbl', await pg.textContent('#protLbl'), 'boxHidden', await pg.isHidden('#protBox'));
+ await pg.evaluate(()=>document.querySelector('#protOn').click()); console.log('lbl', await pg.textContent('#protLbl'));
+ await pg.click('#dlBtn'); await pg.waitForTimeout(300); console.log('no pw msg:', await pg.textContent('#msg'));
+ await pg.fill('#protPw','Bio2026'); console.log('lbl', await pg.textContent('#protLbl'));
+ console.log('word:', await dl('#dlBtn','text_locked.docx'));
+ console.log('pdf:', await dl('#pdfBtn','text_locked.pdf'));
+ await pg.fill('#protPw',''); console.log('pdf noprint only:', await dl('#pdfBtn','text_noprint.pdf'));
+ await pg.fill('#protPw','Bio2026'); await pg.fill('#protOwner','Owner#1');
+ console.log('pdf owner:', await dl('#pdfBtn','text_owner.pdf'));
+ // split mode zip
+ await pg.evaluate(()=>document.querySelector('#protOn').click()); console.log('off word:', await dl('#dlBtn','text_plain.docx'));
+ // ppt mode two decks -> zip with locked docs
+ await pg.evaluate(()=>document.querySelector('#protOn').click()); await pg.click('#modePpt');
+ await pg.setInputFiles('#pptIn',[__FX+'deck1.pptx',__FX+'deck2.pptx']);
+ await pg.waitForFunction(()=>document.querySelectorAll('#pptList .wfile .chips').length===2,null,{timeout:60000});
+ console.log('ppt zip:', await dl('#dlBtn','ppt_locked.zip'));
+ const sw=await pg.evaluate(()=>[document.documentElement.scrollWidth,innerWidth]); console.log('scroll',sw,'errors',errs);
+ await (await pg.$('#protSec')).screenshot({path:OUT+'sec.png'});
+ await b.close();})().catch(e=>{console.error(e);process.exit(1)});

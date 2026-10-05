@@ -448,6 +448,23 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
           </div>
           </div>
         </details>
+        <details class="sec" id="protSec">
+          <summary>حماية الملفات 🔒 <span class="pill" id="protLbl">مطفأة</span></summary>
+          <div class="in">
+            <div class="toggles"><label class="tg"><span>تفعيل الحماية<small>كلمة سر للفتح، ومنع الطباعة والنسخ بالـ PDF</small></span><span class="sw-t"><input type="checkbox" id="protOn"><span></span></span></label></div>
+            <div id="protBox">
+              <div class="field"><label class="lbl" for="protPw">كلمة سر فتح الملف</label><div class="prow"><input class="inp" id="protPw" type="password" dir="ltr" autocomplete="new-password" maxlength="64" placeholder="مثال: Bio2026"><button type="button" class="btn" id="protEye" aria-label="إظهار كلمة السر">👁</button></div><small class="hint">لازمة لقفل Word. للـ PDF اختيارية: إذا تركتها فاضية بينفتح الملف عادي بس القيود (منع الطباعة/النسخ) بتضل.</small></div>
+              <div class="toggles">
+                <label class="tg"><span>قفل ملف Word بكلمة السر<small>ما بينفتح إلا بكلمة السر — نفس تشفير Word نفسه (AES-256)</small></span><span class="sw-t"><input type="checkbox" id="protWord"><span></span></span></label>
+                <label class="tg"><span>حماية ملف PDF<small>تشفير AES-256 مع القيود تحت</small></span><span class="sw-t"><input type="checkbox" id="protPdf"><span></span></span></label>
+                <label class="tg"><span>منع الطباعة (PDF)</span><span class="sw-t"><input type="checkbox" id="protNoPrint"><span></span></span></label>
+                <label class="tg"><span>منع النسخ والتعديل (PDF)<small>صفحات الـ PDF أصلاً صور، فالنص ما بينسخ</small></span><span class="sw-t"><input type="checkbox" id="protNoCopy"><span></span></span></label>
+              </div>
+              <div class="field"><label class="lbl" for="protOwner">كلمة سر المالك للـ PDF <small style="font-weight:400;color:var(--ink-soft)">(اختيارية — لترفع القيود لاحقاً)</small></label><input class="inp" id="protOwner" type="password" dir="ltr" autocomplete="new-password" maxlength="64" placeholder="إذا تركتها فاضية بتنعمل عشوائية"></div>
+              <small class="hint">⚠️ كلمات السر ما بتنحفظ بالمتصفح، بتنمسح لما تسكّر الصفحة. احفظها عندك: إذا ضاعت كلمة سر Word ما في أي طريقة لفتح الملف. ملف Word ما فيه منع طباعة أو نسخ، هاد بس بالـ PDF.</small>
+            </div>
+          </div>
+        </details>
         <details class="sec" id="presetSec">
           <summary>قوالب المواد المحفوظة <span class="pill" id="psCount">0</span></summary>
           <div class="in">
@@ -575,6 +592,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
 <script id="qrlib">__QR__</script>
 <script id="pdflib">__PDF__</script>
 <script id="pptxlib">__PPTX__</script>
+<script id="protlib">__PROTECT__</script>
 <script id="engine">
 var ENGINE = (function () {
   "use strict";
@@ -1503,7 +1521,7 @@ var ENGINE = (function () {
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
     keepParas: true, origLine: true, pageBg: "none", pageFrame: false,
-    idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
+    protOn: false, protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
@@ -2096,7 +2114,22 @@ var ENGINE = (function () {
     });
   }
   function safeName(s) { return (s || "محاضرات").replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "محاضرات"; }
+  /* ---- حماية الملفات: كلمات السر بالذاكرة فقط (لا تُحفظ) ---- */
+  var protPw = "", protOwner = "";
+  function protWordOn() { return !!(S.protOn && S.protWord); }
+  function protErr(pdf) {
+    if (!S.protOn) return null;
+    if (!(window.crypto && window.crypto.subtle && window.RMED_PROTECT)) return "المتصفح ما بيدعم التشفير هون — افتح الموقع من رابطه (https) مو كملف محلي.";
+    if (!pdf && S.protWord && !protPw) return "اكتب كلمة سر فتح الملف بقسم «حماية الملفات 🔒» أو طفّي «قفل ملف Word».";
+    return null;
+  }
+  function protPdfOpts() { if (!S.protOn || !S.protPdf || !window.RMED_PROTECT) return null; if (!protPw && !S.protNoPrint && !S.protNoCopy) return null; return { userPw: protPw, ownerPw: protOwner, noPrint: !!S.protNoPrint, noCopy: !!S.protNoCopy }; }
+  function guardDocx(blob) { return protWordOn() && protPw ? RMED_PROTECT.encryptDocx(blob, protPw) : Promise.resolve(blob); }
   function saveBlob(blob, name) {
+    if (/\.docx$/i.test(name) && protWordOn() && protPw) return guardDocx(blob).then(function (b) { saveRaw(b, name); }).catch(function (e) { show("err", "تعذّر قفل الملف بكلمة السر: " + (e && e.message ? e.message : e)); });
+    saveRaw(blob, name);
+  }
+  function saveRaw(blob, name) {
     var a = document.createElement("a"), url = URL.createObjectURL(blob);
     a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
@@ -2186,7 +2219,8 @@ var ENGINE = (function () {
   $("pdfBtn").onclick = function () {
     if (busy) return;
     if (S.uiMode === "word" && wordFiles.some(function (f) { return f.status === "reading"; })) return show("info", "لحظة… عم نحلّل الملفات، جرّب بعد ثوانٍ.");
-    var m = pdfModel();
+    var pe = protErr(true); if (pe) return show("err", pe);
+    var m = pdfModel(), popt = protPdfOpts();
     if (!m) return show("err", S.uiMode === "word" ? (wordFiles.length ? "الملفات المختارة غير صالحة — راجع رسالة الخطأ تحت كل ملف." : "اختر ملف Word ‎(.docx)‎ أولاً.") : "لا يوجد نص لتحويله. الصق نص محاضرة أولاً.");
     busy = true; $("dlBtn").disabled = $("dlBtn2").disabled = $("pdfBtn").disabled = true; show("info", "جارٍ إنشاء ملف PDF…"); prog(5);
     var s = m.s, T = ENGINE.resolveTheme(s);
@@ -2197,20 +2231,20 @@ var ENGINE = (function () {
       if (s.backCover) { A.back = drawBack(T, 1); var qh = qrHref(s); if (qh) { try { A.qr = drawQR(qh); } catch (e) {} } }
       if (s.wm) A.wm = s._doctorId ? pptWmCanvas(s) : drawWatermark(s);
       return new Promise(function (r) { setTimeout(r, 30); }).then(function () {
-        return RMED_PDF.build(m, A, { scale: 1.8, quality: 0.8, title: m.name, onEncode: function (i, n) { prog(10 + Math.round(85 * i / n)); } });
+        return RMED_PDF.build(m, A, { scale: 1.8, quality: 0.8, title: m.name, protect: popt, onEncode: function (i, n) { prog(10 + Math.round(85 * i / n)); } });
       });
     }).then(function (r) {
       var c = ENGINE.compare(RMED_PDF.expectedWords(m), ENGINE.tokens(r.words.join(" ")));
       saveBlob(r.blob, m.name + ".pdf");
       prog(100); setTimeout(function () { prog(null); }, 700);
-      show(c.ok ? "ok" : "err", (c.ok ? "تم إنشاء PDF (" + r.pages + " صفحة) وبدأ التنزيل ✓ — تحقق الكلمات: " + c.inCount + " كلمة بدون أي فرق." : "تم إنشاء PDF لكن تحقق الكلمات وجد " + (c.missing.length + c.extra.length) + " فرق.") + (m.note ? " " + m.note : ""));
+      show(c.ok ? "ok" : "err", (c.ok ? "تم إنشاء PDF (" + r.pages + " صفحة)" + (r.protected ? " 🔒 محمي" + (popt.userPw ? " بكلمة سر" : "") + (popt.noPrint ? "، بلا طباعة" : "") : "") + " وبدأ التنزيل ✓ — تحقق الكلمات: " + c.inCount + " كلمة بدون أي فرق." : "تم إنشاء PDF لكن تحقق الكلمات وجد " + (c.missing.length + c.extra.length) + " فرق.") + (m.note ? " " + m.note : ""));
       if (!c.ok && window.console) console.warn("PDF check " + JSON.stringify({ missing: c.missing, extra: c.extra }));
     }).catch(function (e) { prog(null); show("err", "تعذّر إنشاء PDF: " + (e && e.message ? e.message : e)); if (window.console) console.error(e); })
       .then(function () { busy = false; $("dlBtn").disabled = $("dlBtn2").disabled = $("pdfBtn").disabled = false; });
   };
 
   /* ---- قوالب المواد المحفوظة ---- */
-  var PS_KEY = "randommed.lec2docx.presets.v1", PS_SKIP = { uiMode: 1, dark: 1, pvReal: 1, merge: 1, method: 1 };
+  var PS_KEY = "randommed.lec2docx.presets.v1", PS_SKIP = { uiMode: 1, dark: 1, pvReal: 1, merge: 1, method: 1, protOn: 1, protWord: 1, protPdf: 1, protNoPrint: 1, protNoCopy: 1 };
   function loadPresets() { try { var o = JSON.parse(localStorage.getItem(PS_KEY) || "{}"), r = {}; if (o && typeof o === "object") Object.keys(o).forEach(function (k) { if (!BAD_KEY.test(k) && o[k] && typeof o[k] === "object") r[k] = o[k]; }); return r; } catch (e) { return {}; } }
   function storePresets(p) { try { localStorage.setItem(PS_KEY, JSON.stringify(p)); return true; } catch (e) { return false; } }
   function snapshot() { var o = JSON.parse(JSON.stringify(S)); Object.keys(PS_SKIP).forEach(function (k) { delete o[k]; }); return o; }
@@ -2264,6 +2298,7 @@ var ENGINE = (function () {
 
   var busy = false;
   function download() {
+    var pe = protErr(false); if (pe) { $("protSec").open = true; return show("err", pe); }
     if (S.uiMode === "word") return processWord(true);
     if (S.uiMode === "ppt") return processPpt(true);
     if (busy) return;
@@ -2277,7 +2312,7 @@ var ENGINE = (function () {
         var zip = new JSZip(), chain = Promise.resolve(), names = uniq(L.map(function (lec, i) { return lecDocName(lec, i, s); }));
         L.forEach(function (lec, i) {
           chain = chain.then(function () { return makeDoc([lec], s).then(function (b) {
-            zip.file(names[i] + ".docx", b);
+            zip.file(names[i] + ".docx", guardDocx(b));
             prog(35 + Math.round(55 * (i + 1) / L.length));
           }); });
         });
@@ -2458,7 +2493,7 @@ var ENGINE = (function () {
       if (save) {
         var nm = uniq(outs.map(function (o) { return wordDocName(o.f, wordSettings(o.f)); }));
         if (outs.length === 1) saveBlob(outs[0].blob, nm[0] + ".docx");
-        else { var z = new JSZip(); outs.forEach(function (o, i) { z.file(nm[i] + ".docx", o.blob); }); return z.generateAsync({ type: "blob" }).then(function (b) { saveBlob(b, ENGINE.fileName(S.nameTpl, nameVals(wordSettings(outs[0].f), { num: ENGINE.numLabel(outs.map(function (o) { return wordNum(o.f); })) })) + ".zip"); return bad; }); }
+        else { var z = new JSZip(); outs.forEach(function (o, i) { z.file(nm[i] + ".docx", guardDocx(o.blob)); }); return z.generateAsync({ type: "blob" }).then(function (b) { saveBlob(b, ENGINE.fileName(S.nameTpl, nameVals(wordSettings(outs[0].f), { num: ENGINE.numLabel(outs.map(function (o) { return wordNum(o.f); })) })) + ".zip"); return bad; }); }
       }
       return bad;
     }).then(function (bad) {
@@ -2696,7 +2731,7 @@ var ENGINE = (function () {
       if (save) {
         var nm = uniq(outs.map(function (o) { return o.name; }));
         if (outs.length === 1) saveBlob(outs[0].blob, nm[0] + ".docx");
-        else { var z = new JSZip(); outs.forEach(function (o, i) { z.file(nm[i] + ".docx", o.blob); }); return z.generateAsync({ type: "blob" }).then(function (b) { saveBlob(b, ENGINE.fileName(S.nameTpl, nameVals(pptGroupSettings(ready), { num: ENGINE.numLabel(ready.map(pptNum)) })) + ".zip"); return bad; }); }
+        else { var z = new JSZip(); outs.forEach(function (o, i) { z.file(nm[i] + ".docx", guardDocx(o.blob)); }); return z.generateAsync({ type: "blob" }).then(function (b) { saveBlob(b, ENGINE.fileName(S.nameTpl, nameVals(pptGroupSettings(ready), { num: ENGINE.numLabel(ready.map(pptNum)) })) + ".zip"); return bad; }); }
       }
       return bad;
     }).then(function (bad) {
@@ -2760,6 +2795,19 @@ var ENGINE = (function () {
     $("pptOwnLogoThumb").classList.toggle("on", !!pptOwnLogo); if (pptOwnLogo) $("pptOwnLogoThumb").src = pptOwnLogo.url; $("pptOwnLogoDel").hidden = !pptOwnLogo;
     paintProfs(); paintId();
   }
+  /* ربط قسم الحماية */
+  function paintProt() {
+    $("protOn").checked = !!S.protOn; $("protBox").hidden = !S.protOn;
+    ["protWord", "protPdf", "protNoPrint", "protNoCopy"].forEach(function (k) { $(k).checked = S[k] !== false; });
+    $("protNoPrint").disabled = $("protNoCopy").disabled = $("protOwner").disabled = !S.protPdf;
+    var on = []; if (S.protOn) { if (S.protWord && protPw) on.push("Word"); if (protPdfOpts()) on.push("PDF"); }
+    $("protLbl").textContent = !S.protOn ? "مطفأة" : on.length ? "🔒 " + on.join(" + ") : "ناقصها كلمة سر";
+  }
+  ["protOn", "protWord", "protPdf", "protNoPrint", "protNoCopy"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); paintProt(); }; });
+  $("protPw").oninput = function () { protPw = this.value; paintProt(); };
+  $("protOwner").oninput = function () { protOwner = this.value; };
+  $("protEye").onclick = function () { var t = $("protPw").type === "password" ? "text" : "password"; $("protPw").type = $("protOwner").type = t; };
+  paintProt();
   paintPpt();
   setUiMode(S.uiMode);
   renderWordList(); renderPptList();

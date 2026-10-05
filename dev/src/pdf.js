@@ -16,31 +16,52 @@ var RMED_PDF = (function () {
     return "<" + h + ">";
   }
   function f2(n) { return (Math.round(n * 100) / 100).toString(); }
-  function writePdf(pages, title) {
-    var enc = new TextEncoder(), chunks = [], off = 0, xref = [];
-    function push(x) { if (typeof x === "string") x = enc.encode(x); chunks.push(x); off += x.length; }
-    var next = 4, kids = [];
-    pages.forEach(function (p) { p.o = next; p.c = next + 1; p.im = next + 2; next += 3; p.an = p.links.map(function () { return next++; }); kids.push(p.o + " 0 R"); });
-    push("%PDF-1.4\n"); push(new Uint8Array([37, 226, 227, 207, 211, 10]));
-    function obj(n, parts) { xref[n] = off; push(n + " 0 obj\n"); parts.forEach(push); push("\nendobj\n"); }
-    obj(1, ["<< /Type /Catalog /Pages 2 0 R >>"]);
-    obj(2, ["<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + pages.length + " >>"]);
-    obj(3, ["<< /Title " + pdfStr(title) + " /Creator (Random.MEd) /Producer (Random.MEd) >>"]);
+  function strBytes(s) { // بايتات النص كما يكتبه pdfStr (ASCII أو UTF-16BE مع BOM)
+    s = String(s || ""); var o, i;
+    if (/^[\x20-\x7E]*$/.test(s)) { o = new Uint8Array(s.length); for (i = 0; i < s.length; i++) o[i] = s.charCodeAt(i); return o; }
+    o = new Uint8Array(2 + s.length * 2); o[0] = 0xFE; o[1] = 0xFF; for (i = 0; i < s.length; i++) { o[2 + i * 2] = s.charCodeAt(i) >> 8; o[3 + i * 2] = s.charCodeAt(i) & 255; } return o;
+  }
+  // sec (اختياري): حماية AES-256 من RMED_PROTECT.pdfSecurity — تُشفَّر كل المجاري والنصوص
+  function writePdf(pages, title, sec) {
+    var enc = new TextEncoder();
+    var csText = "q " + PW + " 0 0 " + PH + " 0 0 cm /Im0 Do Q", csBytes = enc.encode(csText);
+    if (!sec) return Promise.resolve(emit(null));
+    var jobs = [sec.enc(strBytes(title)).then(function (b) { title = b; })];
     pages.forEach(function (p) {
-      obj(p.o, ["<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /XObject << /Im0 " + p.im + " 0 R >> >> /Contents " + p.c + " 0 R" +
-        (p.an.length ? " /Annots [" + p.an.map(function (n) { return n + " 0 R"; }).join(" ") + "]" : "") + " >>"]);
-      var cs = "q " + PW + " 0 0 " + PH + " 0 0 cm /Im0 Do Q";
-      obj(p.c, ["<< /Length " + cs.length + " >>\nstream\n" + cs + "\nendstream"]);
-      obj(p.im, ["<< /Type /XObject /Subtype /Image /Width " + p.w + " /Height " + p.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + p.jpeg.length + " >>\nstream\n", p.jpeg, "\nendstream"]);
-      p.links.forEach(function (l, k) {
-        obj(p.an[k], ["<< /Type /Annot /Subtype /Link /Rect [" + [l.x, PH - l.y - l.h, l.x + l.w, PH - l.y].map(f2).join(" ") + "] /Border [0 0 0] /A << /S /URI /URI " + pdfStr(l.url) + " >> >>"]);
-      });
+      jobs.push(sec.enc(csBytes).then(function (b) { p.encCs = b; }), sec.enc(p.jpeg).then(function (b) { p.encJpeg = b; }));
+      p.encUrl = []; p.links.forEach(function (l, k) { jobs.push(sec.enc(strBytes(l.url)).then(function (b) { p.encUrl[k] = b; })); });
     });
-    var xo = off;
-    push("xref\n0 " + next + "\n0000000000 65535 f \n");
-    for (var i = 1; i < next; i++) push(("0000000000" + xref[i]).slice(-10) + " 00000 n \n");
-    push("trailer\n<< /Size " + next + " /Root 1 0 R /Info 3 0 R >>\nstartxref\n" + xo + "\n%%EOF\n");
-    return new Blob(chunks, { type: "application/pdf" });
+    return Promise.all(jobs).then(function () { return emit(sec); });
+    function emit(sec) {
+      var chunks = [], off = 0, xref = [];
+      function push(x) { if (typeof x === "string") x = enc.encode(x); chunks.push(x); off += x.length; }
+      function hexs(b) { return "<" + sec.hex(b) + ">"; }
+      var next = 4, kids = [];
+      pages.forEach(function (p) { p.o = next; p.c = next + 1; p.im = next + 2; next += 3; p.an = p.links.map(function () { return next++; }); kids.push(p.o + " 0 R"); });
+      var encObj = sec ? next++ : 0;
+      push(sec ? "%PDF-1.7\n" : "%PDF-1.4\n"); push(new Uint8Array([37, 226, 227, 207, 211, 10]));
+      function obj(n, parts) { xref[n] = off; push(n + " 0 obj\n"); parts.forEach(push); push("\nendobj\n"); }
+      obj(1, ["<< /Type /Catalog /Pages 2 0 R" + (sec ? " /Extensions << /ADBE << /BaseVersion /1.7 /ExtensionLevel 8 >> >>" : "") + " >>"]);
+      obj(2, ["<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + pages.length + " >>"]);
+      obj(3, ["<< /Title " + (sec ? hexs(title) : pdfStr(title) + " /Creator (Random.MEd) /Producer (Random.MEd)") + " >>"]);
+      pages.forEach(function (p) {
+        obj(p.o, ["<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /XObject << /Im0 " + p.im + " 0 R >> >> /Contents " + p.c + " 0 R" +
+          (p.an.length ? " /Annots [" + p.an.map(function (n) { return n + " 0 R"; }).join(" ") + "]" : "") + " >>"]);
+        var cs = sec ? p.encCs : csBytes, jp = sec ? p.encJpeg : p.jpeg;
+        obj(p.c, ["<< /Length " + cs.length + " >>\nstream\n", cs, "\nendstream"]);
+        obj(p.im, ["<< /Type /XObject /Subtype /Image /Width " + p.w + " /Height " + p.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + jp.length + " >>\nstream\n", jp, "\nendstream"]);
+        p.links.forEach(function (l, k) {
+          obj(p.an[k], ["<< /Type /Annot /Subtype /Link /Rect [" + [l.x, PH - l.y - l.h, l.x + l.w, PH - l.y].map(f2).join(" ") + "] /Border [0 0 0] /A << /S /URI /URI " + (sec ? hexs(p.encUrl[k]) : pdfStr(l.url)) + " >> >>"]);
+        });
+      });
+      if (sec) obj(encObj, [sec.dict]);
+      var xo = off;
+      push("xref\n0 " + next + "\n0000000000 65535 f \n");
+      for (var i = 1; i < next; i++) push(("0000000000" + xref[i]).slice(-10) + " 00000 n \n");
+      var id = sec ? sec.hex(window.crypto.getRandomValues(new Uint8Array(16))) : "";
+      push("trailer\n<< /Size " + next + " /Root 1 0 R /Info 3 0 R" + (sec ? " /Encrypt " + encObj + " 0 R /ID [<" + id + "><" + id + ">]" : "") + " >>\nstartxref\n" + xo + "\n%%EOF\n");
+      return new Blob(chunks, { type: "application/pdf" });
+    }
   }
   function canvasJpeg(c, q) { return new Promise(function (res) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); }, "image/jpeg", q); }); }
 
@@ -547,7 +568,9 @@ var RMED_PDF = (function () {
         out.push({ jpeg: jp, w: p.c.width, h: p.c.height, links: p.links }); p.c.width = p.c.height = 1; if (opt.onEncode) opt.onEncode(i + 1, pages.length);
       });
     });
-    return chain.then(function () { return { blob: writePdf(out, opt.title || S.subject || "Random.MEd"), pages: out.length, words: drawnWords }; });
+    return chain.then(function () { return opt.protect && window.RMED_PROTECT ? RMED_PROTECT.pdfSecurity(opt.protect) : null; })
+      .then(function (sec) { return writePdf(out, opt.title || S.subject || "Random.MEd", sec); })
+      .then(function (blob) { return { blob: blob, pages: out.length, words: drawnWords, protected: !!opt.protect }; });
   }
 
   // كلمات المحتوى الأصلي المتوقع ظهورها (للتحقق من أن التخطيط لم يُسقط شيئاً)
