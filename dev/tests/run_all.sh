@@ -14,3 +14,4 @@ echo "== 8) الأغلفة (ملفات في out/cov_*.docx)"; node covers.js 2>&
 echo "== هوية الملف (منصة/دكتور) بكل الأوضاع"; node idt.js 2>&1 | tail -4
 echo "== حماية الملفات (Word مشفّر + PDF AES-256)"; node prot_t.js 2>&1 | grep -E "word:|pdf|zip|errors" | cut -c1-120
 echo "   تحقق مستقل: python3 verify_agile.py out/text_locked.docx Bio2026 out/text_plain.docx ; qpdf --show-encryption --password=Bio2026 out/text_locked.pdf"
+echo "== التنسيق الذكي"; node smart_t.js 2>&1 | grep -E "check:|pdf:|undo|errors"

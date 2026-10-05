@@ -83,6 +83,31 @@ details.sec>.in{padding:0 16px 16px}
 .btn:hover{border-color:var(--brass)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn.danger{color:var(--rose)}
+.btn.smart-b{border-color:var(--brass);color:var(--brass-deep);background:var(--brass-soft);font-weight:600}
+.btn.gold{background:#7C5714;border-color:#7C5714;color:#fff;font-weight:600}
+.smart{border:1px solid var(--brass);border-radius:14px;padding:12px;margin:0 0 10px;background:var(--surface-2);min-width:0;max-width:100%;overflow:hidden}
+.smart .sm-list,.smart .sm-row{min-width:0;max-width:100%}
+.main-col>*{min-width:0}
+[hidden]{display:none!important}
+.smart h4{margin:0 0 6px;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.smart .sm-opts{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.smart .sm-opts label{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer}
+.smart .sm-opts input{accent-color:var(--brass);margin:0}
+.smart .sm-stats{display:flex;flex-wrap:wrap;gap:5px;font-size:12px;margin:4px 0}
+.smart .sm-stats span{padding:2px 8px;border-radius:999px;background:var(--surface);border:1px solid var(--line)}
+.smart .sm-ok{color:var(--teal);font-weight:600}.smart .sm-bad{color:var(--rose);font-weight:600}
+.smart .sm-list{max-height:360px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:6px 0}
+.smart .sm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 9px;border-bottom:1px solid var(--line)}
+.smart .sm-row:last-child{border-bottom:none}
+.smart .sm-n{font-size:11px;color:var(--ink-soft);min-width:26px;text-align:center}
+.smart .sm-row select{font:inherit;font-size:13px;min-height:36px;padding:4px 6px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);max-width:150px}
+.smart .sm-t{flex:1 1 220px;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-inline-start:4px solid var(--line);padding-inline-start:8px}
+.smart .sm-why{flex-basis:100%;font-size:11px;color:var(--ink-soft);padding-inline-start:34px}
+.smart .k-h1 .sm-t{border-color:var(--brass-deep);font-weight:700}.smart .k-h2 .sm-t{border-color:var(--brass);font-weight:700}.smart .k-h3 .sm-t,.smart .k-h4 .sm-t{border-color:#D9A84E;font-weight:600}
+.smart .k-li .sm-t,.smart .k-li2 .sm-t{border-color:var(--teal)}.smart .k-table .sm-t{border-color:#6B7A99}.smart .k-bold .sm-t{border-color:var(--ink-soft)}
+.smart .k-note .sm-t{border-color:#2E75B6}.smart .k-imp .sm-t{border-color:#BF9000}.smart .k-def .sm-t{border-color:#548235}.smart .k-warn .sm-t{border-color:#C00000}.smart .k-case .sm-t{border-color:#7F7F7F}
+.smart .k-keep .sm-t{opacity:.55;text-decoration:line-through}
+.smart .sm-act{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 4px}
 .btn svg{width:16px;height:16px;flex:none}
 .drop{position:relative}
 textarea#src{width:100%;min-height:360px;resize:vertical;border:1px solid var(--line);border-radius:13px;padding:14px;background:var(--surface-2);line-height:1.85;font-size:14px;outline:none;unicode-bidi:plaintext}
@@ -399,9 +424,22 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
         <div class="toolbar">
           <button class="btn" id="pasteBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg>لصق</button>
           <label class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>رفع ملفات<input type="file" id="fileIn" accept=".md,.txt,.markdown,text/plain,text/markdown" multiple class="sr"></label>
+          <button class="btn smart-b" id="smartBtn" title="يدرس النص ويقترح العناوين والنقاط والجداول والصناديق — بدون تغيير أي كلمة">✨ تنسيق ذكي</button>
+          <button class="btn" id="smartUndo" hidden>↶ تراجع عن التنسيق</button>
           <button class="btn" id="moveR" title="نقل المحاضرة قبل">→ قبل</button>
           <button class="btn" id="moveL" title="نقل المحاضرة بعد">بعد ←</button>
           <button class="btn danger" id="delBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>حذف</button>
+        </div>
+        <div class="smart" id="smartPanel" role="region" aria-label="التنسيق الذكي" hidden>
+          <h4>✨ التنسيق الذكي <span class="pill" id="smTab"></span></h4>
+          <small class="hint" id="smHint" aria-live="polite">درسنا النص واقترحنا بنيته. راجع الاقتراحات وغيّر نوع أي سطر من القائمة، وبعدين اضغط «تطبيق». ولا كلمة بتتغيّر — بس التنسيق.</small>
+          <div class="sm-opts" id="smOpts">
+            <label><input type="checkbox" data-o="headings">عناوين</label><label><input type="checkbox" data-o="title">عنوان المحاضرة</label><label><input type="checkbox" data-o="bullets">نقاط</label>
+            <label><input type="checkbox" data-o="tables">جداول</label><label><input type="checkbox" data-o="boxes">صناديق ملوّنة</label><label><input type="checkbox" data-o="bold">تغميق المصطلحات</label>
+          </div>
+          <div class="sm-stats" id="smStats"></div>
+          <div class="sm-act"><button class="btn gold" id="smApply">✓ تطبيق التنسيق</button><button class="btn" id="smCancel">إلغاء</button></div>
+          <div class="sm-list" id="smList"></div>
         </div>
         <div class="drop" id="drop">
           <textarea id="src" aria-label="نص المحاضرة" spellcheck="false" dir="auto" placeholder="الصق هنا نص المحاضرة المفرّغ (Markdown)… أو اسحب ملفات .md / .txt وأفلتها هنا — كل ملف يصبح محاضرة مستقلة."></textarea>
@@ -410,6 +448,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
         <div class="meta" id="meta"></div>
         <details class="help">
           <summary>صيغة الإدخال المدعومة</summary>
+          <p>نصك خام بلا رموز؟ اضغط <b>✨ تنسيق ذكي</b>: بيقترح العناوين والنقاط والجداول (الأسطر المفصولة بـ Tab) والصناديق (الأسطر اللي بتبلش بـ «ملاحظة/هام/تعريف/تحذير/حالة سريرية») بدون ما يغيّر ولا كلمة، وبتقدر تراجع وتتراجع.</p>
           <p><code># عنوان</code> المحاضرة، <code>##</code> قسم، <code>###</code> و<code>####</code> عناوين فرعية، <code>* </code> نقاط (إزاحة مسافتين لكل مستوى)، <code>1. </code> قائمة مرقمة، جداول <code>| … |</code>، <code>**غامق**</code> و<code>*مائل*</code>، وكتل <code>```</code> للمخططات. الجملة التي تحوي وسماً تُبرز في صندوق ملوّن: <code>[هام جداً]</code> أصفر، <code>[تعريف]</code> أخضر، <code>[تحذير]</code> أحمر، <code>[حالة سريرية]</code> رمادي، <code>[ملاحظة]</code> أزرق؛ والسطر الذي يبدأ بـ «إليك التفريغ» مقدمة، والسطر الذي يبدأ بـ 💡 خاتمة. يمكن لصق عدة محاضرات في تبويب واحد وتُفصل تلقائياً عند كل عنوان <code>#</code>.</p>
         </details>
       </div>
@@ -594,6 +633,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
 <script id="pdflib">__PDF__</script>
 <script id="pptxlib">__PPTX__</script>
 <script id="protlib">__PROTECT__</script>
+<script id="smartlib">__SMART__</script>
 <script id="engine">
 var ENGINE = (function () {
   "use strict";
@@ -607,7 +647,11 @@ var ENGINE = (function () {
     { id: "note", tag: "[ملاحظة]", fill: "DEEAF6", border: "2E75B6", tagFill: "2E75B6", label: "ملاحظة" }
   ];
   var CO_RE = new RegExp("(" + CALLOUTS.map(function (c) { return c.tag.replace(/[\[\]]/g, "\\$&"); }).join("|") + ")");
-  function calloutOf(text) { var m = CO_RE.exec(String(text || "")); if (!m) return null; for (var i = 0; i < CALLOUTS.length; i++) if (CALLOUTS[i].tag === m[1]) return CALLOUTS[i]; return null; }
+  // وسم مخفي {{ملاحظة}} يلوّن الصندوق دون أن يُكتب في الملف (يستعمله «التنسيق الذكي» حتى لا يضيف أي كلمة)
+  var MK_RE = /\{\{(هام جداً|هام جدا|تعريف|تحذير|حالة سريرية|ملاحظة)\}\}[ \t]*/, MK_G = new RegExp(MK_RE.source, "g");
+  function stripMk(t) { return String(t || "").replace(MK_G, ""); }
+  function calloutOf(text) { var k = MK_RE.exec(String(text || "")); if (k) { var lb = k[1] === "هام جدا" ? "هام جداً" : k[1]; for (var j = 0; j < CALLOUTS.length; j++) if (CALLOUTS[j].label === lb) return CALLOUTS[j]; }
+    var m = CO_RE.exec(String(text || "")); if (!m) return null; for (var i = 0; i < CALLOUTS.length; i++) if (CALLOUTS[i].tag === m[1]) return CALLOUTS[i]; return null; }
   function coByTag(t) { for (var i = 0; i < CALLOUTS.length; i++) if (CALLOUTS[i].tag === t) return CALLOUTS[i]; return null; }
   var BOX_RE = /[─━│┃┌┐└┘┬┴┼├┤═║╔╗╚╝╠╣╦╩╬▼▲►◄▶◀]/g;
   var INVIS_RE = /[\u200E\u200F\u2060\u2066-\u2069\u202A-\u202E\uFEFF]/g;
@@ -668,9 +712,9 @@ var ENGINE = (function () {
     if (!s) return { k: "blank" };
     if (/^```/.test(s)) return { k: "fence" };
     if (HR_RE.test(s)) return { k: "hr" };
-    if ((m = s.match(/^(#{1,6})\s+(.*)$/))) return { k: "h", level: Math.min(m[1].length, 4), text: m[2], indent: indent };
-    if (/^إليك التفريغ/.test(s)) return { k: "intro", text: s };
-    if (/^💡/.test(s)) return { k: "outro", text: s };
+    if ((m = s.match(/^(#{1,6})\s+(.*)$/))) return { k: "h", level: Math.min(m[1].length, 4), text: stripMk(m[2]), indent: indent };
+    if (/^إليك التفريغ/.test(s)) return { k: "intro", text: stripMk(s) };
+    if (/^💡/.test(s)) return { k: "outro", text: stripMk(s) };
     if (s.charAt(0) === "|") return { k: "tr", text: s };
     if ((m = s.match(/^[*+\-•]\s+(.*)$/))) return { k: "li", text: m[1], indent: indent };
     if ((m = s.match(/^(\d+[.)])\s+(.*)$/))) return { k: "ol", num: m[1], text: m[2], indent: indent };
@@ -751,7 +795,7 @@ var ENGINE = (function () {
     while (i < items.length) {
       var it = items[i];
       if (it.k === "blank" || it.k === "hr") { i++; continue; }
-      if (it.k === "h") { blocks.push({ t: "h", level: Math.max(2, it.level), inl: parseInline(it.text) }); i++; continue; }
+      if (it.k === "h") { blocks.push({ t: "h", level: Math.max(2, it.level), inl: parseInline(stripMk(it.text)) }); i++; continue; }
       if (it.k === "tr") {
         var rows = [];
         while (i < items.length && items[i].k === "tr") { if (!SEP_RE.test(items[i].text)) rows.push(splitRow(items[i].text).map(parseInline)); i++; }
@@ -760,7 +804,7 @@ var ENGINE = (function () {
       if (it.k === "code") { var d = parseDiagram(it.lines); blocks.push(d ? { t: "diagram", rows: d } : { t: "pre", lines: it.lines }); i++; continue; }
       if (it.k === "li" || it.k === "ol") { var r = gatherList(items, i); blocks.push.apply(blocks, structure(r.run)); i = r.next; continue; }
       if (it.k === "intro" || it.k === "outro") { blocks.push({ t: "p", inl: parseInline(it.text), imp: false }); i++; continue; }
-      blocks.push({ t: "p", inl: parseInline(it.text), imp: calloutOf(it.text) }); i++;
+      blocks.push({ t: "p", inl: parseInline(stripMk(it.text)), imp: calloutOf(it.text) }); i++;
     }
     return blocks;
   }
@@ -790,12 +834,12 @@ var ENGINE = (function () {
         while (i < run.length && run[i].k === "ol" && run[i].indent === base) {
           var o = run[i]; i++; var kids = [];
           while (i < run.length && run[i].indent > base) { kids.push(run[i]); i++; }
-          olItems.push({ num: o.num, inl: parseInline(o.text), imp: calloutOf(o.text), children: structure(kids) });
+          olItems.push({ num: o.num, inl: parseInline(stripMk(o.text)), imp: calloutOf(o.text), children: structure(kids) });
         }
         blocks.push({ t: "ol", items: olItems, nested: base > minIndent }); continue;
       }
       var lvl = Math.min(3, Math.max(0, indents.indexOf(it.indent)));
-      blocks.push({ t: it.k === "li" ? "li" : "p", level: lvl, inl: parseInline(it.text), imp: calloutOf(it.text) });
+      blocks.push({ t: it.k === "li" ? "li" : "p", level: lvl, inl: parseInline(stripMk(it.text)), imp: calloutOf(it.text) });
       i++;
     }
     return blocks;
@@ -846,11 +890,13 @@ var ENGINE = (function () {
       var t = l.trim();
       if (/^```/.test(t)) { fence = !fence; return; }
       if (fence) { out.push(l); return; }
+      // نفس تصنيف المحرك تماماً (classify)، ثم نحذف الوسم المخفي {{…}} من المحتوى كما يفعل المحرك
       if (!t || HR_RE.test(t)) return;
       if (t.charAt(0) === "|") { if (SEP_RE.test(t)) return; out.push(splitRow(t).map(function (c) { return plain(parseInline(c)); }).join(" ")); return; }
       var m = t.match(/^#{1,6}\s+(.*)$/); if (m) t = m[1];
+      else if (/^إليك التفريغ|^💡/.test(t)) {}
       else { m = t.match(/^[*+\-•]\s+(.*)$/); if (m) t = m[1]; }
-      out.push(plain(parseInline(t)));
+      out.push(plain(parseInline(stripMk(t))));
     });
     return tokens(out.join("\n"));
   }
@@ -1506,7 +1552,7 @@ var ENGINE = (function () {
 
   return { PAGE_BGS: PAGE_BGS, pageBgColor: pageBgColor, lecNum: lecNum, numLabel: numLabel, fileName: fileName, NAME_TPL: NAME_TPL, THEMES: THEMES, SIZE_DEFAULTS: SIZE_DEFAULTS, resolveTheme: resolveTheme, customTheme: customTheme, parseLectures: parseLectures, build: build, finalize: finalize,
     previewHTML: previewHTML, detectSubject: detectSubject, inputTokens: inputTokens, xmlTokens: xmlTokens, compare: compare, lectureLabel: lectureLabel,
-    plain: plain, splitDir: splitDir, b64ToBytes: b64ToBytes, parseInline: parseInline, tokens: tokens, AR_RE: AR_RE, IMP: IMP, CALLOUTS: CALLOUTS, CO_RE: CO_RE, calloutOf: calloutOf, coByTag: coByTag };
+    plain: plain, splitDir: splitDir, b64ToBytes: b64ToBytes, parseInline: parseInline, tokens: tokens, AR_RE: AR_RE, IMP: IMP, CALLOUTS: CALLOUTS, CO_RE: CO_RE, calloutOf: calloutOf, stripMk: stripMk, MK_RE: MK_RE, classify: classify, coByTag: coByTag };
 })();
 </script>
 
@@ -1522,7 +1568,7 @@ var ENGINE = (function () {
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
     keepParas: true, origLine: true, pageBg: "none", pageFrame: false,
-    protOn: false, protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
+    smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
@@ -1818,7 +1864,7 @@ var ENGINE = (function () {
     $("moveR").disabled = active === 0; $("moveL").disabled = active === lectures.length - 1;
   }
   function syncActive() { lectures[active].text = $("src").value; }
-  function renderAll() { $("src").value = lectures[active].text; renderTabs(); updateMeta(); schedulePreview(); }
+  function renderAll() { $("src").value = lectures[active].text; renderTabs(); updateMeta(); schedulePreview(); if (smState && smState.lec !== lectures[active]) { $("smartPanel").hidden = true; smState = null; } if (smState) $("smTab").textContent = "المحاضرة " + (active + 1); if (smUndo && lectures.indexOf(smUndo.lec) < 0) { smUndo = null; $("smartUndo").hidden = true; } }
   $("moveR").onclick = function () { syncActive(); if (active > 0) { var t = lectures[active]; lectures[active] = lectures[active - 1]; lectures[active - 1] = t; active--; renderAll(); } };
   $("moveL").onclick = function () { syncActive(); if (active < lectures.length - 1) { var t = lectures[active]; lectures[active] = lectures[active + 1]; lectures[active + 1] = t; active++; renderAll(); } };
   $("delBtn").onclick = function () {
@@ -1826,6 +1872,50 @@ var ENGINE = (function () {
     if (lectures[active].text.trim() && !confirm("حذف هذه المحاضرة من القائمة؟")) return;
     lectures.splice(active, 1); if (!lectures.length) lectures.push({ text: "" });
     active = Math.min(active, lectures.length - 1); renderAll();
+  };
+  /* ---- التنسيق الذكي (اختياري، للتبويب الحالي) ---- */
+  var smState = null, smUndo = null, SM_OPT = { headings: "smHeadings", title: "smTitle", bullets: "smBullets", tables: "smTables", boxes: "smBoxes", bold: "smBold" };
+  var SM_KINDS = ["keep", "h1", "h2", "h3", "h4", "li", "li2", "bold", "note", "imp", "def", "warn", "case"];
+  function smOpts() { var o = {}; Object.keys(SM_OPT).forEach(function (k) { o[k] = S[SM_OPT[k]] !== false; }); return o; }
+  function smAnalyze(keepOv) { syncActive(); var ov = keepOv && smState && smState.lec === lectures[active] && smState.src === lectures[active].text ? smState.ov : {}; smState = { A: RMED_SMART.analyze(lectures[active].text, smOpts()), ov: ov, tab: active, lec: lectures[active], src: lectures[active].text }; smRender(); }
+  function smRender() {
+    var R = RMED_SMART.compose(smState.A, smState.ov), st = R.stats, K = RMED_SMART.KINDS; smState.R = R;
+    $("smTab").textContent = "المحاضرة " + (active + 1);
+    var parts = []; if (st.h) parts.push(st.h + " عنوان"); if (st.li) parts.push(st.li + " نقطة"); if (st.table) parts.push(st.table + " جدول"); if (st.box) parts.push(st.box + " صندوق"); if (st.bold) parts.push(st.bold + " مصطلح غامق");
+    $("smStats").innerHTML = parts.map(function (x) { return "<span>" + x + "</span>"; }).join("") + (R.ok ? '<span class="sm-ok">✓ الكلمات نفسها: ' + st.diff.inCount + "</span>" : '<span class="sm-bad">✗ في فرق بالكلمات — ما رح نطبّق</span>') + (st.reverted ? "<span>" + st.reverted + " سطر تركناه متل ما هو للأمان</span>" : "");
+    $("smHint").textContent = smState.A.already ? "النص فيه تنسيق أصلاً (عناوين #)، فما غيّرنا العناوين — اقترحنا بس النقاط والجداول والصناديق والمصطلحات. ولا كلمة بتتغيّر." : "درسنا النص واقترحنا بنيته. راجع الاقتراحات وغيّر نوع أي سطر من القائمة، وبعدين اضغط «تطبيق». ولا كلمة بتتغيّر — بس التنسيق.";
+    var L = smState.A.lines, rows = [];
+    L.forEach(function (x, i) {
+      if (x.kind === "inTable") return;
+      var cur = smState.ov[i] || x.final; if (x.final === "keep" && !smState.ov[i]) return;
+      var opts = x.final === "table" ? ["table", "keep"] : SM_KINDS;
+      rows.push('<div class="sm-row k-' + cur + '"><span class="sm-n">' + (i + 1) + '</span><select data-i="' + i + '" aria-label="نوع السطر ' + (i + 1) + '">' + opts.map(function (k) { return '<option value="' + k + '"' + (k === cur ? " selected" : "") + ">" + K[k] + "</option>"; }).join("") + '</select><span class="sm-t" dir="rtl">' + esc2(x.final === "table" ? x.raw.replace(/\t/g, " │ ") + "  (+" + (x.span - 1) + " سطر)" : x.raw.trim()) + "</span>" + (x.why ? '<span class="sm-why">' + esc2(x.why) + "</span>" : "") + "</div>");
+    });
+    $("smList").innerHTML = rows.length ? rows.join("") : '<div class="sm-row"><span class="sm-t">ما لقينا شي بدّو تنسيق بهالنص.</span></div>';
+    Array.prototype.forEach.call($("smList").querySelectorAll("select"), function (sel) { sel.onchange = function () { var i = +sel.dataset.i; if (sel.value === smState.A.lines[i].final) delete smState.ov[i]; else smState.ov[i] = sel.value; smRender(); }; });
+    $("smApply").disabled = !R.ok || !R.changed.length;
+    Array.prototype.forEach.call($("smOpts").querySelectorAll("input"), function (cb) { cb.checked = S[SM_OPT[cb.dataset.o]] !== false; });
+  }
+  $("smartBtn").onclick = function () {
+    if (!window.RMED_SMART) return show("err", "ميزة التنسيق الذكي ما تحمّلت — حدّث الصفحة.");
+    syncActive(); if (!lectures[active].text.trim()) return show("err", "الصق نص المحاضرة أولاً، وبعدين اضغط «تنسيق ذكي».");
+    smAnalyze(); $("smartPanel").hidden = false; $("smartPanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+  Array.prototype.forEach.call($("smOpts").querySelectorAll("input"), function (cb) { cb.onchange = function () { S[SM_OPT[cb.dataset.o]] = cb.checked; save(); smAnalyze(true); }; });
+  $("smCancel").onclick = function () { $("smartPanel").hidden = true; smState = null; };
+  $("smApply").onclick = function () {
+    if (!smState || !smState.R || !smState.R.ok) return;
+    syncActive();
+    if (smState.lec !== lectures[active] || lectures[active].text !== smState.src) { smAnalyze(); return show("info", "النص تغيّر — عدنا التحليل، راجع وطبّق مرة تانية."); }
+    smUndo = { lec: lectures[active], before: lectures[active].text, after: smState.R.text };
+    lectures[active].text = smState.R.text; $("smartPanel").hidden = true; smState = null; renderAll(); paintName();
+    $("smartUndo").hidden = false; show("ok", "✓ تم التنسيق الذكي — الكلمات نفسها بدون أي فرق. إذا ما عجبك اضغط «↶ تراجع عن التنسيق».");
+  };
+  $("smartUndo").onclick = function () {
+    if (!smUndo) return; syncActive();
+    var ix = lectures.indexOf(smUndo.lec), L = smUndo.lec; if (ix < 0) { smUndo = null; $("smartUndo").hidden = true; return show("info", "المحاضرة اللي نسّقناها انحذفت — ما في شي نرجّعه."); }
+    if (L.text !== smUndo.after && !confirm("عدّلت النص بعد التنسيق — التراجع رح يرجّع النص متل ما كان قبل التنسيق ويضيّع تعديلاتك. أكمل؟")) return;
+    L.text = smUndo.before; active = ix; smUndo = null; $("smartUndo").hidden = true; renderAll(); paintName(); show("ok", "رجّعنا النص متل ما كان قبل التنسيق.");
   };
   $("pasteBtn").onclick = function () {
     if (!navigator.clipboard || !navigator.clipboard.readText) { show("err", "المتصفح لا يسمح باللصق التلقائي. اضغط مطولاً داخل مربع النص واختر «لصق»."); return; }
