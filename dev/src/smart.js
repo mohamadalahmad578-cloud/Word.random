@@ -21,11 +21,12 @@ var RMED_SMART = (function () {
   var DIALECT = /(^|\s)(حكينا|منحكي|رح|بدنا|قلنا|شفنا|خلصنا|هلق|هون)(\s|$)/;
   var FUNCW = /(^|\s)(في|على|إلى|الى|من|عن|حسب|ما|التي|الذي|هناك|يلي|بعدة)(\s|$)/;
   var LET_RE = new RegExp("^([أابتثجحخدذرزسشصضطظعغفقكلمنهوي]|[a-hA-H])\\s*[-–)]\\s+(?=\\S)");
+  var PUNC = "((\\s+[^\\s:：.،]+){0,5}\\s*[:：]|\\s*[\\-–!]|\\s*$)"; // الأسماء (ملاحظة، هام، تعريف…) لازم يليها «:» أو «-» حتى لا تُلوَّن جملة عادية
   var CALL = [
-    [new RegExp("^((ملاحظة|ملاحظه|ملاحظات|ملحوظة)" + END + "|(Note|N\\.B\\.?|NB)\\s*[:：\\-–]|Note that\\s)", "i"), "ملاحظة"],
-    [new RegExp("^((هام جداً|هام جدا|مهم جداً|مهم جدا|هام|مهم|انتبه|انتبهوا|تذكر|تذكّر|تذكروا|ركّز|ركز)" + END + "|(Important|Remember|Key point)\\s*[:：\\-–])", "i"), "هام جداً"],
-    [new RegExp("^((تعريف)" + END + "|(التعريف|Definition|Def\\.?)\\s*[:：\\-–])", "i"), "تعريف"],
-    [new RegExp("^((تحذير|احذر|احذروا|تنبيه)" + END + "|(Warning|Caution|Contraindication)\\s*[:：\\-–])", "i"), "تحذير"],
+    [new RegExp("^((ملاحظة|ملاحظه|ملحوظة)" + END + "|(ملاحظات)" + PUNC + "|(Note|N\\.B\\.?|NB)\\s*[:：\\-–]|Note that\\s)", "i"), "ملاحظة"],
+    [new RegExp("^((هام جداً|هام جدا|مهم جداً|مهم جدا|مهم كتير|هام كتير)" + END + "|(هام|مهم)" + PUNC + "|(هام|مهم|من المهم|من الهام)\\s+(جداً\\s+|جدا\\s+)?(أن|ان|إن)\\s|(انتبه|انتبهوا|تذكر|تذكّر|تذكروا|ركّز|ركز)" + END + "|(Important|Remember|Key point)\\s*[:：\\-–])", "i"), "هام جداً"],
+    [new RegExp("^((تعريف)" + PUNC + "|تعريف(\\s+[^\\s:：]+){1,3}\\s+(هو|هي)\\s|(التعريف|Definition|Def\\.?)\\s*[:：\\-–])", "i"), "تعريف"],
+    [new RegExp("^((تحذير|تنبيه)" + END + "|(احذر|احذروا)" + END + "|(Warning|Caution|Contraindication)\\s*[:：\\-–])", "i"), "تحذير"],
     [new RegExp("^((حالة سريرية|حالة مرضية|مثال سريري|سيناريو سريري)" + END + "|(Clinical case|Case study|Case)\\s*([\\d٠-٩]+\\s*)?[:：\\-–])", "i"), "حالة سريرية"]
   ];
   var SENT_END = /[.،؛!؟?…]["»”')\]]*$/;
@@ -38,6 +39,12 @@ var RMED_SMART = (function () {
   function words(s) { return String(s).trim().split(/\s+/).filter(Boolean).length; }
   function isHeadingShape(t) {
     if (!t || t.length > 75 || words(t) > 10 || words(t) < 1 || /^#/.test(t)) return false;
+    if (/^(الشكل|شكل|الجدول|جدول|الصورة|صورة|المخطط|مخطط|Figure|Fig\.?|Table|Image|Chart)\s*[\d٠-٩]/i.test(t)) return false; // تعليقات الصور والجداول
+    if (/[،,;؛]/.test(t) && words(t) > 4) return false; // جملة فيها فاصلة ليست عنواناً
+    if (/\t/.test(t)) return false;
+    if (/^(Dr\.?|د\.|الدكتور|الدكتورة|أ\.د|Prof\.?)\s/i.test(t)) return false; // اسم دكتور ليس عنواناً
+    if (/^(الجواب|الإجابة|الاجابة|السؤال|الحل|Answer|Question|Q|A)\s*[:：]?$/i.test(t)) return false;
+    if (LABEL_ONLY_RE.test(t)) return false;
     if (SENT_END.test(t)) return false;
     if (/[:：]\s*\S/.test(t)) return false; // «مصطلح: شرح» ليست عنواناً
     if (!new RegExp("[" + AR + "A-Za-z]").test(t)) return false;
@@ -48,7 +55,7 @@ var RMED_SMART = (function () {
   }
   var RUN_RE = /^([Ø§o])[ \t\u00A0]+(?=\S)/; // رموز لها معنى أحياناً (Ø = قطر): نقطة فقط إذا تكررت بسطرين متتاليين أو أكثر
   function stripBullet(t, run) { var m = BUL_RE.exec(t) || (run ? RUN_RE.exec(t) : null); return m ? { glyph: m[1], rest: t.slice(m[0].length) } : null; }
-  function boxOf(t) { for (var i = 0; i < CALL.length; i++) if (CALL[i][0].test(t)) return BOX_BY_LABEL[CALL[i][1]]; return null; }
+  function boxOf(t) { if (LABEL_ONLY_RE.test(t) && !/[:：]\s*$/.test(t)) t = t.trim() + ":"; for (var i = 0; i < CALL.length; i++) if (CALL[i][0].test(t)) return BOX_BY_LABEL[CALL[i][1]]; return null; }
   function boldTerm(t) {
     if (/\*\*|`/.test(t)) return t;
     var nm = /^([\d٠-٩]{1,2}[.)]\s+)(?=\S)/.exec(t); if (nm) { var rb = boldTerm(t.slice(nm[0].length)); return rb === t.slice(nm[0].length) ? t : nm[0] + rb; }
@@ -118,17 +125,17 @@ var RMED_SMART = (function () {
       if (isRun) S[i].run = true;
       var b = stripBullet(t, isRun), body = b ? b.rest : t, box = opt.boxes ? boxOf(body) : null;
       if (b && opt.bullets) {
-        if (box && LABEL_ONLY_RE.test(body)) { pendBox = box; box = null; } else { if (!box && pendBox) box = pendBox; pendBox = null; }
+        if (box && LABEL_ONLY_RE.test(body)) { pendBox = box; box = null; } else { var keepP = pendBox && !box && lines[i + 1] !== undefined && !!stripBullet(lines[i + 1].trim()); if (!box && pendBox) box = pendBox; if (!keepP) pendBox = null; }
         var lvl2 = BUL2.indexOf(b.glyph) >= 0 || indent >= 2;
         S[i].kind = box ? box : lvl2 ? "li2" : "li"; S[i].li2 = lvl2; S[i].why = box ? "نقطة تبدأ بـ «" + body.split(/\s/)[0] + "»" : "تبدأ برمز نقطة «" + b.glyph + "»"; continue;
       }
       if (b) continue;
       if (box && LABEL_ONLY_RE.test(body)) { pendBox = box; S[i].kind = "para"; S[i].label = true; continue; } // «تعريف:» وحدها → الصندوق للسطر التالي
-      if (pendBox && S[i].kind === "keep") { S[i].kind = pendBox; pendBox = null; S[i].why = "يلي سطر عنوان الصندوق"; continue; }
+      if (pendBox && S[i].kind === "keep") { S[i].kind = pendBox; S[i].why = "يلي سطر عنوان الصندوق"; if (!(isItem(t) && lines[i + 1] !== undefined && isItem(lines[i + 1].trim()))) pendBox = null; continue; } // عناصر قائمة متتالية بعد «ملاحظات:» كلها بالصندوق
       pendBox = null;
       var nB = nextNB(i), nL = nB >= 0 ? vis(lines[nB].trim()) : "";
-      if (box === "def" && /^تعريف\s/.test(t) && !already && opt.headings && isHeadingShape(t) && !new RegExp("^\\S+(\\s+جداً?|\\s+سريرية|\\s+صغيرة)?\\s*[:：\\-–]").test(t) && words(t) <= 6 && nL.length > t.length * 1.4) { // «تعريف الأنسولين» / «Warning signs of …» = عنوان
-        S[i].kind = "gen"; S[i].why = "عنوان يبدأ بكلمة صندوق"; used.gen++; if (box === "def" || box === "case") pendBox = box; continue; }
+      if (/^تعريف\s/.test(t) && !/[:：]/.test(t) && !already && opt.headings && isHeadingShape(t) && !new RegExp("^\\S+(\\s+جداً?|\\s+سريرية|\\s+صغيرة)?\\s*[:：\\-–]").test(t) && words(t) <= 6 && nL.length > t.length * 1.4) { // «تعريف الأنسولين» / «Warning signs of …» = عنوان
+        S[i].kind = "gen"; S[i].why = "عنوان يبدأ بكلمة صندوق"; used.gen++; pendBox = "def"; continue; }
       if (box) { S[i].kind = box; S[i].why = "تبدأ بـ «" + body.split(/[\s:：]/)[0] + "»"; continue; }
       if (!opt.headings || already) { S[i].kind = "para"; continue; }
       var pi = prevNB(i), ni = nextNB(i), blankBefore = i === 0 || !lines[i - 1].trim() || SENT_END.test(lines[i - 1].trim()), nextLine = ni >= 0 ? vis(lines[ni].trim()) : "";
@@ -144,7 +151,7 @@ var RMED_SMART = (function () {
       var realBlank = i === 0 || !lines[i - 1].trim(), shortNext = isHeadingShape(nextLine) && ni === i + 1;
       var hardBreak = pi < 0 || realBlank || (SENT_END.test(prevT) || !isHeadingShape(prevT)) && !/[:：]$/.test(prevT) && /^(para|bold|keep|li|li2|table|inTable|note|imp|def|warn|case)$/.test(S[pi].kind);
       var ppi = pi >= 0 ? prevNB(pi) : -1, listTail = pi >= 0 && ppi >= 0 && pi === i - 1 && ppi === pi - 1 && S[pi].kind === "para" && S[ppi].kind === "para" && isHeadingShape(prevT) && isHeadingShape(lines[ppi].trim());
-      var colonIntro = /[:：]$/.test(t) && (/^و/.test(t) || /^(يتميز|تتميز|يمتاز|تمتاز|نسمع|نلاحظ|نميز|يمر|تمر|يحدث|تحدث|يعتمد|تعتمد|نستخدم|يستخدم|تستخدم|يشمل|تشمل|نذكر|منها|ومنها)(\s|:)/.test(t) || /(^|\s)(بعدة|عدة|التالية|الآتية|كالتالي|كالآتي)(\s|:|$)/.test(t)) || /[:：]$/.test(t) && pi >= 0 && /^(gen|ord|num|let|h1)$/.test(S[pi].kind) || DIALECT.test(t) || /[:：]$/.test(t) && words(t) > 4 && (FUNCW.test(t) || VERBY.test(t));
+      var colonIntro = /[:：]$/.test(t) && VERBY.test(t) || /[:：]$/.test(t) && (/^و/.test(t) || /^(يتميز|تتميز|يمتاز|تمتاز|نسمع|نلاحظ|نميز|يمر|تمر|يحدث|تحدث|يعتمد|تعتمد|نستخدم|يستخدم|تستخدم|يشمل|تشمل|نذكر|منها|ومنها)(\s|:)/.test(t) || /(^|\s)(بعدة|عدة|التالية|الآتية|كالتالي|كالآتي)(\s|:|$)/.test(t)) || /[:：]$/.test(t) && pi >= 0 && /^(gen|ord|num|let|h1)$/.test(S[pi].kind) || DIALECT.test(t) || /[:：]$/.test(t) && words(t) > 4 && (FUNCW.test(t) || VERBY.test(t));
       var nextIsList = ni === i + 1 && isHeadingShape(nextLine) && !isItem(nextLine) && lines[i + 2] !== undefined && isHeadingShape(lines[i + 2].trim());
       var prevBreaks = pi < 0 || realBlank || SENT_END.test(prevT) && !/[:：]$/.test(prevT) || !isHeadingShape(prevT) && !/[:：]$/.test(prevT) || S[pi].kind !== "para" && S[pi].kind !== "bold";
       var n2 = ni >= 0 ? nextNB(ni) : -1, stacked = realBlank && ni === i + 1 && words(t) <= 7 && !/[:：]$/.test(t) && isHeadingShape(nextLine) && !isItem(nextLine) && !boxOf(nextLine) && words(nextLine) <= 6 && n2 === ni + 1 && (words(lines[n2].trim()) >= 8 || !!stripBullet(lines[n2].trim()));
@@ -157,7 +164,7 @@ var RMED_SMART = (function () {
           (lowPunct && words(t) <= 5 && nextLine.length >= t.length * 2 && words(nextLine) >= 6 && !boxOf(nextLine) && !listTail) ||
           (LEX.test(t.replace(/[:：]\s*$/, '')) && !/[:：]$/.test(prevT)))) {
         // سلسلة أسطر قصيرة متتالية بلا فراغ = قائمة وليست عناوين
-        var runShort = !stacked && !(S[pi] && S[pi].kind === "gen" && words(nextLine) >= 8) && (pi >= 0 && pi === i - 1 && isHeadingShape(lines[pi].trim())) && (ni === i + 1 && isHeadingShape(nextLine));
+        var runShort = !LEX.test(t.replace(/[:：]\s*$/, "")) && !stacked && !(S[pi] && S[pi].kind === "gen" && words(nextLine) >= 8) && (pi >= 0 && pi === i - 1 && isHeadingShape(lines[pi].trim())) && (ni === i + 1 && isHeadingShape(nextLine));
         if (!runShort) { S[i].kind = "gen"; S[i].why = "سطر قصير بلا نقطة يليه شرح"; used.gen++; continue; }
       }
       S[i].kind = opt.bold && boldTerm(t) !== t ? "bold" : "para";
@@ -172,7 +179,11 @@ var RMED_SMART = (function () {
     // عنوان المحاضرة: أول سطر إذا كان قصيراً ولا يوجد سطر «المحاضرة…»
     var first = -1; for (i = 0; i < n; i++) if (S[i].raw.trim()) { first = i; break; }
     var fT = first >= 0 ? lines[first].trim() : "", titleOK = first >= 0 && !S[first].label && !LABEL_ONLY_RE.test(fT) && !isItem(fT) && !BOXES[S[first].kind] && words(fT) <= 10 && fT.length <= 90 && !SENT_END.test(fT) && !/^(بسم الله|د\.|Dr\.?\s|الدكتور|أ\.د)/i.test(fT) && (isHeadingShape(fT) || /^[^:：]{3,60}[:：]\s*[^:：]{3,60}$/.test(fT));
-    var sub = nextNB(first), subOK = titleOK && sub === first + 1 && words(lines[sub]) <= 10 && !SENT_END.test(lines[sub].trim()) && (sub + 1 >= n || !lines[sub + 1].trim());
+    var sub = nextNB(first), subOK = false;
+    if (titleOK && sub === first + 1) { // عنوان يليه حتى 3 أسطر قصيرة (الدكتور، القسم، السنة) ثم سطر فارغ
+      for (var q2 = sub; q2 < Math.min(n, sub + 3) && lines[q2].trim() && words(lines[q2]) <= 10 && !SENT_END.test(lines[q2].trim()) && S[q2].kind === "para" || q2 < Math.min(n, sub + 3) && lines[q2].trim() && S[q2].kind === "keep" && words(lines[q2]) <= 10; q2++) {}
+      subOK = q2 > sub && (q2 >= n || !lines[q2].trim()) || /^(Dr\.?|د\.|الدكتور|الدكتورة|أ\.د|Prof\.?)\s/i.test(lines[sub].trim());
+    }
     if (opt.title && opt.headings && !already && titleOK && /^(para|keep|bold|gen)$/.test(S[first].kind) && (used.lec || subOK || first + 1 >= n || !lines[first + 1].trim())) {
       for (i = first + 1; i < Math.min(n, first + 4); i++) if (S[i].kind === "h1") { S[i].kind = "para"; S[i].why = ""; used.lec--; }
       if (!used.lec) { S[first].kind = "gen"; used.gen++; if (subOK && S[sub].kind !== "para") S[sub].kind = "para"; }

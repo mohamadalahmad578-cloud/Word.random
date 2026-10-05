@@ -237,6 +237,13 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .bgs button{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:6px 4px;cursor:pointer;font-size:12px;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:4px;min-height:58px}
 .bgs button i{display:block;width:100%;height:24px;border-radius:6px;border:1px solid rgba(0,0,0,.12)}
 .bgs button.sel{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass) inset;font-weight:700}
+.decos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.decos .dg{grid-column:1/-1;font-size:12px;color:var(--ink-soft);margin:4px 2px 0}
+.decos button{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:5px;cursor:pointer;font-size:11.5px;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.decos button canvas{width:100%;aspect-ratio:1240/1754;height:auto;border-radius:5px;border:1px solid rgba(0,0,0,.1);background:#fff}
+.decos button.sel{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass) inset;font-weight:700}
+.page.has-deco{padding-inline:9%}
+.page .deco{position:absolute;inset:0;background-repeat:repeat-y;background-position:center top;background-size:100% auto;pointer-events:none}
 /* ---- وضع ملف Word ---- */
 .main-col{display:grid;gap:12px;min-width:0}
 .modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -378,6 +385,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
           </div>
         </div>
         <div class="toggles" style="margin:0 0 10px"><label class="tg"><span>حافظ على تباعد الأسطر وحجم خط المتن الأصليين<small>نفس عدد صفحات الملف تقريباً (لإعادة التلبيس) — أطفئه لتطبيق تباعد وحجم الإعدادات</small></span><span class="sw-t"><input type="checkbox" id="optOrigLine"><span></span></span></label></div>
+        <div class="toggles" style="margin:0 0 10px"><label class="tg"><span>✨ تنسيق ذكي<small>يدرس الفقرات العادية ويكتشف العناوين الناقصة والصناديق (ملاحظة/هام/تعريف/تحذير/حالة سريرية) — تنسيق بس، ولا كلمة بتتغيّر</small></span><span class="sw-t"><input type="checkbox" id="optWordSmart"><span></span></span></label></div>
         <div class="merge-box" id="mergeBox"><div class="toggles"><label class="tg"><span>دمج الملفات بكتاب واحد<small>غلاف وفهرس موحّد لكل الملفات بترتيبها هنا (يستخدم إعادة البناء)</small></span><span class="sw-t"><input type="checkbox" id="optMerge"><span></span></span></label></div></div>
         <div id="wordList" class="wlist"></div>
       </div>
@@ -562,6 +570,10 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
           <div class="in">
             <div class="bgs" id="bgs" role="radiogroup" aria-label="خلفية الصفحات"></div>
             <div class="toggles" style="margin-top:10px"><label class="tg"><span>إطار مزدوج حول الصفحات<small>بلون القالب، في الفهرس والمتن</small></span><span class="sw-t"><input type="checkbox" id="optFrame"><span></span></span></label></div>
+            <span class="lbl" style="display:block;margin:12px 0 6px">زخرفة كل الصفحات ✨</span>
+            <div class="decos" id="decos" role="radiogroup" aria-label="زخرفة الصفحات"></div>
+            <div class="seg" id="decoSeg" style="margin-top:8px" aria-label="وضوح الزخرفة"><button type="button" data-v="soft">خفيفة</button><button type="button" data-v="mid">متوسطة</button><button type="button" data-v="bold">واضحة</button></div>
+            <small class="hint">الزخرفة بالهوامش والزوايا بس، خلف النص، فما بتغطي على الكتابة. «حركات المنصة» بتطلع بهوية المنصة بس، وكل هوية بتحفظ زخرفتها لحالها.</small>
             <small class="hint">الخلفية لون صفحة من Word نفسه، فتبقى مقروءة حتى بالوضع الداكن. ملاحظة: Word على الكمبيوتر لا يطبع لون الصفحة إلا إذا فعّلت «طباعة ألوان الخلفية»، أما ملف PDF من الموقع فيتضمنها دائماً.</small>
           </div>
         </details>
@@ -1334,6 +1346,10 @@ var ENGINE = (function () {
 
     /* ترويسة وتذييل */
     var hdrKids = [];
+    function decoRun() { return new D.ImageRun({ type: "png", data: brand.deco.data, transformation: { width: brand.deco.w, height: brand.deco.h },
+        floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 0 },
+          behindDocument: true, allowOverlap: true, wrap: { type: D.TextWrappingType.NONE } }, altText: { title: "زخرفة", description: "زخرفة الصفحة", name: "deco" } }); }
+    if (brand.deco) hdrKids.push(decoRun());
     if (brand.wm) {
       hdrKids.push(new D.ImageRun({ type: "png", data: brand.wm.data, transformation: { width: brand.wm.w, height: brand.wm.h },
         floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, align: D.HorizontalPositionAlign.CENTER },
@@ -1400,7 +1416,7 @@ var ENGINE = (function () {
         footers: { default: coverFooterKids && coverFooterKids.length ? new D.Footer({ children: coverFooterKids }) : emptyHF(D.Footer) }, children: cover });
     }
     var plain2 = Object.assign({}, page); delete plain2.borders;
-    if (tocKids.length) sections.push({ properties: { page: page }, headers: { default: emptyHF(D.Header) }, footers: { default: emptyHF(D.Footer) }, children: tocKids });
+    if (tocKids.length) sections.push({ properties: { page: page }, headers: { default: brand.deco ? new D.Header({ children: [new D.Paragraph({ children: [decoRun()] })] }) : emptyHF(D.Header) }, footers: { default: emptyHF(D.Footer) }, children: tocKids });
     sections.push({ properties: { page: Object.assign({}, page, { pageNumbers: { start: 1, formatType: D.NumberFormat.DECIMAL } }) }, headers: { default: header }, footers: { default: footer }, children: body });
     if (back.length) sections.push({ properties: { page: plain2 }, headers: { default: emptyHF(D.Header) }, footers: { default: backFooterKids.length ? new D.Footer({ children: backFooterKids }) : emptyHF(D.Footer) }, children: back });
     function hStyle(id, name, size, color) {
@@ -1567,8 +1583,8 @@ var ENGINE = (function () {
   var LS_KEY = "randommed.lec2docx.settings.v2";
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
-    keepParas: true, origLine: true, pageBg: "none", pageFrame: false,
-    activeSlot: "platform", slotPlatform: "", slotDoctor: "", smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
+    keepParas: true, origLine: true, pageBg: "none", pageFrame: false, pageDeco: "none", decoStrength: "mid",
+    activeSlot: "platform", slotPlatform: "", slotDoctor: "", wordSmart: false, smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
@@ -1805,6 +1821,75 @@ var ENGINE = (function () {
     g.lineWidth = 1 * u; g.strokeRect(70 * u, 70 * u, W - 140 * u, H - 140 * u);
     return c;
   }
+  /* ---- زخرفة الصفحات: رسمة شفافة بحجم الصفحة، بالهوامش والزوايا فقط (منطقة النص تبقى نظيفة) ---- */
+  var DECOS = [["none", "بدون", "chem"], ["hexa", "حلقات بنزين", "chem"], ["helix", "حلزون DNA", "chem"], ["mols", "جزيئات", "chem"], ["lattice", "شبكة سداسية", "chem"], ["amino", "أحماض أمينية", "chem"],
+    ["bband", "شريط المنصة", "brand"], ["bcorner", "زوايا ذهبية", "brand"], ["bwave", "موجات المنصة", "brand"], ["bdots", "نقش المنصة", "brand"]];
+  function decoAllowed(k, doctor) { for (var i = 0; i < DECOS.length; i++) if (DECOS[i][0] === k) return DECOS[i][2] !== "brand" || !doctor; return false; }
+  // G (اختياري): هندسة الصفحة بالـ twips {w,h,top,bottom,left,right} — الافتراضي A4 بهوامش 2.5 سم. frame: إطار الصفحة مفعّل (نرسم داخله)
+  function drawDeco(style, T, scale, strength, G, frame) {
+    G = G || { w: 11906, h: 16838, top: 1418, bottom: 1418, left: 1418, right: 1418 };
+    var W = Math.round(1240 * (scale || 1)), H = Math.round(W * G.h / G.w), c = document.createElement("canvas"); c.width = W; c.height = H;
+    var g = c.getContext("2d"), u = W / 1240 * (11906 / G.w), P = hx(T.h1), A = hx(T.acc), GOLD = "#D9A84E", GOLD2 = "#A9761E", K = { soft: 0.6, mid: 1, bold: 1.5 }[strength] || 1;
+    var px = W / G.w, fi = frame ? 50 * u : 0, safe = 18 * u;
+    var zx = Math.min(G.left, G.right) * px - fi - safe, zy = Math.min(G.top, G.bottom) * px - fi - safe;
+    var v = u * Math.max(0.3, Math.min(1, zx / (130 * u), zy / (130 * u) * 1.15)); // وحدة الزخرفة تصغر إن ضاقت الهوامش
+    var L0 = fi, R0 = W - fi, T0 = fi, B0 = H - fi;
+    function al(a) { g.globalAlpha = Math.min(1, a * K); }
+    function ring(x, y, r, col, lw) { g.strokeStyle = col; g.lineWidth = lw * v; hexPath(g, x, y, r); g.stroke(); g.beginPath(); for (var k = 0; k < 6; k += 2) { var a1 = Math.PI / 3 * k + Math.PI / 6, a2 = a1 + Math.PI / 3; g.moveTo(x + r * .7 * Math.cos(a1), y + r * .7 * Math.sin(a1)); g.lineTo(x + r * .7 * Math.cos(a2), y + r * .7 * Math.sin(a2)); } g.stroke(); }
+    function atom(x, y, r, col) { g.fillStyle = col; g.beginPath(); g.arc(x, y, r * v, 0, Math.PI * 2); g.fill(); }
+    function bond(x1, y1, x2, y2, col, lw) { g.strokeStyle = col; g.lineWidth = (lw || 3) * v; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); }
+    g.lineCap = "round"; g.lineJoin = "round";
+    if (style === "hexa") { // عناقيد بنزين في زاويتين متقابلتين
+      [[1, 0], [0, 1]].forEach(function (cr) {
+        var r = 28 * v, x0 = cr[0] ? L0 + 40 * v : R0 - 40 * v, y0 = cr[0] ? T0 + 120 * v : B0 - 190 * v, d = cr[0] ? 1 : -1;
+        al(.32); ring(x0, y0, r, P, 3); ring(x0, y0 + d * r * 1.73, r, A, 3); ring(x0 + d * r * 1.5, y0 + d * r * 0.87, r, P, 3);
+        al(.45); atom(x0 + d * r * 2.5, y0 + d * r * .87, 6, GOLD); al(.3); bond(x0, y0 - d * r, x0, y0 - d * r * 2.1, P, 3); atom(x0, y0 - d * r * 2.1, 7, A);
+        al(.18); ring(x0 + d * 6 * v, y0 + d * r * 4.6, r * .7, A, 2);
+      });
+    } else if (style === "helix") { // حلزون مزدوج رفيع على حافة الصفحة اليسرى
+      var cx = L0 + 52 * v, amp = 24 * v, per = 210 * v, y1 = T0 + 30 * v, y2 = B0 - 30 * v;
+      for (var yy = y1, k2 = 0; yy < y2; yy += 22 * v, k2++) { var ph = yy / per * Math.PI * 2; al(.12 + .2 * Math.abs(Math.cos(ph))); bond(cx + Math.sin(ph) * amp, yy, cx - Math.sin(ph) * amp, yy, [P, A, GOLD, "#2E8B7A"][k2 % 4], 3); }
+      [0, Math.PI].forEach(function (off, si) { al(.38); g.strokeStyle = si ? A : P; g.lineWidth = 4.5 * v; g.beginPath(); for (var y3 = y1; y3 <= y2; y3 += 6 * v) { var xx = cx + Math.sin(y3 / per * Math.PI * 2 + off) * amp; if (y3 === y1) g.moveTo(xx, y3); else g.lineTo(xx, y3); } g.stroke(); });
+    } else if (style === "mols") { // جزيئات «كرة وعصا» في الزوايا الأربع
+      var mol = function (x, y, s2, rot) { g.save(); g.translate(x, y); g.rotate(rot); var pts = [[0, 0], [34, -20], [34, 24], [68, -40], [-30, -24]].map(function (p) { return [p[0] * s2 * v, p[1] * s2 * v]; });
+        al(.3); [[0, 1], [0, 2], [1, 3], [0, 4]].forEach(function (e) { bond(pts[e[0]][0], pts[e[0]][1], pts[e[1]][0], pts[e[1]][1], "#8C96A8", 3.5); });
+        al(.42); atom(pts[0][0], pts[0][1], 10 * s2, P); atom(pts[1][0], pts[1][1], 7 * s2, A); atom(pts[2][0], pts[2][1], 7 * s2, GOLD); atom(pts[3][0], pts[3][1], 5 * s2, "#2E8B7A"); atom(pts[4][0], pts[4][1], 6 * s2, A); g.restore(); };
+      mol(L0 + 50 * v, T0 + 140 * v, .85, Math.PI / 2 + .3); mol(R0 - 55 * v, T0 + 230 * v, .8, -Math.PI / 2 + .2); mol(L0 + 50 * v, B0 - 230 * v, .8, Math.PI / 2 - .4); mol(R0 - 50 * v, B0 - 160 * v, .85, -Math.PI / 2 - .3);
+      al(.2); atom(L0 + 70 * v, H / 2, 5, GOLD); atom(R0 - 66 * v, H / 2 + 120 * v, 4, A);
+    } else if (style === "lattice") { // شبكة سداسية في الهامشين تتلاشى نحو النص
+      var r3 = 20 * v, dx = r3 * 1.732, dy = r3 * 1.5, zw = 112 * v;
+      for (var row = 0, yv = T0 + 16 * v; yv < B0 - 10 * v; row++, yv += dy) for (var col = 0; col < 4; col++) {
+        [0, 1].forEach(function (side) { var off = (row % 2 ? dx / 2 : 0) + col * dx + 12 * v, x = side ? R0 - off : L0 + off; if (off > zw) return; g.strokeStyle = side ? A : P; g.lineWidth = 1.6 * v; al(.26 * (1 - off / (zw + 8 * v)) + .04); hexPath(g, x, yv, r3 * .92); g.stroke(); });
+      }
+    } else if (style === "amino") { // سلسلة أحماض أمينية ملوّنة على الحافة اليمنى
+      var COLS = [P, A, GOLD, "#2E8B7A", shadeHex(T.h1, .35)], xc = R0 - 52 * v, pts2 = [];
+      for (var y4 = T0 + 50 * v, i4 = 0; y4 < B0 - 40 * v; y4 += 44 * v, i4++) pts2.push([xc + Math.sin(i4 * .9) * 18 * v, y4]);
+      al(.22); g.strokeStyle = "#8C96A8"; g.lineWidth = 3.5 * v; g.beginPath(); pts2.forEach(function (p, i) { if (i) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.stroke();
+      pts2.forEach(function (p, i) { al(.4); atom(p[0], p[1], i % 3 ? 9 : 12, COLS[i % COLS.length]); al(.5); g.fillStyle = "#fff"; g.beginPath(); g.arc(p[0] - 3 * v, p[1] - 3 * v, 3 * v, 0, Math.PI * 2); g.fill(); });
+    } else if (style === "bband") { // شريط المنصة: عمود كحلي رفيع + خط ذهبي على الحافة اليمنى
+      al(.9); var gb = g.createLinearGradient(0, 0, 0, H); gb.addColorStop(0, P); gb.addColorStop(1, shadeHex(T.h1, -0.4)); g.fillStyle = gb; g.fillRect(R0 - 26 * v, T0, 26 * v, B0 - T0);
+      g.fillStyle = GOLD; g.fillRect(R0 - 33 * v, T0, 4 * v, B0 - T0);
+      [.2, .5, .8].forEach(function (f) { var y5 = T0 + (B0 - T0) * f; g.save(); g.translate(R0 - 31 * v, y5); g.rotate(Math.PI / 4); g.fillStyle = GOLD; g.fillRect(-8 * v, -8 * v, 16 * v, 16 * v); g.fillStyle = P; g.fillRect(-3.5 * v, -3.5 * v, 7 * v, 7 * v); g.restore(); });
+    } else if (style === "bcorner") { // زوايا ذهبية أنيقة
+      [[0, 0], [1, 0], [0, 1], [1, 1]].forEach(function (q) {
+        g.save(); g.translate(q[0] ? R0 - 30 * v : L0 + 30 * v, q[1] ? B0 - 30 * v : T0 + 30 * v); g.scale(q[0] ? -1 : 1, q[1] ? -1 : 1);
+        al(.75); g.strokeStyle = GOLD2; g.lineWidth = 3 * v; g.beginPath(); g.moveTo(0, 140 * v); g.lineTo(0, 0); g.lineTo(140 * v, 0); g.stroke();
+        al(.5); g.lineWidth = 1.2 * v; g.beginPath(); g.moveTo(10 * v, 90 * v); g.lineTo(10 * v, 10 * v); g.lineTo(90 * v, 10 * v); g.stroke();
+        al(.8); g.save(); g.rotate(Math.PI / 4); g.fillStyle = P; g.fillRect(-7 * v, -7 * v, 14 * v, 14 * v); g.restore(); atom(140 * v, 0, 3.5, GOLD); atom(0, 140 * v, 3.5, GOLD); g.restore();
+      });
+    } else if (style === "bwave") { // موجات بلون القالب في الزاويتين اليساريتين (بعيداً عن التذييل)
+      var wave = function (yb, amp2, col, a2, ph2, x1, top) { al(a2); g.fillStyle = col; g.beginPath(); g.moveTo(L0, top ? T0 : B0); for (var x = 0; x <= x1; x += 8 * v) g.lineTo(L0 + x, yb + Math.sin(x / x1 * Math.PI * 1.4 + ph2) * amp2 * (1 - x / x1)); g.lineTo(L0 + x1, top ? T0 : B0); g.closePath(); g.fill(); };
+      wave(B0 - 80 * v, 20 * v, hx(T.light), .7, 0, 250 * v); wave(B0 - 58 * v, 16 * v, A, .3, 1.4, 210 * v); wave(B0 - 38 * v, 12 * v, P, .32, 2.4, 170 * v);
+      wave(T0 + 60 * v, 12 * v, hx(T.light), .65, 1, 170 * v, true); wave(T0 + 40 * v, 9 * v, A, .25, 2.2, 130 * v, true);
+    } else if (style === "bdots") { // نقش المنصة: نقاط ذهبية متدرجة على الحافتين
+      for (var y6 = T0 + 26 * v, r6 = 0; y6 < B0 - 16 * v; y6 += 26 * v, r6++) for (var c6 = 0; c6 < 4; c6++) {
+        var ox = 20 * v + c6 * 24 * v + (r6 % 2 ? 12 * v : 0), a6 = .5 * (1 - c6 / 4);
+        al(a6); atom(L0 + ox, y6, 3.2 - c6 * .5, r6 % 5 ? GOLD : P); atom(R0 - ox, y6, 3.2 - c6 * .5, r6 % 5 ? GOLD : P);
+      }
+    }
+    g.globalAlpha = 1; return c;
+  }
+  function decoFor(s) { var k = s.pageDeco || "none"; return k !== "none" && !s._mixedPages && decoAllowed(k, !!s._doctorId) ? k : null; }
   function qrHref(s) { var u = String((s.platform && s.platform.url) || "").trim(); return u ? (/^https?:\/\//i.test(u) ? u : "https://" + u) : ""; }
   function drawQR(text) {
     var m = RMED_QR(text), n = m.length, q = 4, k = Math.max(4, Math.floor(600 / (n + 2 * q))), sz = (n + 2 * q) * k;
@@ -1815,12 +1900,13 @@ var ENGINE = (function () {
   }
   function brandAssets(s) {
     var needCover = s.cover && s.coverStyle && s.coverStyle !== "none";
-    if (!s.logo && !s.wm && !needCover && !s.backCover) return Promise.resolve({});
+    if (!s.logo && !s.wm && !needCover && !s.backCover && !decoFor(s)) return Promise.resolve({});
     return logoReady.then(function () { return document.fonts && document.fonts.ready ? document.fonts.ready : null; }).then(function () {
       var out = {}, W = logoImg.naturalWidth || 214, H = logoImg.naturalHeight || 180, jobs = [];
       if (s.logo) out.logo = { data: ENGINE.b64ToBytes(LOGO_B64), w: W, h: H };
       if (s.wm) { var wc = drawWatermark(s); jobs.push(canvasPng(wc).then(function (u) { out.wm = { data: u, w: 660, h: Math.round(660 * wc.height / wc.width) }; })); }
       if (needCover) jobs.push(canvasPng(drawCover(s.coverStyle, ENGINE.resolveTheme(s), platformName(s), 1, s._covLogo)).then(function (u) { out.coverBg = { data: u, w: 1240, h: 1754 }; }));
+      var dk = decoFor(s), GG = s._geom || null; if (dk) jobs.push(canvasPng(drawDeco(dk, ENGINE.resolveTheme(s), 1, s.decoStrength, GG, !!s.pageFrame)).then(function (u) { out.deco = { data: u, w: GG ? Math.round(GG.w / 15) : 794, h: GG ? Math.round(GG.h / 15) : 1123 }; }));
       if (s.backCover) {
         jobs.push(canvasPng(drawBack(ENGINE.resolveTheme(s))).then(function (u) { out.backBg = { data: u, w: 1240, h: 1754 }; }));
         var qh = qrHref(s); if (qh) { try { jobs.push(canvasPng(drawQR(qh)).then(function (u) { out.qr = { data: u }; })); } catch (e) { if (window.console) console.warn("QR", e); } }
@@ -2033,7 +2119,7 @@ var ENGINE = (function () {
     paintCoverThumbs();
   }
   /* فصل تنسيق المنصة عن تنسيق الدكتور: الألوان والخلفية والإطار ونمط الغلاف لكل هوية محفوظة لحالها */
-  var SLOT_KEYS = ["theme", "cMain", "cAcc", "pageBg", "pageFrame", "coverStyle"];
+  var SLOT_KEYS = ["theme", "cMain", "cAcc", "pageBg", "pageFrame", "coverStyle", "pageDeco", "decoStrength"];
   function syncSlot(silent) {
     var want = idDoctor() ? "doctor" : "platform", cur = S.activeSlot === "doctor" ? "doctor" : "platform";
     if (want === cur) return false;
@@ -2096,9 +2182,9 @@ var ENGINE = (function () {
     if (S.uiMode === "word") {
       var ready = wordFiles.filter(function (f) { return f.status === "ready" || f.status === "done"; });
       if (!ready.length) return Promise.resolve(null);
-      if (S.merge && ready.length > 1) { var ms = mergeSettings(ready); return brandFor(ms).then(function (brand) { return Promise.all(ready.map(function (f) { return RESTYLE.analyze(f.buf.slice(0)); })).then(function (ans) { return RESTYLE.merge(ans, ms, brand); }); }).then(function (r) { return r.blob; }); }
+      if (S.merge && ready.length > 1) { var ms = mergeSettings(ready); return brandFor(ms).then(function (brand) { return Promise.all(ready.map(function (f) { return analyzeW(f.buf.slice(0)); })).then(function (ans) { return RESTYLE.merge(ans, ms, brand); }); }).then(function (r) { return r.blob; }); }
       var f = ready[0], ws = wordSettings(f);
-      return brandFor(ws).then(function (brand) { return RESTYLE.analyze(f.buf.slice(0)).then(function (an) { return RESTYLE[S.method === "rebuild" ? "rebuild" : "reskin"](an, ws, brand); }); }).then(function (r) { return r.blob; });
+      return brandFor(ws).then(function (brand) { return analyzeW(f.buf.slice(0)).then(function (an) { return RESTYLE[S.method === "rebuild" ? "rebuild" : "reskin"](an, ws, brand); }); }).then(function (r) { return r.blob; });
     }
     var L = parseAll(); if (!L.length) return Promise.resolve(null);
     var s = effSettings();
@@ -2111,7 +2197,7 @@ var ENGINE = (function () {
       Array.prototype.forEach.call(sec.querySelectorAll("img"), function (img) {
         var wr = img.parentElement; if (!wr || wr.style.width !== "0px") return;
         var w = parseFloat(img.style.width) || 0;
-        if (w >= 580) { sec.style.backgroundImage = "url(" + img.src + ")"; sec.style.backgroundSize = "100% auto"; sec.style.backgroundRepeat = "no-repeat"; sec.style.backgroundPosition = "top center"; wr.parentNode.removeChild(wr); return; }
+        if (w >= 580) { var lay = sec._bgl || (sec._bgl = []); lay.push("url(" + img.src + ")"); sec.style.backgroundImage = lay.slice().reverse().join(","); sec.style.backgroundSize = "100% auto"; sec.style.backgroundRepeat = "repeat-y"; sec.style.backgroundPosition = "top center"; wr.parentNode.removeChild(wr); return; }
         wr.style.cssText = "position:absolute;left:0;right:0;top:561px;transform:translateY(-50%);text-align:center;pointer-events:none;z-index:0;width:auto;height:auto";
         img.style.position = "static"; sec.appendChild(wr);
       });
@@ -2157,7 +2243,8 @@ var ENGINE = (function () {
     if (!bgCache[key]) bgCache[key] = drawCover(s.coverStyle || "classic", T, platformName(s), 0.5, s._covLogo).toDataURL("image/png");
     return bgCache[key];
   }
-  var backCache = {}, qrCache = {};
+  var backCache = {}, qrCache = {}, decoCache = {};
+  function decoUrlCached(k, T, st, fr) { var key = [k, T.h1, T.acc, T.light, st, fr].join("|"); if (!decoCache[key]) decoCache[key] = drawDeco(k, T, 0.5, st, null, fr).toDataURL("image/png"); return decoCache[key]; }
   function backHTML(s) {
     if (!s.backCover || !logoImg.naturalWidth) return "";
     var T = ENGINE.resolveTheme(s), k = T.h1; if (!backCache[k]) backCache[k] = drawBack(T, 0.5).toDataURL("image/png");
@@ -2194,12 +2281,15 @@ var ENGINE = (function () {
     var pptWmFull = false; if (s._doctorId && s.wm) { pptWmUrl = pptWmUrlCached(s); pptWmFull = S.pptWm === "doctor" || S.pptWm === "text"; }
     var lgSrc = s._doctorId ? (pptOwnLogo ? pptOwnLogo.url : "") : LOGO_SRC;
     pv.style.background = ENGINE.pageBgColor(s) ? "#" + ENGINE.pageBgColor(s) : ""; pv.style.outline = s.pageFrame ? "3px double #" + T.h2line : ""; pv.style.outlineOffset = s.pageFrame ? "-12px" : "";
+    var dkp = decoFor(s), deco = dkp ? '<div class="deco" style="background-image:url(' + decoUrlCached(dkp, T, s.decoStrength, !!s.pageFrame) + ')"></div>' : "";
     var wm = s.wm && !(s._doctorId && !pptWmUrl) ? (pptWmUrl ? '<div class="wm" style="background-image:url(' + pptWmUrl + ');opacity:1' + (pptWmFull ? ';background-size:100% auto;background-position:center top' : '') + '"></div>' : '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>') : "";
     var pfx = Object.assign({ name: "Random.MEd", url: "" }, s.platform || {});
     var foot = s.footerText ? '<div class="pv-foot"><b style="color:#' + T.h1 + '">صفحة <span style="color:#' + T.acc + '">1</span></b><br>' + esc2(s.footerText) + "</div>" : '<div class="pv-foot"><b style="color:#' + T.h1 + '">صفحة <span style="color:#' + T.acc + '">1</span></b>' + (s.footBrand && s.rights === false ? ' · <b>' + esc2(pfx.name) + '</b>' : "") +
       (s.rights !== false || pfx.url ? "<br>" + (s.rights !== false ? "© " + new Date().getFullYear() + " <b>" + esc2(pfx.name) + "</b> — جميع الحقوق محفوظة" : "") + (pfx.url ? (s.rights !== false ? " · " : "") + '<span dir="ltr" style="color:var(--c-acc)">' + esc2(pfx.url.replace(/^https?:\/\//, "")) + "</span>" : "") : "") + "</div>";
     var cbg = s.cover ? (s._pptImg ? pptCovImg.url : coverBgUrl(s)) : "";
-    pv.innerHTML = L.length ? wm + ENGINE.previewHTML(L, s, s.logo ? lgSrc : "", cbg) + foot + backHTML(s) : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
+    pv.classList.toggle("has-deco", !!dkp);
+    pv.innerHTML = L.length ? deco + wm + ENGINE.previewHTML(L, s, s.logo ? lgSrc : "", cbg) + foot + backHTML(s) : '<div class="empty">ستظهر هنا معاينة الملف بعد لصق نص المحاضرة.</div>';
+    var dEl = pv.querySelector(".deco"); if (dEl) { var cvE = pv.querySelector(".pv-cover"), bkE = pv.querySelector(".pv-back"); if (cvE) dEl.style.top = (cvE.offsetTop + cvE.offsetHeight) + "px"; if (bkE) dEl.style.bottom = (pv.scrollHeight - bkE.offsetTop) + "px"; }
   }
   $("pvBtn").onclick = function () { if (S.pvReal) renderReal(); else renderPreview(); $("pvCard").scrollIntoView({ behavior: "smooth", block: "start" }); };
 
@@ -2240,7 +2330,28 @@ var ENGINE = (function () {
     setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
   }
   /* ---- خلفيات الصفحات ---- */
-  function paintBgs() {
+  function paintDecos() {
+    var el = $("decos"), doc = idDoctor(), T = ENGINE.resolveTheme(S);
+    if (!el.children.length) {
+      var grp = ""; DECOS.forEach(function (d) {
+        if (d[2] && d[2] !== grp) { grp = d[2]; var h = document.createElement("div"); h.className = "dg"; h.dataset.g = grp; h.textContent = grp === "chem" ? "🧬 حركات الكيمياء الحيوية" : "✨ حركات المنصة"; el.appendChild(h); }
+        var bt = document.createElement("button"); bt.type = "button"; bt.dataset.k = d[0]; bt.dataset.g = d[2]; bt.setAttribute("role", "radio"); bt.innerHTML = "<canvas width=\"124\" height=\"175\"></canvas><span>" + d[1] + "</span>";
+        bt.onclick = function () { S.pageDeco = d[0]; save(); paintDecos(); schedulePreview(); }; el.appendChild(bt);
+      });
+    }
+    var key = [T.h1, T.acc, T.light, S.pageFrame, ENGINE.pageBgColor(S)].join("|");
+    Array.prototype.forEach.call(el.children, function (n) {
+      if (n.dataset.g === "brand") n.hidden = doc;
+      if (n.tagName !== "BUTTON") return;
+      var on = !n.hidden && ((S.pageDeco || "none") === n.dataset.k || (!decoAllowed(S.pageDeco || "none", doc) && n.dataset.k === "none")); n.classList.toggle("sel", on); n.setAttribute("aria-checked", on ? "true" : "false");
+      if (n.dataset.key !== key) { n.dataset.key = key; var cv = n.firstChild, g = cv.getContext("2d"); g.fillStyle = "#" + (ENGINE.pageBgColor(S) || "FFFFFF"); g.fillRect(0, 0, cv.width, cv.height);
+        g.fillStyle = "rgba(20,27,46,.18)"; for (var y = 24; y < 160; y += 9) g.fillRect(22, y, 80 - (y % 27 ? 0 : 24), 3);
+        if (n.dataset.k !== "none") g.drawImage(drawDeco(n.dataset.k, T, 0.1, "bold", null, !!S.pageFrame), 0, 0, cv.width, cv.height); }
+    });
+    Array.prototype.forEach.call($("decoSeg").children, function (b) { b.classList.toggle("sel", b.dataset.v === (S.decoStrength || "mid")); });
+  }
+  Array.prototype.forEach.call($("decoSeg").children, function (b) { b.onclick = function () { S.decoStrength = b.dataset.v; save(); paintDecos(); schedulePreview(); }; });
+  function paintBgs() { if (typeof paintDecos === "function" && $("decos")) paintDecos();
     var el = $("bgs"); if (!el) return;
     if (!el.children.length) ENGINE.PAGE_BGS.forEach(function (b) {
       var bt = document.createElement("button"); bt.type = "button"; bt.dataset.k = b[0]; bt.setAttribute("role", "radio");
@@ -2335,6 +2446,7 @@ var ENGINE = (function () {
       if (s._doctorId) A.logo = s.logo && pptOwnLogo ? pptOwnLogo.img : null;
       if (s.backCover) { A.back = drawBack(T, 1); var qh = qrHref(s); if (qh) { try { A.qr = drawQR(qh); } catch (e) {} } }
       if (s.wm) A.wm = s._doctorId ? pptWmCanvas(s) : drawWatermark(s);
+      var dk2 = decoFor(Object.assign({}, s, { _mixedPages: false })); if (dk2) A.deco = drawDeco(dk2, T, 1, s.decoStrength, null, !!s.pageFrame);
       return new Promise(function (r) { setTimeout(r, 30); }).then(function () {
         return RMED_PDF.build(m, A, { scale: 1.8, quality: 0.8, title: m.name, protect: popt, onEncode: function (i, n) { prog(10 + Math.round(85 * i / n)); } });
       });
@@ -2481,8 +2593,8 @@ var ENGINE = (function () {
     files.forEach(function (file) {
       var f = { id: ++wid, name: file.name, size: file.size, status: "reading" };
       wordFiles.push(f); renderWordList();
-      ensureLibs().then(function () { return file.arrayBuffer(); }).then(function (buf) { f.buf = buf; return RESTYLE.analyze(buf.slice(0)); })
-        .then(function (an) { f.stats = an.stats; f.coverLines = an.coverLines; f.coverTitleIdx = an.coverTitleIdx; f.title = an.title; f.genTitle = an.genTitle || ""; f.words = an.origTokens.length; return Promise.all([RESTYLE.headerTextOf(an), RESTYLE.previewModel(an)]); })
+      ensureLibs().then(function () { return file.arrayBuffer(); }).then(function (buf) { f.buf = buf; return analyzeW(buf.slice(0)); })
+        .then(function (an) { f.smart = an.smart || null; f.geom = an.geom; f.mixedPages = an.mixedPages; f.stats = an.stats; f.coverLines = an.coverLines; f.coverTitleIdx = an.coverTitleIdx; f.title = an.title; f.genTitle = an.genTitle || ""; f.words = an.origTokens.length; return Promise.all([RESTYLE.headerTextOf(an), RESTYLE.previewModel(an)]); })
         .then(function (x) { f.header = x[0]; f.model = x[1]; f.status = "ready"; renderWordList(); schedulePreview(); })
         .catch(function (e) { f.status = "error"; f.err = e && e.message && /[\u0600-\u06FF]/.test(e.message) ? e.message : "تعذّرت قراءة الملف — تأكد أنه ملف ‎.docx‎ سليم."; renderWordList(); if (window.console) console.error(e); });
     });
@@ -2492,10 +2604,21 @@ var ENGINE = (function () {
   ["dragenter", "dragover"].forEach(function (ev) { wdrop.addEventListener(ev, function (e) { e.preventDefault(); wdrop.classList.add("over"); }); });
   ["dragleave", "drop"].forEach(function (ev) { wdrop.addEventListener(ev, function () { wdrop.classList.remove("over"); }); });
   wdrop.addEventListener("drop", function (e) { e.preventDefault(); if (e.dataTransfer && e.dataTransfer.files.length) addDocx(e.dataTransfer.files); });
+  // تحليل ملف Word + «التنسيق الذكي» الاختياري
+  function analyzeW(buf) { return RESTYLE.analyze(buf).then(function (an) { if (S.wordSmart && RESTYLE.smartify) RESTYLE.smartify(an); return an; }); }
+  function refreshWordModels() {
+    wordFiles.forEach(function (f) { if (!f.buf || f.status === "error") return; f.status = "reading"; f.result = null;
+      analyzeW(f.buf.slice(0)).then(function (an) { f.smart = an.smart || null; f.geom = an.geom; f.mixedPages = an.mixedPages; f.stats = an.stats; f.coverLines = an.coverLines; f.coverTitleIdx = an.coverTitleIdx; return RESTYLE.previewModel(an); })
+        .then(function (m) { f.model = m; f.status = "ready"; renderWordList(); schedulePreview(); }).catch(function () { f.status = "ready"; renderWordList(); }); });
+    mergeResult = null; renderWordList();
+  }
+  $("optWordSmart").onchange = function () { S.wordSmart = this.checked; save(); refreshWordModels(); };
+  $("optWordSmart").checked = !!S.wordSmart;
   function wordSettings(f) {
     var s = JSON.parse(JSON.stringify(S));
     s.userSubject = !!S.subject.trim();
     if (!s.userSubject) s.subject = (f.genTitle || f.header || f.title || baseName(f.name)).slice(0, 120);
+    if (S.method !== "rebuild" && f.geom) { s._geom = f.geom; s._mixedPages = !!f.mixedPages; } // إعادة التلبيس تحافظ على حجم الصفحة الأصلي
     return applyIdentity(s, "word");
   }
   function recommend(st) { return st && (st.math || st.charts) ? "reskin" : null; }
@@ -2545,12 +2668,14 @@ var ENGINE = (function () {
       if (st.lists) ch.push('<span class="chip">' + st.lists + " بند قائمة</span>");
       if (st.imp) ch.push('<span class="chip">' + st.imp + " صندوق ملوّن</span>");
       if (st.cover) ch.push('<span class="chip ok">غلاف ✓</span>');
+      if (S.wordSmart && f.smart) ch.push('<span class="chip ok">✨ ذكي: ' + (f.smart.h ? "+" + f.smart.h + " عنوان" : "") + (f.smart.h && f.smart.box ? "، " : "") + (f.smart.box ? "+" + f.smart.box + " صندوق" : "") + (f.smart.h || f.smart.box ? "" : "ما في إضافات") + "</span>");
       if (st.toc) ch.push('<span class="chip ok">فهرس ✓</span>');
       if (st.textboxes) ch.push('<span class="chip">' + st.textboxes + " مربع نص</span>");
       if (st.math) ch.push('<span class="chip warn">' + st.math + " معادلة</span>");
       h += '<div class="chips">' + ch.join("") + "</div>";
       var notes = [];
-      if (!hd) notes.push("ما لقينا عناوين بالملف — رح نحافظ على ترتيبه ونلوّن الفقرات والجداول.");
+      if (f.mixedPages && S.pageDeco && S.pageDeco !== "none" && S.method !== "rebuild") notes.push("الملف فيه صفحات بأحجام أو اتجاهات مختلفة، فما رح نحط زخرفة الصفحات بإعادة التلبيس (بتنحط بإعادة البناء وبالـ PDF).");
+      if (!hd && !(S.wordSmart && f.smart && f.smart.h)) notes.push("ما لقينا عناوين بالملف — رح نحافظ على ترتيبه ونلوّن الفقرات والجداول.");
       else if (st.heurHeadings) notes.push("العناوين بالملف مو معرّفة كعناوين حقيقية، فاستنتجنا " + st.heurHeadings + " عنوان من حجم الخط والغامق.");
       if (recommend(st) && S.method === "rebuild") notes.push('<span style="color:var(--rose)">الملف فيه معادلات/رسوم بيانية — إعادة البناء ما بتنقلها، اختار «إعادة تلبيس».</span>');
       if (st.cover && !S.cover) notes.push("صفحة الغلاف مطفأة — رح نترك الغلاف الأصلي كما هو.");
@@ -2584,7 +2709,7 @@ var ENGINE = (function () {
         chain = chain.then(function () {
           if (wordFiles.indexOf(f) < 0) return;
           f.status = "working"; renderWordList();
-          return RESTYLE.analyze(f.buf.slice(0)).then(function (an) {
+          return analyzeW(f.buf.slice(0)).then(function (an) {
             var s = wordSettings(f);
             return RESTYLE[method](an, s, brand).then(function (r) {
               return RESTYLE.check(an, r.blob).then(function (c) { if (wordFiles.indexOf(f) < 0) return; f.result = { method: method, report: r.report, check: c, cover: s.cover, toc: s.toc }; f.status = "done"; outs.push({ f: f, blob: r.blob }); });
@@ -2613,6 +2738,7 @@ var ENGINE = (function () {
   function mergeSettings(list) {
     var s = wordSettings(list[0]);
     if (!s.userSubject && !s._courseSubj) s.subject = (list[0].header || "").slice(0, 120) || "المحاضرات";
+    s._geom = null; s._mixedPages = false;
     return s;
   }
   function mergeWord(ready, save, nErr) {
@@ -2620,7 +2746,7 @@ var ENGINE = (function () {
     var s = mergeSettings(ready);
     ready.forEach(function (f) { f.status = "working"; f.result = null; }); renderWordList();
     return ensureLibs().then(function () { return brandFor(s); }).then(function (brand) {
-      return Promise.all(ready.map(function (f) { return RESTYLE.analyze(f.buf.slice(0)); })).then(function (ans) { prog(40); return RESTYLE.merge(ans, s, brand); });
+      return Promise.all(ready.map(function (f) { return analyzeW(f.buf.slice(0)); })).then(function (ans) { prog(40); return RESTYLE.merge(ans, s, brand); });
     }).then(function (r) {
       prog(90);
       mergeResult = { report: r.report, check: r.check, files: ready.length, cover: s.cover, toc: s.toc };

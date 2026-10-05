@@ -16,3 +16,5 @@ echo "== حماية الملفات (Word مشفّر + PDF AES-256)"; node prot_t
 echo "   تحقق مستقل: python3 verify_agile.py out/text_locked.docx Bio2026 out/text_plain.docx ; qpdf --show-encryption --password=Bio2026 out/text_locked.pdf"
 echo "== التنسيق الذكي"; node smart_t.js 2>&1 | grep -E "check:|pdf:|undo|errors"
 echo "== فصل هوية المنصة عن هوية الدكتور"; node sep_t.js 2>&1 | grep -E "✓|✗|FAIL"
+echo "== زخرفة الصفحات"; node deco_t.js 2>&1 | grep -E "^(hexa|bwave)|errors"
+echo "== التنسيق الذكي لملفات Word"; node wsmart_t.js 2>&1 | grep -E "on:|errors"

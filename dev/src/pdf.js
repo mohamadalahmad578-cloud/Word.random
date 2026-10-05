@@ -95,6 +95,7 @@ var RMED_PDF = (function () {
       if ((kind === "body" || kind === "toc") && !dry) {
         if (PBG) rect(0, 0, PW, PH, PBG);
         if (S.pageFrame) { rect(17, 17, PW - 34, PH - 34, null, T.h2line, 1.4); rect(21, 21, PW - 42, PH - 42, null, T.h2line, 0.6); }
+        if (A.deco) img(A.deco, 0, 0, PW, PH); // زخرفة الصفحات (هوامش وزوايا)
       }
       if (kind === "body") bodyChrome();
       if (onPage) onPage(pageNo);

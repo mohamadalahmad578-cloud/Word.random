@@ -161,6 +161,15 @@ var RESTYLE = (function () {
         an.rels = parseRels(x[3]);
         an.body = doc.getElementsByTagNameNS(W, "body")[0];
         classify(an);
+        // هندسة الصفحة الأصلية (للزخرفة في إعادة التلبيس): الحجم والهوامش من آخر sectPr، وهل في أحجام مختلفة
+        (function () {
+          var secs = an.body.getElementsByTagNameNS(W, "sectPr"), G = null, mixed = false;
+          function geo(sp) { var sz = kid(sp, "pgSz"), mr = kid(sp, "pgMar"), n = function (e, a, d) { var v = e ? +wa(e, a) : NaN; return isFinite(v) && v > 0 ? v : d; };
+            return { w: n(sz, "w", 11906), h: n(sz, "h", 16838), top: n(mr, "top", 1418), bottom: n(mr, "bottom", 1418), left: n(mr, "left", 1418), right: n(mr, "right", 1418) }; }
+          var all = Array.prototype.map.call(secs, geo); G = all.length ? all[all.length - 1] : geo(null);
+          all.forEach(function (g) { if (Math.abs(g.w - G.w) > 30 || Math.abs(g.h - G.h) > 30) mixed = true; });
+          an.geom = G; an.mixedPages = mixed;
+        })();
         // ملف سبق توليده بالموقع: اسم المادة كان داخل الغلاف المولّد — نسترجعه من خصائص الملف
         if (an.items.some(function (it) { return it.gen; }) && x[6]) {
           var mt = x[6].match(/<dc:title>([^<]*)<\/dc:title>/);
@@ -501,7 +510,7 @@ var RESTYLE = (function () {
       if (imgOnly) { removeKids(pPr, ["jc"]); jv = null; } // الصور على اليمين
       if (jv !== "center") { removeKids(pPr, ["jc"]); if (txt.trim().length > 60 && !it.drawing && !/\*\*/.test(txt)) place(pPr, mk(doc, "jc", { val: "both" }), ORD.pPr); }
       setSpacing(pPr, LINE);
-      var imp = ENGINE.calloutOf(txt);
+      var imp = ENGINE.calloutOf(txt) || it.smartBox || null;
       if (imp) { rep.imp++; place(pPr, mk(doc, "shd", { val: "clear", color: "auto", fill: imp.fill }), ORD.pPr); pBox(pPr, imp.border, 8, 4); }
       splitRuns(p, rtl, { size: S.origLine !== false ? null : hp(Z.body), pst: it.style, impTag: imp });
     });
@@ -858,7 +867,8 @@ var RESTYLE = (function () {
       return segs;
     }
     var lectures = [], cur = null, top = 99;
-    an.items.forEach(function (it) { if (!(it.cover || it.toc || it.gen) && it.level && !it.twin) top = Math.min(top, it.level); });
+    an.items.forEach(function (it) { if (!(it.cover || it.toc || it.gen) && it.level && !it.twin && (!it.smart || it.level === 1)) top = Math.min(top, it.level); });
+    if (an.smart && an.smart.h && top === 99) top = 1; // عناوين «التنسيق الذكي» لا تصير محاضرات مستقلة
     function ensureLec() { if (!cur) { cur = { title: null, titleInl: null, intro: null, outro: [], blocks: [] }; lectures.push(cur); } return cur; }
     var olOpen = null;
     var keepCover = an._keepCover;
@@ -879,12 +889,13 @@ var RESTYLE = (function () {
         olOpen = null;
         var lv = Math.min(4, it.level - top + 1);
         if (it.twin && lv <= 1) lv = 2;
+        if (it.smart && it.level !== 1 && lv <= 1) lv = 2;
         if (lv <= 1) { cur = { title: t.trim(), titleInl: inlOf(p, it.style, true), intro: null, outro: [], blocks: [] }; lectures.push(cur); }
         else ensureLec().blocks.push({ t: "h", level: lv, inl: inlOf(p, it.style, true), twin: !!it.twin });
         imagesOf(p).forEach(function (im) { ensureLec().blocks.push({ t: "img", img: im }); });
         return;
       }
-      var L = ensureLec(), inl = inlOf(p, it.style), imgs = imagesOf(p), imp = ENGINE.calloutOf(t);
+      var L = ensureLec(), inl = inlOf(p, it.style), imgs = imagesOf(p), imp = ENGINE.calloutOf(t) || it.smartBox || null;
       var styleList = !it.numPr && it.style && it.style.numPr && it.style.numId && it.style.numId !== "0";
       if ((it.numPr || styleList) && t.trim()) {
         var ilvl = it.numPr && kid(it.numPr, "ilvl"), nid = it.numPr && kid(it.numPr, "numId");
@@ -970,7 +981,27 @@ var RESTYLE = (function () {
   }
 
   /* نموذج للمعاينة (يُستخدم لكلا الطريقتين) */
+  /* «التنسيق الذكي» لملفات Word: نكتشف عناوين وصناديق في الفقرات العادية (بلا نمط عنوان) — التنسيق فقط، النص لا يُمس */
+  function smartify(an) {
+    var n = { h: 0, box: 0 }; if (!window.RMED_SMART || !an || !an.items) return n;
+    var items = an.items, lines = [], map = [];
+    items.forEach(function (it, idx) {
+      if (it.kind !== "p") { lines.push(""); map.push(-1); return; }
+      var t = String(it.text || "").replace(/[\t ]*\n[\t ]*/g, " ").replace(/\t/g, " ").trim();
+      var prev = items[idx - 1], next = items[idx + 1], nearFig = (prev && (prev.drawing || prev.kind === "tbl")) || (next && next.kind === "tbl" && /^(الجدول|جدول|Table)/i.test(t));
+      var cand = !!t && !nearFig && !/\t/.test(String(it.text || "")) && !Array.prototype.some.call(it.node.getElementsByTagNameNS(W, "tab"), function (tb) { return tb.parentNode && tb.parentNode.localName === "r"; }) && !CAP_RE.test(t) && !(it.toc || it.gen || it.cover || it.tocLine || it.title || it.subtitle || it.level || it.numPr || it.container || it.drawing) && !(it.style && it.style.numPr);
+      lines.push(t); map.push(cand ? idx : -1);
+    });
+    var hasTop = items.some(function (it) { return it.level === 1 && !it.cover && !it.toc && !it.gen; });
+    var A = RMED_SMART.analyze(lines.join("\n"), { headings: true, title: false, bullets: false, tables: false, boxes: true, bold: false });
+    A.lines.forEach(function (x, li) {
+      var idx = map[li]; if (idx == null || idx < 0) return; var it = items[idx], k = x.final;
+      if (/^h[1-4]$/.test(k)) { it.level = k === "h1" && !hasTop && !n.top ? 1 : Math.max(2, +k.charAt(1)); if (it.level === 1) n.top = 1; it.smart = true; n.h++; }
+      else if (k === "note" || k === "imp" || k === "def" || k === "warn" || k === "case") { it.smartBox = ENGINE.CALLOUTS.filter(function (c) { return c.id === k; })[0] || null; if (it.smartBox) n.box++; }
+    });
+    an.smart = n; return n;
+  }
   function previewModel(an) { return rebuildModel(an).then(function (m) { return m.lectures; }); }
 
-  return { merge: merge, analyze: analyze, reskin: reskin, rebuild: rebuild, check: check, previewModel: previewModel, headerTextOf: headerTextOf };
+  return { smartify: smartify, merge: merge, analyze: analyze, reskin: reskin, rebuild: rebuild, check: check, previewModel: previewModel, headerTextOf: headerTextOf };
 })();
