@@ -448,6 +448,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
             </div>
             <div class="toggles">
               <label class="tg">فهرس المحاضرات ومحاورها<span class="sw-t"><input type="checkbox" id="optToc"><span></span></span></label>
+              <label class="tg"><span>عدم تقسيم الفقرة بين صفحتين<small>إذا ما بقي مكان للفقرة كاملة بتنزل كلها عالصفحة الجاية</small></span><span class="sw-t"><input type="checkbox" id="optKeep"><span></span></span></label>
             </div>
             <div class="field" style="margin-top:12px">
               <label class="lbl" for="nameTpl">تسمية الملف تلقائياً</label>
@@ -2118,7 +2119,8 @@ var ENGINE = (function () {
       if (o.side) { var sr = o.side.r || 0, sl = o.side.l || 0; opts.indent = rtl ? ind(sr, sl) : ind(sl, sr); } // r = يمين الصفحة، l = يسارها
       // المحاذاة الافتراضية لفقرة RTL هي اليمين في كل البرامج؛ نُبقي «start» صريحة فقط للفقرة التي لا تحوي حروفاً عربية (أرقام/إنجليزي فقط)
       if (opts.alignment === START && rtl && AR_RE.test(txt)) delete opts.alignment;
-      if (opts.alignment === BOTH && /\*\*/.test(txt)) delete opts.alignment; // تجنّب خلل ضبط النص في LibreOffice مع النجوم الحرفية
+      if (opts.alignment === BOTH && /\*\*/.test(txt)) delete opts.alignment;
+      if (S.keepParas && opts.keepLines === undefined) opts.keepLines = true; // الفقرة كاملة بصفحة وحدة // تجنّب خلل ضبط النص في LibreOffice مع النجوم الحرفية
       return new D.Paragraph(opts);
     }
     function impOpts(level, extra, co) {
@@ -2179,7 +2181,7 @@ var ENGINE = (function () {
         var textCell = new D.TableCell({ width: { size: TW, type: D.WidthType.DXA }, borders: cellNone, margins: { top: 20, bottom: 40, left: 80, right: 80 }, children: kids });
         var numCell = new D.TableCell({ width: { size: NW, type: D.WidthType.DXA }, borders: cellNone, shading: shade(T.light), margins: { top: 20, bottom: 20, left: 40, right: 40 }, verticalAlign: D.VerticalAlign.TOP, children: [num] });
         // الجدول RTL بصرياً: الخلية الأولى تظهر يميناً
-        return new D.TableRow({ children: ltrList ? [numCell, textCell] : (numLeft ? [textCell, numCell] : [numCell, textCell]) });
+        return new D.TableRow({ cantSplit: !!S.keepParas, children: ltrList ? [numCell, textCell] : (numLeft ? [textCell, numCell] : [numCell, textCell]) });
       });
       return [new D.Table({ layout: D.TableLayoutType.FIXED, rows: trs, width: { size: w, type: D.WidthType.DXA }, columnWidths: ltrList ? [NW, TW] : (numLeft ? [TW, NW] : [NW, TW]), visuallyRightToLeft: !ltrList, borders: noBorders, indent: indent ? { size: indent, type: D.WidthType.DXA } : undefined }),
         new D.Paragraph({ spacing: { before: 0, after: 60, line: 120 }, children: [] })];
@@ -3050,6 +3052,7 @@ var ENGINE = (function () {
     bodyItems.forEach(function (it) {
       if (it.kind !== "p") return;
       var p = it.node, pPr = ensurePr(p, "pPr"), txt = it.text, rtl = AR.test(txt);
+      if (S.keepParas && txt.trim()) place(pPr, mk(doc, "keepLines"), ORD.pPr); // الفقرة كاملة بصفحة وحدة
       if (it.level) {
         var lv = it.level; rep.headings[lv]++;
         place(pPr, mk(doc, "pStyle", { val: "Heading" + lv }), ORD.pPr);
@@ -3509,7 +3512,7 @@ var ENGINE = (function () {
   var LS_KEY = "randommed.lec2docx.settings.v2";
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
-    doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
+    keepParas: true, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
   try { var saved = JSON.parse(localStorage.getItem(LS_KEY) || "null"); if (saved && typeof saved === "object") { Object.assign(S, saved); S.sizes = Object.assign({}, ENGINE.SIZE_DEFAULTS, saved.sizes || {}); } } catch (e) {}
   if (!ENGINE.THEMES[S.theme] && S.theme !== "custom") S.theme = "brand";
@@ -3780,7 +3783,7 @@ var ENGINE = (function () {
   $("pfName").oninput = function () { S.platform.name = this.value; save(); paintCoverThumbs(); schedulePreview(); };
   $("pfUrl").oninput = function () { S.platform.url = this.value.trim(); save(); paintQrHint(); schedulePreview(); };
   function paintQrHint() { $("qrHint").textContent = qrHref(S) ? "رمز QR رح ينولّد تلقائياً لـ " + qrHref(S).replace(/^https?:\/\//, "") : "اكتب «رابط المنصة» بقسم الغلاف والحقوق ليظهر رمز QR."; }
-  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"], ["optBack", "backCover"], ["optMerge", "merge"]].forEach(function (p) {
+  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"], ["optBack", "backCover"], ["optMerge", "merge"], ["optKeep", "keepParas"]].forEach(function (p) {
     $(p[0]).onchange = function () { S[p[1]] = this.checked; save(); paintSettings(); schedulePreview(); };
   });
   $("wmOp").oninput = function () { S.wmOpacity = +this.value; $("wmOpV").textContent = this.value + "%"; save(); schedulePreview(); };
@@ -3796,7 +3799,7 @@ var ENGINE = (function () {
     $("optSub").checked = S.showSubtitle !== false; $("optRights").checked = S.rights !== false;
     $("pfName").value = S.platform.name || ""; $("pfUrl").value = S.platform.url || "";
     $("doctor").value = S.doctor || ""; $("coverExtra").value = S.coverExtra || ""; $("backText").value = S.backText || ""; $("social").value = S.social || "";
-    $("optBack").checked = !!S.backCover; $("optMerge").checked = !!S.merge; $("nameTpl").value = S.nameTpl || "";
+    $("optBack").checked = !!S.backCover; $("optKeep").checked = !!S.keepParas; $("optMerge").checked = !!S.merge; $("nameTpl").value = S.nameTpl || "";
     Array.prototype.forEach.call($("pvSeg").children, function (b) { b.classList.toggle("sel", (b.dataset.v === "real") === !!S.pvReal); });
     paintQrHint(); paintName(); paintPresets();
     Array.prototype.forEach.call($("covers").children, function (b) { var on = b.dataset.k === (S.coverStyle || "classic"); b.classList.toggle("sel", on && S.cover); b.setAttribute("aria-checked", on && S.cover ? "true" : "false"); });
