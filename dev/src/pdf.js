@@ -22,7 +22,7 @@ var RMED_PDF = (function () {
     o = new Uint8Array(2 + s.length * 2); o[0] = 0xFE; o[1] = 0xFF; for (i = 0; i < s.length; i++) { o[2 + i * 2] = s.charCodeAt(i) >> 8; o[3 + i * 2] = s.charCodeAt(i) & 255; } return o;
   }
   // sec (اختياري): حماية AES-256 من RMED_PROTECT.pdfSecurity — تُشفَّر كل المجاري والنصوص
-  function writePdf(pages, title, sec) {
+  function writePdf(pages, title, sec, creator) {
     var enc = new TextEncoder();
     var csText = "q " + PW + " 0 0 " + PH + " 0 0 cm /Im0 Do Q", csBytes = enc.encode(csText);
     if (!sec) return Promise.resolve(emit(null));
@@ -43,7 +43,7 @@ var RMED_PDF = (function () {
       function obj(n, parts) { xref[n] = off; push(n + " 0 obj\n"); parts.forEach(push); push("\nendobj\n"); }
       obj(1, ["<< /Type /Catalog /Pages 2 0 R" + (sec ? " /Extensions << /ADBE << /BaseVersion /1.7 /ExtensionLevel 8 >> >>" : "") + " >>"]);
       obj(2, ["<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + pages.length + " >>"]);
-      obj(3, ["<< /Title " + (sec ? hexs(title) : pdfStr(title) + " /Creator (Random.MEd) /Producer (Random.MEd)") + " >>"]);
+      obj(3, ["<< /Title " + (sec ? hexs(title) : pdfStr(title) + (creator ? " /Creator " + pdfStr(creator) + " /Producer " + pdfStr(creator) : "")) + " >>"]);
       pages.forEach(function (p) {
         obj(p.o, ["<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /XObject << /Im0 " + p.im + " 0 R >> >> /Contents " + p.c + " 0 R" +
           (p.an.length ? " /Annots [" + p.an.map(function (n) { return n + " 0 R"; }).join(" ") + "]" : "") + " >>"]);
@@ -71,7 +71,7 @@ var RMED_PDF = (function () {
     var S = m.s, T = ENGINE.resolveTheme(S), Z = Object.assign({}, ENGINE.SIZE_DEFAULTS, S.sizes || {});
     var K = opt.scale || 2, LS = S.lineSpacing || 1.5;
     var MX = 70.87, MT = 70.87, MB = 70.87, CW = PW - 2 * MX, TOP = MT, BOT = PH - MB;
-    var PF = Object.assign({ name: "Random.MEd", url: "" }, S.platform || {}), pfName = String(PF.name || "Random.MEd").trim() || "Random.MEd";
+    var PF = Object.assign({ name: "Random.MEd", url: "" }, S.platform || {}), pfName = S._doctorId ? String(PF.name || "").trim() : (String(PF.name || "Random.MEd").trim() || "Random.MEd");
     var URL = String(PF.url || "").trim(), HREF = URL ? (/^https?:\/\//i.test(URL) ? URL : "https://" + URL) : "", URLTXT = URL.replace(/^https?:\/\//i, "").replace(/\/$/, "");
     var YEAR = String(new Date().getFullYear()), rightsOn = S.rights !== false, PBG = ENGINE.pageBgColor ? ENGINE.pageBgColor(S) : null, GOLD = "A9761E";
     var meas = document.createElement("canvas").getContext("2d"), wcache = {};
@@ -569,7 +569,7 @@ var RMED_PDF = (function () {
       });
     });
     return chain.then(function () { return opt.protect && window.RMED_PROTECT ? RMED_PROTECT.pdfSecurity(opt.protect) : null; })
-      .then(function (sec) { return writePdf(out, opt.title || S.subject || "Random.MEd", sec); })
+      .then(function (sec) { return writePdf(out, opt.title || S.subject || "", sec, S._doctorId ? (String(S.doctor || "").trim() || pfName) : pfName); })
       .then(function (blob) { return { blob: blob, pages: out.length, words: drawnWords, protected: !!opt.protect }; });
   }
 

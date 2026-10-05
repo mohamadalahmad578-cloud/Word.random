@@ -468,7 +468,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
           <summary>هوية الملف <span class="pill" id="idModeLbl"></span></summary>
           <div class="in">
             <div class="seg" id="idSeg" role="radiogroup" aria-label="هوية الملف"><button type="button" data-v="platform">منصة Random.MEd</button><button type="button" data-v="doctor">من دكتور/ة</button></div>
-            <small class="hint" id="idPlatHint">الملف بهوية المنصة: الشعار والعلامة المائية والحقوق من قسم «هوية Random.MEd والعلامة المائية».</small>
+            <small class="hint" id="idPlatHint">الملف بهوية المنصة: الشعار والعلامة المائية والحقوق من قسم «هوية Random.MEd والعلامة المائية». ألوان وخلفية وغلاف المنصة محفوظة لحالها عن ألوان الدكتور.</small>
             <div id="idDoctorBox">
             <div class="prow" style="margin-top:10px"><select class="inp" id="profSel" aria-label="ملف دكتور محفوظ"><option value="">— ملفات الدكاترة المحفوظة —</option></select><button type="button" class="btn danger" id="profDel">حذف</button></div>
             <div class="prow"><input class="inp" id="profName" dir="auto" placeholder="اسم الملف (افتراضياً اسم الدكتور)"><button type="button" class="btn" id="profSave">💾 حفظ الملف</button></div>
@@ -479,7 +479,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
             <div class="field"><label class="lbl" for="pptFooter">نص التذييل <small style="font-weight:400;color:var(--ink-soft)">(اختياري — افتراضياً: الدكتور — الجامعة)</small></label><input class="inp" id="pptFooter" dir="auto" maxlength="120" placeholder="مثال: محاضرات د. ريم الأحمد — الكيمياء الحيوية"></div>
             <div class="field"><span class="lbl">شعار الدكتور / الجامعة</span><div class="prow"><label class="btn">⬆ رفع الشعار<input type="file" id="pptOwnLogo" accept="image/*" class="sr"></label><img id="pptOwnLogoThumb" class="mini-thumb" alt="الشعار"><button type="button" class="btn danger" id="pptOwnLogoDel">إزالة</button></div><small class="hint">يظهر عند تفعيل «الشعار» تحت. بدون شعار مرفوع يُستخدم شعار المنصة.</small></div>
             <div class="toggles"><label class="tg"><span>«جميع الحقوق محفوظة»<small>تُضاف لسطر التذييل باسم الجامعة/الدكتور</small></span><span class="sw-t"><input type="checkbox" id="pptRights"><span></span></span></label><label class="tg"><span>غلاف خلفي<small>بالشعار واسم الجامعة</small></span><span class="sw-t"><input type="checkbox" id="pptBack"><span></span></span></label><label class="tg"><span>ألوان العرض تلقائياً<small>نقرأ ألوان قالب الـ PowerPoint ونلوّن الملف فيها</small></span><span class="sw-t"><input type="checkbox" id="pptAutoColors"><span></span></span></label></div>
-          <div class="toggles"><label class="tg"><span>إظهار الشعار<small>شعار الدكتور المرفوع (أو شعار المنصة إن لم يُرفع) على الغلاف والترويسة</small></span><span class="sw-t"><input type="checkbox" id="pptLogo"><span></span></span></label></div>
+          <div class="toggles"><label class="tg"><span>إظهار الشعار<small>شعار الدكتور المرفوع على الغلاف والترويسة — بدون شعار مرفوع ما بيطلع أي شعار (ولا شعار المنصة)</small></span><span class="sw-t"><input type="checkbox" id="pptLogo"><span></span></span></label></div>
             <div class="field"><span class="lbl">العلامة المائية</span><div class="seg" id="pptWmSeg"><button type="button" data-v="none">بدون</button><button type="button" data-v="doctor">اسم الدكتور/ة</button><button type="button" data-v="logo">الشعار</button><button type="button" data-v="text">نص</button><button type="button" data-v="image">صورة</button></div></div>
           <div class="field" id="pptWmTextRow"><input class="inp" id="pptWmText" dir="auto" maxlength="60" placeholder="مثال: خاص بطلاب الدفعة 2026"></div>
           <div class="field" id="pptWmImgRow"><div class="prow"><label class="btn">⬆ رفع صورة العلامة<input type="file" id="pptWmImg" accept="image/*" class="sr"></label><img id="pptWmThumb" class="mini-thumb" alt="العلامة المائية"><button type="button" class="btn danger" id="pptWmDel">إزالة</button></div></div>
@@ -902,8 +902,8 @@ var ENGINE = (function () {
   }
   function decodeXml(s) { return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, function (_, d) { return String.fromCharCode(+d); }).replace(/&amp;/g, "&"); }
   function xmlTokens(xml, opt) {
-    xml = xml.replace(/w:name="RMEDGEN\d+"[\s\S]*?w:name="RMEDEND\d+"/g, "").replace(/<mc:Fallback>[\s\S]*?<\/mc:Fallback>/g, "");
-    var k = xml.indexOf('w:name="BODY_START"'); if (k >= 0 && !(opt && opt.all)) xml = xml.slice(k);
+    xml = xml.replace(/w:name="(?:_?RMEDGEN|_Gs)\d+"[\s\S]*?w:name="(?:_?RMEDEND|_Ge)\d+"/g, "").replace(/<mc:Fallback>[\s\S]*?<\/mc:Fallback>/g, "");
+    var k = xml.search(/w:name="(?:_?BODY_START|_Body)"/); if (k >= 0 && !(opt && opt.all)) xml = xml.slice(k);
     var parts = [], re = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>|<\/w:p>|<w:tab\/>|<w:br\/>/g, m;
     while ((m = re.exec(xml))) parts.push(m[1] !== undefined ? decodeXml(m[1]) : " ");
     return tokens(parts.join(""));
@@ -996,8 +996,8 @@ var ENGINE = (function () {
       return arr;
     }
     var gk = 0;
-    function GS() { return new D.Bookmark({ id: "RMEDGEN" + (++gk), children: [] }); }
-    function GE() { return new D.Bookmark({ id: "RMEDEND" + gk, children: [] }); }
+    function GS() { return new D.Bookmark({ id: "_Gs" + (++gk), children: [] }); }
+    function GE() { return new D.Bookmark({ id: "_Ge" + gk, children: [] }); }
     function markP(b) { return new D.Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [b] }); }
     function P(inl, o) {
       o = o || {};
@@ -1161,7 +1161,7 @@ var ENGINE = (function () {
     function logoRun(hPx) {
       if (!brand.logo) return null;
       var w = Math.round(brand.logo.w * hPx / brand.logo.h);
-      return new D.ImageRun({ type: "png", data: brand.logo.data, transformation: { width: w, height: hPx }, altText: { title: "Random.MEd", description: "شعار Random.MEd", name: "logo" } });
+      return new D.ImageRun({ type: "png", data: brand.logo.data, transformation: { width: w, height: hPx }, altText: { title: PF.name || "شعار", description: PF.name ? "شعار " + PF.name : "شعار", name: "logo" } });
     }
 
     /* الغلاف والفهرس */
@@ -1321,7 +1321,7 @@ var ENGINE = (function () {
     /* المتن */
     var body = [];
     lectures.forEach(function (L, idx) {
-      var first = idx === 0, mark = first ? [new D.Bookmark({ id: "BODY_START", children: [] })] : [];
+      var first = idx === 0, mark = first ? [new D.Bookmark({ id: "_Body", children: [] })] : [];
       if (L.title !== null) {
         body.push(P(L.titleInl, { pre: mark, heading: D.HeadingLevel.HEADING_1, pageBreakBefore: !first && S.h1NewPage !== false, size: SZ.h1, bold: true, color: "FFFFFF", boldColor: "FFFFFF",
           align: CENTER, line: 320, after: 200, keepNext: true, forceRtl: true, shading: shade(T.h1), border: box(T.h1, 6, 6) }));
@@ -1339,7 +1339,7 @@ var ENGINE = (function () {
         floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, align: D.HorizontalPositionAlign.CENTER },
           verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, align: D.VerticalPositionAlign.CENTER },
           behindDocument: true, allowOverlap: true, wrap: { type: D.TextWrappingType.NONE } },
-        altText: { title: "علامة مائية", description: "Random.MEd", name: "watermark" } }));
+        altText: { title: "علامة مائية", description: PF.name || "علامة مائية", name: "watermark" } }));
     }
     var hl = brand.logo ? logoRun(20) : null;
     if (hl) { hdrKids.push(hl); hdrKids.push(mkRun("  ", true, {}, { size: SZ.body - 4 })); }
@@ -1408,7 +1408,7 @@ var ENGINE = (function () {
         run: { size: size, bold: true, color: color, font: { ascii: FE, hAnsi: FE, cs: FA } }, paragraph: { keepNext: true, keepLines: true, bidirectional: true } };
     }
     return new D.Document({
-      creator: "Random.MEd", title: subject, description: S.subtitle || "", background: PBG ? { color: PBG } : undefined,
+      creator: S._doctorId ? (String(S.doctor || "").trim() || PF.name || "") : (PF.name || "Random.MEd"), lastModifiedBy: S._doctorId ? (String(S.doctor || "").trim() || PF.name || "") : (PF.name || "Random.MEd"), title: subject, description: S.subtitle || "", background: PBG ? { color: PBG } : undefined,
       styles: {
         default: { document: { run: { font: { ascii: FE, hAnsi: FE, cs: FA, eastAsia: FA }, size: SZ.body, language: { value: "ar-SA", bidirectional: "ar-SA" } }, paragraph: { spacing: { line: LINE, lineRule: AUTO }, bidirectional: true } } },
         paragraphStyles: [hStyle("Heading1", "Heading 1", SZ.h1, "FFFFFF"), hStyle("Heading2", "Heading 2", SZ.h2, T.h2t), hStyle("Heading3", "Heading 3", SZ.h3, T.h3), hStyle("Heading4", "Heading 4", SZ.h4, T.h4)]
@@ -1568,7 +1568,7 @@ var ENGINE = (function () {
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
     keepParas: true, origLine: true, pageBg: "none", pageFrame: false,
-    smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
+    activeSlot: "platform", slotPlatform: "", slotDoctor: "", smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
@@ -1778,7 +1778,7 @@ var ENGINE = (function () {
     return c;
   }
 
-  function platformName(s) { return ((s.platform && s.platform.name) || "Random.MEd").trim() || "Random.MEd"; }
+  function platformName(s) { if (s && s._doctorId) return String((s.platform && s.platform.name) || "").trim(); return ((s.platform && s.platform.name) || "Random.MEd").trim() || "Random.MEd"; }
   // العلامة المائية: الشعار + سطر الحقوق
   function drawWatermark(s) {
     var W = logoImg.naturalWidth || 214, H = logoImg.naturalHeight || 180, cw = 760, lh = Math.round(cw * 0.62 * H / W), rights = s.rights !== false;
@@ -2032,6 +2032,20 @@ var ENGINE = (function () {
     Array.prototype.forEach.call($("covers").children, function (b) { var on = b.dataset.k === (S.coverStyle || "classic"); b.classList.toggle("sel", on && S.cover); b.setAttribute("aria-checked", on && S.cover ? "true" : "false"); });
     paintCoverThumbs();
   }
+  /* فصل تنسيق المنصة عن تنسيق الدكتور: الألوان والخلفية والإطار ونمط الغلاف لكل هوية محفوظة لحالها */
+  var SLOT_KEYS = ["theme", "cMain", "cAcc", "pageBg", "pageFrame", "coverStyle"];
+  function syncSlot(silent) {
+    var want = idDoctor() ? "doctor" : "platform", cur = S.activeSlot === "doctor" ? "doctor" : "platform";
+    if (want === cur) return false;
+    var snap = {}; SLOT_KEYS.forEach(function (k) { snap[k] = S[k]; });
+    S[cur === "doctor" ? "slotDoctor" : "slotPlatform"] = JSON.stringify(snap);
+    var raw = S[want === "doctor" ? "slotDoctor" : "slotPlatform"], nxt = null;
+    try { nxt = raw ? JSON.parse(raw) : null; } catch (e) { nxt = null; }
+    if (nxt && typeof nxt === "object") { var c = cleanSettings(nxt); SLOT_KEYS.forEach(function (k) { if (c[k] !== undefined) S[k] = c[k]; }); }
+    S.activeSlot = want; save(); if (!silent) { paintSettings(); schedulePreview(); }
+    return true;
+  }
+  syncSlot(true);
   paintSettings();
 
   /* ---- التحليل ---- */
@@ -2150,7 +2164,7 @@ var ENGINE = (function () {
     var qh = qrHref(s), qr = "";
     if (qh) { if (!qrCache[qh]) { try { qrCache[qh] = drawQR(qh).toDataURL("image/png"); } catch (e) { qrCache[qh] = ""; } } qr = qrCache[qh]; }
     var pf = platformName(s), soc = String(s.social || "").split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 8);
-    return '<div class="pv-back" style="background-image:url(' + backCache[k] + ')">' + (s.logo ? '<img class="lg" src="' + (s._doctorId && pptOwnLogo ? pptOwnLogo.url : LOGO_SRC) + '" alt="">' : "") + '<div class="bn" dir="auto">' + esc2(pf) + "</div>" +
+    return '<div class="pv-back" style="background-image:url(' + backCache[k] + ')">' + (s.logo && (!s._doctorId || pptOwnLogo) ? '<img class="lg" src="' + (s._doctorId ? pptOwnLogo.url : LOGO_SRC) + '" alt="">' : "") + '<div class="bn" dir="auto">' + esc2(pf) + "</div>" +
       (String(s.backText || "").trim() ? '<div class="bt" dir="auto">' + esc2(s.backText.trim()) + "</div>" : "") + '<div class="bb"></div>' +
       (qr ? '<img class="qr" src="' + qr + '" alt="QR"><div class="bh">امسح الرمز لزيارة المنصة</div><div class="bu">' + esc2(qh.replace(/^https?:\/\//, "").replace(/\/$/, "")) + "</div>" : "") +
       soc.map(function (x) { return '<div class="bs" dir="auto">' + esc2(x) + "</div>"; }).join("") +
@@ -2178,7 +2192,7 @@ var ENGINE = (function () {
       s = Object.assign(s, ws); L = wf.model;
     }
     var pptWmFull = false; if (s._doctorId && s.wm) { pptWmUrl = pptWmUrlCached(s); pptWmFull = S.pptWm === "doctor" || S.pptWm === "text"; }
-    var lgSrc = s._doctorId && pptOwnLogo ? pptOwnLogo.url : LOGO_SRC;
+    var lgSrc = s._doctorId ? (pptOwnLogo ? pptOwnLogo.url : "") : LOGO_SRC;
     pv.style.background = ENGINE.pageBgColor(s) ? "#" + ENGINE.pageBgColor(s) : ""; pv.style.outline = s.pageFrame ? "3px double #" + T.h2line : ""; pv.style.outlineOffset = s.pageFrame ? "-12px" : "";
     var wm = s.wm && !(s._doctorId && !pptWmUrl) ? (pptWmUrl ? '<div class="wm" style="background-image:url(' + pptWmUrl + ');opacity:1' + (pptWmFull ? ';background-size:100% auto;background-position:center top' : '') + '"></div>' : '<div class="wm" style="background-image:url(' + LOGO_SRC + ');opacity:' + (s.wmOpacity / 100) + '"></div>') : "";
     var pfx = Object.assign({ name: "Random.MEd", url: "" }, s.platform || {});
@@ -2318,7 +2332,7 @@ var ENGINE = (function () {
     logoReady.then(function () { return document.fonts && document.fonts.ready ? document.fonts.ready : null; }).then(function () { return modelImages(m.L); }).then(function (images) {
       var A = { logo: logoImg.naturalWidth && s.logo !== false ? logoImg : null, images: images };
       if (s.cover) A.cover = s._pptImg ? pptCoverCanvas() : drawCover(s.coverStyle || "classic", T, platformName(s), 1, s._covLogo);
-      if (s._doctorId) A.logo = s.logo ? (pptOwnLogo ? pptOwnLogo.img : (logoImg.naturalWidth ? logoImg : null)) : null;
+      if (s._doctorId) A.logo = s.logo && pptOwnLogo ? pptOwnLogo.img : null;
       if (s.backCover) { A.back = drawBack(T, 1); var qh = qrHref(s); if (qh) { try { A.qr = drawQR(qh); } catch (e) {} } }
       if (s.wm) A.wm = s._doctorId ? pptWmCanvas(s) : drawWatermark(s);
       return new Promise(function (r) { setTimeout(r, 30); }).then(function () {
@@ -2335,7 +2349,7 @@ var ENGINE = (function () {
   };
 
   /* ---- قوالب المواد المحفوظة ---- */
-  var PS_KEY = "randommed.lec2docx.presets.v1", PS_SKIP = { uiMode: 1, dark: 1, pvReal: 1, merge: 1, method: 1, protOn: 1, protWord: 1, protPdf: 1, protNoPrint: 1, protNoCopy: 1 };
+  var PS_KEY = "randommed.lec2docx.presets.v1", PS_SKIP = { activeSlot: 1, slotPlatform: 1, slotDoctor: 1, uiMode: 1, dark: 1, pvReal: 1, merge: 1, method: 1, protOn: 1, protWord: 1, protPdf: 1, protNoPrint: 1, protNoCopy: 1 };
   function loadPresets() { try { var o = JSON.parse(localStorage.getItem(PS_KEY) || "{}"), r = {}; if (o && typeof o === "object") Object.keys(o).forEach(function (k) { if (!BAD_KEY.test(k) && o[k] && typeof o[k] === "object") r[k] = o[k]; }); return r; } catch (e) { return {}; } }
   function storePresets(p) { try { localStorage.setItem(PS_KEY, JSON.stringify(p)); return true; } catch (e) { return false; } }
   function snapshot() { var o = JSON.parse(JSON.stringify(S)); Object.keys(PS_SKIP).forEach(function (k) { delete o[k]; }); return o; }
@@ -2450,7 +2464,7 @@ var ENGINE = (function () {
     S.uiMode = m === "word" || m === "ppt" ? m : "text"; save();
     [["modeText", "text"], ["modeWord", "word"], ["modePpt", "ppt"]].forEach(function (p) { $(p[0]).classList.toggle("sel", S.uiMode === p[1]); $(p[0]).setAttribute("aria-selected", S.uiMode === p[1]); });
     $("textCard").hidden = S.uiMode !== "text"; $("wordCard").hidden = S.uiMode !== "word"; $("pptCard").hidden = S.uiMode !== "ppt";
-    $("report").className = "report"; hide(); schedulePreview(); paintName(); paintId();
+    $("report").className = "report"; hide(); syncSlot(); schedulePreview(); paintName(); paintId();
   }
   $("modeText").onclick = function () { setUiMode("text"); };
   $("modeWord").onclick = function () { setUiMode("word"); };
@@ -2670,11 +2684,12 @@ var ENGINE = (function () {
     }
     if (mode === "logo") return drawWatermark(Object.assign({}, s, { wmOpacity: S.pptWmOpacity || 8 }));
     if (mode === "image") {
-      if (!pptWmImgObj) return drawWatermark(Object.assign({}, s, { wmOpacity: S.pptWmOpacity || 8 }));
+      if (!pptWmImgObj) return s._doctorId ? null : drawWatermark(Object.assign({}, s, { wmOpacity: S.pptWmOpacity || 8 }));
       var im = pptWmImgObj.img, k = Math.min(1, 900 / Math.max(im.naturalWidth, im.naturalHeight)); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
       g = c.getContext("2d"); g.globalAlpha = a; g.drawImage(im, 0, 0, c.width, c.height); return c;
     }
     var t = mode === "doctor" ? (String(S.pptDoctor || "").trim() || String(S.pptCourse || "").trim() || String(S.pptWmText || "").trim() || platformName(s)) : (String(S.pptWmText || "").trim() || platformName(s));
+    if (!String(t || "").trim()) return null;
     // النص على قطر الصفحة من الزاوية للزاوية (لوحة بنسبة A4 تُوضع بحجم الصفحة كاملة)
     c.width = 1000; c.height = 1414; c._full = true; g = c.getContext("2d");
     var diag = Math.sqrt(1000 * 1000 + 1414 * 1414), ang = Math.atan2(1414, 1000);
@@ -2695,16 +2710,14 @@ var ENGINE = (function () {
     var dr = String(S.pptDoctor || "").trim(), un = String(S.pptUni || "").trim(), yr = String(S.pptYear || "").trim(), cr = String(S.pptCourse || "").trim();
     s._doctorId = true;
     if (cr && !s.userSubject && !String(S.subject || "").trim()) { s.subject = cr; s._courseSubj = true; }
-    s.platform = { name: un || dr || "", url: "" }; s.footBrand = false; s.backCover = !!S.pptBack; s.rights = false;
-    s.doctor = dr || String(S.doctor || "").trim();
-    var ex = []; if (mode === "text") ex = String(S.coverExtra || "").split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean);
-    if (yr && ex.indexOf(yr) < 0) ex.push(yr); s.coverExtra = ex.join("\n");
+    s.platform = { name: un || dr || cr || "", url: "" }; s.footBrand = false; s.backCover = !!S.pptBack; s.rights = false;
+    s.doctor = dr; s.coverExtra = yr; s.social = ""; s.backText = ""; s.footBrand = false;
     s.coverBigName = un; s.showSubtitle = !!String(S.subtitle || "").trim();
     var ft = String(S.pptFooter || "").trim() || [dr, un].filter(Boolean).join(" — ");
     if (S.pptRights) ft = (ft ? ft + "  ·  " : "") + "© " + new Date().getFullYear() + (un || dr ? " " + (un || dr) : "") + " — جميع الحقوق محفوظة";
     s.footerText = ft;
     s.logo = !!S.pptLogo; s.wm = (S.pptWm || "logo") !== "none"; s.wmOpacity = S.pptWmOpacity || 8;
-    s._covLogo = s.logo ? (pptOwnLogo ? pptOwnLogo.img : logoImg) : null;
+    s.logo = !!(S.pptLogo && pptOwnLogo); s._covLogo = s.logo ? pptOwnLogo.img : null; // شعار الدكتور فقط — لا شعار المنصة أبداً
     return s;
   }
   function brandFor(s) {
@@ -2714,7 +2727,6 @@ var ENGINE = (function () {
       var jobs = [];
       if (doc && s.logo) {
         if (pptOwnLogo) { var oc = document.createElement("canvas"), oi = pptOwnLogo.img; oc.width = oi.naturalWidth; oc.height = oi.naturalHeight; oc.getContext("2d").drawImage(oi, 0, 0); jobs.push(canvasPng(oc).then(function (u) { out.logo = { data: u, w: oi.naturalWidth, h: oi.naturalHeight }; })); }
-        else out.logo = { data: ENGINE.b64ToBytes(LOGO_B64), w: logoImg.naturalWidth || 214, h: logoImg.naturalHeight || 180 };
       }
       if (s._pptImg && pptCovImg) jobs.push(canvasJpeg(pptCoverCanvas()).then(function (u) { out.coverBg = { data: u, w: 1240, h: 1754, type: "jpg" }; }));
       var wc = doc && s.wm ? pptWmCanvas(s) : null; if (wc) jobs.push(canvasPng(wc).then(function (u) { out.wm = wc._full ? { data: u, w: 794, h: 1123 } : { data: u, w: 660, h: Math.round(660 * wc.height / wc.width) }; }));
@@ -2731,7 +2743,7 @@ var ENGINE = (function () {
   Array.prototype.forEach.call($("idSeg").children, function (b) { b.onclick = function () { setIdentity(b.dataset.v === "doctor"); }; });
   function setIdentity(doc) {
     var m = S.uiMode; if (m === "ppt") S.pptIdentity = doc; else if (m === "word") S.idWord = doc ? "doctor" : "platform"; else S.idText = doc ? "doctor" : "platform";
-    save(); paintId(); paintPpt(); pptResult = null; clearResults(); renderPptList(); schedulePreview(); paintName();
+    save(); syncSlot(); paintId(); paintPpt(); pptResult = null; clearResults(); renderPptList(); schedulePreview(); paintName();
   }
   function pptReady() { return pptFiles.filter(function (f) { return f.res && f.status !== "error" && f.status !== "reading"; }); }
   function pptGroupSettings(grp) {
@@ -2859,9 +2871,10 @@ var ENGINE = (function () {
   };
   $("profSel").onchange = function () {
     var p = loadProfs()[this.value]; $("profDel").disabled = !this.value; if (!p) return;
+    if (S.uiMode === "ppt") S.pptIdentity = true; else if (S.uiMode === "word") S.idWord = "doctor"; else S.idText = "doctor";
+    syncSlot(true);
     var c = cleanSettings(p); PROF_FIELDS.forEach(function (f) { if (c[f] !== undefined) S[f] = c[f]; });
     ["pptDoctor", "pptCourse", "pptUni", "pptYear", "pptFooter"].forEach(function (k) { $(k).value = S[k] || ""; });
-    if (S.uiMode === "ppt") S.pptIdentity = true; else if (S.uiMode === "word") S.idWord = "doctor"; else S.idText = "doctor";
     save(); setPptImage("logo", typeof p._logo === "string" && /^data:image\//.test(p._logo) ? p._logo : null);
     if (typeof p._cover === "string" && /^data:image\//.test(p._cover)) setPptImage("cover", p._cover); if (typeof p._wm === "string" && /^data:image\//.test(p._wm)) setPptImage("wm", p._wm);
     paintSettings(); paintPpt(); renderPptList(); schedulePreview(); show("ok", "تم تطبيق ملف «" + this.value + "»");

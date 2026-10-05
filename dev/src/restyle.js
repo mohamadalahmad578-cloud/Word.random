@@ -229,7 +229,7 @@ var RESTYLE = (function () {
     var gen = false;
     items.forEach(function (it) {
       var bms = Array.prototype.map.call(it.node.getElementsByTagNameNS(W, "bookmarkStart"), function (b) { return wa(b, "name") || ""; });
-      var startG = bms.some(function (n) { return /^RMEDGEN/.test(n); }), endG = bms.some(function (n) { return /^RMEDEND/.test(n); });
+      var startG = bms.some(function (n) { return /^(_?RMEDGEN|_Gs\d)/.test(n); }), endG = bms.some(function (n) { return /^(_?RMEDEND|_Ge\d)/.test(n); });
       if (startG) gen = true;
       if (gen) it.gen = true;
       if (endG) gen = false;
@@ -238,6 +238,7 @@ var RESTYLE = (function () {
     var tocStart = -1, tocEnd = -1, i;
     for (i = 0; i < items.length; i++) {
       var it = items[i];
+      if (it.gen) continue; // المحتوى المولَّد سابقاً (غلاف/فهرس منّا) يُحذف كله — لا نبدأ منه «فهرساً» يبتلع المتن
       if (it.kind === "tocsdt") { it.toc = true; continue; }
       if (it.kind === "p" && /\bTOC\b/.test(Array.prototype.map.call(it.node.getElementsByTagNameNS(W, "instrText"), function (n) { return n.textContent; }).join(" "))) {
         var depth = 0, j = i;
@@ -778,7 +779,7 @@ var RESTYLE = (function () {
         var prevSp = prev && isW(prev, "p") && kid(kid(prev, "pPr"), "sectPr");
         if (!(prevSp && !paraText(prev).trim() && !hasDrawing(prev))) {
           var brk = mk(doc, "p"), bpp = mk(doc, "pPr");
-          var bs = mk(doc, "bookmarkStart", { id: "0", name: "RMEDGEN900" }), be = mk(doc, "bookmarkEnd", { id: "0" });
+          var bs = mk(doc, "bookmarkStart", { id: "0", name: "_Gs900" }), be = mk(doc, "bookmarkEnd", { id: "0" });
           bpp.appendChild(mk(doc, "spacing", { before: "0", after: "0", line: "20", lineRule: "exact" }));
           if (osp) bpp.appendChild(osp.cloneNode(true));
           brk.appendChild(bpp); brk.appendChild(bs); brk.appendChild(be);
