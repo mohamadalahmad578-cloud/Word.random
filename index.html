@@ -522,6 +522,15 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
             <small class="hint">احفظ لكل مادة: الألوان، الأحجام، نمط الغلاف، اسم الدكتور، الرابط… وبضغطة وحدة ترجع كلها. التصدير بيعطيك ملف JSON تنقله لجهاز تاني.</small>
           </div>
         </details>
+        <details class="sec" id="decoSec" open>
+          <summary>زخرفة الصفحات ✨</summary>
+          <div class="in">
+            <div class="decos" id="decos" role="radiogroup" aria-label="زخرفة الصفحات"></div>
+            <span class="lbl" style="display:block;margin:10px 0 6px">الوضوح</span>
+            <div class="seg" id="decoSeg" aria-label="وضوح الزخرفة"><button type="button" data-v="soft">خفيفة</button><button type="button" data-v="mid">متوسطة</button><button type="button" data-v="bold">واضحة</button></div>
+            <small class="hint">حركات كيمياء حيوية أو حركات المنصة على كل صفحات الملف، بالهوامش والزوايا بس، خلف النص. «حركات المنصة» بتطلع بهوية المنصة بس، وكل هوية بتحفظ زخرفتها لحالها.</small>
+          </div>
+        </details>
         <details class="sec" open>
           <summary>قالب الألوان</summary>
           <div class="in">
@@ -570,10 +579,6 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
           <div class="in">
             <div class="bgs" id="bgs" role="radiogroup" aria-label="خلفية الصفحات"></div>
             <div class="toggles" style="margin-top:10px"><label class="tg"><span>إطار مزدوج حول الصفحات<small>بلون القالب، في الفهرس والمتن</small></span><span class="sw-t"><input type="checkbox" id="optFrame"><span></span></span></label></div>
-            <span class="lbl" style="display:block;margin:12px 0 6px">زخرفة كل الصفحات ✨</span>
-            <div class="decos" id="decos" role="radiogroup" aria-label="زخرفة الصفحات"></div>
-            <div class="seg" id="decoSeg" style="margin-top:8px" aria-label="وضوح الزخرفة"><button type="button" data-v="soft">خفيفة</button><button type="button" data-v="mid">متوسطة</button><button type="button" data-v="bold">واضحة</button></div>
-            <small class="hint">الزخرفة بالهوامش والزوايا بس، خلف النص، فما بتغطي على الكتابة. «حركات المنصة» بتطلع بهوية المنصة بس، وكل هوية بتحفظ زخرفتها لحالها.</small>
             <small class="hint">الخلفية لون صفحة من Word نفسه، فتبقى مقروءة حتى بالوضع الداكن. ملاحظة: Word على الكمبيوتر لا يطبع لون الصفحة إلا إذا فعّلت «طباعة ألوان الخلفية»، أما ملف PDF من الموقع فيتضمنها دائماً.</small>
           </div>
         </details>
