@@ -63,6 +63,22 @@ var RMED_PDF = (function () {
       return new Blob(chunks, { type: "application/pdf" });
     }
   }
+  /* طبقة «ضد النسخ بالكاميرا/السكرين» (OCR): خطوط مائلة دقيقة ونقاط وحروف تمويه باهتة تُربك برامج قراءة النص من الصور وتبقى القراءة بالعين مريحة.
+     تُرسم مباشرة على الصورة (لا تدخل بتحقق الكلمات). */
+  function antiOcr(c, level, seed) {
+    var g = c.getContext("2d"), W = c.width, H = c.height, k = W / 595.28, s0 = (seed + 1) * 9301;
+    function rnd() { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; }
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+    function hatch(ang, gap, alpha, lw) { g.strokeStyle = "rgba(25,28,45," + alpha + ")"; g.lineWidth = lw; var t = Math.tan(ang * Math.PI / 180); g.beginPath(); for (var x = -H * Math.abs(t) - gap; x < W + H * Math.abs(t) + gap; x += gap) { g.moveTo(x, 0); g.lineTo(x + H * t, H); } g.stroke(); }
+    // نقاط صغيرة بحجم نقاط الحروف العربية: العين بتتجاهلها، وبرامج قراءة النص بتخلطها مع نقاط الحروف (ب/ت/ث، ج/خ…) فيطلع النص مخربط
+    var strong = level === "strong", dens = strong ? 0.012 : 0.008, al = strong ? 0.5 : 0.4, r = Math.max(1.2, 0.83 * k), n = Math.round(W * H * dens * (1.8 / k) * (1.8 / k));
+    g.fillStyle = "rgba(25,28,45," + al + ")";
+    for (var d = 0; d < n; d++) { g.beginPath(); g.arc(rnd() * W, rnd() * H, r, 0, 6.2832); g.fill(); }
+    if (strong) hatch(35, Math.max(3, 2.1 * k), 0.2, Math.max(1, 0.5 * k));
+    g.fillStyle = "rgba(255,255,255," + (strong ? 0.55 : 0.45) + ")"; // نقاط فاتحة: تشتغل على الأشرطة الغامقة (العناوين البيضاء على كحلي)
+    for (var d2 = 0, n2 = Math.round(n * 0.6); d2 < n2; d2++) { g.beginPath(); g.arc(rnd() * W, rnd() * H, r, 0, 6.2832); g.fill(); }
+    g.restore();
+  }
   function canvasJpeg(c, q) { return new Promise(function (res) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); }, "image/jpeg", q); }); }
 
   /* ---------- البناء ---------- */
@@ -565,6 +581,7 @@ var RMED_PDF = (function () {
     // صور الصفحات → PDF
     var out = [], chain = Promise.resolve();
     pages.forEach(function (p, i) {
+      if (opt.antiOcr && opt.antiOcr !== "none") antiOcr(p.c, opt.antiOcr, i);
       chain = chain.then(function () { return canvasJpeg(p.c, opt.quality || 0.85); }).then(function (jp) {
         out.push({ jpeg: jp, w: p.c.width, h: p.c.height, links: p.links }); p.c.width = p.c.height = 1; if (opt.onEncode) opt.onEncode(i + 1, pages.length);
       });

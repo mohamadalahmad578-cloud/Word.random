@@ -1,0 +1,20 @@
+const __P=require('path'),__FX=__P.join(__dirname,'fixtures')+'/',__OUT=__P.join(__dirname,'out')+'/';require('fs').mkdirSync(__OUT,{recursive:true});
+const { chromium } = require(process.env.PW||'/opt/node-tools/node_modules/playwright');const fs=require('fs'),path=require('path');
+const OUT=process.env.OUT||__OUT+'aocr/'; fs.mkdirSync(OUT,{recursive:true});
+(async()=>{const b=await chromium.launch({executablePath:(process.env.CHROME||'/opt/pw-browsers/chromium-1194/chrome-linux/chrome')});
+ const ctx=await b.newContext({viewport:{width:390,height:844},acceptDownloads:true}); const pg=await ctx.newPage(); const errs=[];
+ pg.on('pageerror',e=>errs.push(e.message));
+ await pg.route('**/*',r=>{const u=r.request().url();
+  if(u.includes('docx@'))return r.fulfill({body:fs.readFileSync(__P.join(__dirname,'../vendor/docx.iife.js')),contentType:'application/javascript'});
+  if(u.includes('jszip'))return r.fulfill({body:fs.readFileSync(__P.join(__dirname,'../vendor/jszip.min.js')),contentType:'application/javascript'});
+  if(u.includes('localhost:8765'))return r.fulfill({body:fs.readFileSync(path.join(__dirname,'../src/index.html')),contentType:'text/html; charset=utf-8'});
+  return r.abort();});
+ await pg.goto('http://localhost:8765/index.html'); await pg.evaluate(()=>localStorage.clear()); await pg.reload(); await pg.waitForFunction(()=>window.docx&&window.JSZip);
+ await pg.evaluate(()=>{document.querySelectorAll('details').forEach(d=>d.open=true)});
+ const dl=async(sel,name)=>{const [d]=await Promise.all([pg.waitForEvent('download',{timeout:120000}),pg.click(sel)]); await d.saveAs(OUT+name); await pg.waitForFunction(()=>!document.querySelector('#pdfBtn').disabled); return (await pg.textContent('#msg'));};
+ await pg.fill('#src', fs.readFileSync(process.env.SRC||__FX+'sample.md','utf8')); await pg.waitForTimeout(400);
+ console.log('none:', await dl('#pdfBtn','none.pdf'));
+ await pg.evaluate(()=>document.querySelector('#protOn').click()); await pg.evaluate(()=>{const c=document.querySelector('#protWord');if(c.checked)c.click();});
+ await pg.evaluate(()=>{const c=document.querySelector('#protNoPrint');if(c.checked)c.click(); const d=document.querySelector('#protNoCopy');if(d.checked)d.click();});
+ for (const lv of ['light','strong']) { await pg.click(`#antiOcrSeg button[data-v="${lv}"]`); console.log(lv+':', await dl('#pdfBtn',lv+'.pdf')); }
+ console.log('lbl', await pg.textContent('#protLbl'), 'errors',errs); await b.close();})().catch(e=>{console.error(e);process.exit(1)});

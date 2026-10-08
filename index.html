@@ -507,6 +507,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
                 <label class="tg"><span>منع الطباعة (PDF)</span><span class="sw-t"><input type="checkbox" id="protNoPrint"><span></span></span></label>
                 <label class="tg"><span>منع النسخ والتعديل (PDF)<small>صفحات الـ PDF أصلاً صور، فالنص ما بينسخ</small></span><span class="sw-t"><input type="checkbox" id="protNoCopy"><span></span></span></label>
               </div>
+              <div class="field"><span class="lbl">ضد النسخ من السكرين/الكاميرا (PDF) 📷</span><div class="seg" id="antiOcrSeg" role="radiogroup" aria-label="ضد النسخ من الصورة"><button type="button" data-v="none">بدون</button><button type="button" data-v="light">خفيفة</button><button type="button" data-v="strong">قوية</button></div><small class="hint">بتنحط على صفحات الـ PDF طبقة خطوط ونقاط وحروف تمويه باهتة، فإذا حدا صوّر الصفحة أو أخد سكرين وجرّب «نسخ النص من الصورة» بيطلعلو نص مخربط. القراءة بالعين بتضل مريحة. «قوية» أشد بس الصفحة بتبين محبّبة شوي.</small></div>
               <div class="field"><span class="lbl">حماية ملف PDF جاهز عندك 📄</span><div class="prow"><label class="btn">⬆ اختار ملف PDF<input type="file" id="protPdfIn" accept="application/pdf,.pdf" class="sr"></label></div><small class="hint">حوّلت الملف لـ PDF من Word عندك؟ ارفعه هون وبتنزل نسخة محمية بالإعدادات اللي فوق (كلمة السر ومنع الطباعة والنسخ). المحتوى ما بيتغيّر ولا حرف، وكل شي بيصير على جهازك.</small></div>
               <div class="field"><label class="lbl" for="protOwner">كلمة سر المالك للـ PDF <small style="font-weight:400;color:var(--ink-soft)">(اختيارية — لترفع القيود لاحقاً)</small></label><input class="inp" id="protOwner" type="password" dir="ltr" autocomplete="new-password" maxlength="64" placeholder="إذا تركتها فاضية بتنعمل عشوائية"></div>
               <small class="hint">⚠️ كلمات السر ما بتنحفظ بالمتصفح، بتنمسح لما تسكّر الصفحة. احفظها عندك: إذا ضاعت كلمة سر Word ما في أي طريقة لفتح الملف. ملف Word ما فيه منع طباعة أو نسخ، هاد بس بالـ PDF.</small>
@@ -1971,6 +1972,22 @@ var RMED_PDF = (function () {
       return new Blob(chunks, { type: "application/pdf" });
     }
   }
+  /* طبقة «ضد النسخ بالكاميرا/السكرين» (OCR): خطوط مائلة دقيقة ونقاط وحروف تمويه باهتة تُربك برامج قراءة النص من الصور وتبقى القراءة بالعين مريحة.
+     تُرسم مباشرة على الصورة (لا تدخل بتحقق الكلمات). */
+  function antiOcr(c, level, seed) {
+    var g = c.getContext("2d"), W = c.width, H = c.height, k = W / 595.28, s0 = (seed + 1) * 9301;
+    function rnd() { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; }
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+    function hatch(ang, gap, alpha, lw) { g.strokeStyle = "rgba(25,28,45," + alpha + ")"; g.lineWidth = lw; var t = Math.tan(ang * Math.PI / 180); g.beginPath(); for (var x = -H * Math.abs(t) - gap; x < W + H * Math.abs(t) + gap; x += gap) { g.moveTo(x, 0); g.lineTo(x + H * t, H); } g.stroke(); }
+    // نقاط صغيرة بحجم نقاط الحروف العربية: العين بتتجاهلها، وبرامج قراءة النص بتخلطها مع نقاط الحروف (ب/ت/ث، ج/خ…) فيطلع النص مخربط
+    var strong = level === "strong", dens = strong ? 0.012 : 0.008, al = strong ? 0.5 : 0.4, r = Math.max(1.2, 0.83 * k), n = Math.round(W * H * dens * (1.8 / k) * (1.8 / k));
+    g.fillStyle = "rgba(25,28,45," + al + ")";
+    for (var d = 0; d < n; d++) { g.beginPath(); g.arc(rnd() * W, rnd() * H, r, 0, 6.2832); g.fill(); }
+    if (strong) hatch(35, Math.max(3, 2.1 * k), 0.2, Math.max(1, 0.5 * k));
+    g.fillStyle = "rgba(255,255,255," + (strong ? 0.55 : 0.45) + ")"; // نقاط فاتحة: تشتغل على الأشرطة الغامقة (العناوين البيضاء على كحلي)
+    for (var d2 = 0, n2 = Math.round(n * 0.6); d2 < n2; d2++) { g.beginPath(); g.arc(rnd() * W, rnd() * H, r, 0, 6.2832); g.fill(); }
+    g.restore();
+  }
   function canvasJpeg(c, q) { return new Promise(function (res) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); }, "image/jpeg", q); }); }
 
   /* ---------- البناء ---------- */
@@ -2473,6 +2490,7 @@ var RMED_PDF = (function () {
     // صور الصفحات → PDF
     var out = [], chain = Promise.resolve();
     pages.forEach(function (p, i) {
+      if (opt.antiOcr && opt.antiOcr !== "none") antiOcr(p.c, opt.antiOcr, i);
       chain = chain.then(function () { return canvasJpeg(p.c, opt.quality || 0.85); }).then(function (jp) {
         out.push({ jpeg: jp, w: p.c.width, h: p.c.height, links: p.links }); p.c.width = p.c.height = 1; if (opt.onEncode) opt.onEncode(i + 1, pages.length);
       });
@@ -5431,7 +5449,7 @@ var ENGINE = (function () {
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
     keepParas: true, origLine: true, pageBg: "none", pageFrame: false, pageDeco: "none", decoStrength: "mid",
-    activeSlot: "platform", slotPlatform: "", slotDoctor: "", wordSmart: false, smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
+    activeSlot: "platform", slotPlatform: "", slotDoctor: "", wordSmart: false, smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protAntiOcr: "none", protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
@@ -6295,13 +6313,13 @@ var ENGINE = (function () {
       if (s.wm) A.wm = s._doctorId ? pptWmCanvas(s) : drawWatermark(s);
       var dk2 = decoFor(Object.assign({}, s, { _mixedPages: false })); if (dk2) A.deco = drawDeco(dk2, T, 1, s.decoStrength, null, !!s.pageFrame);
       return new Promise(function (r) { setTimeout(r, 30); }).then(function () {
-        return RMED_PDF.build(m, A, { scale: 1.8, quality: 0.8, title: m.name, protect: popt, onEncode: function (i, n) { prog(10 + Math.round(85 * i / n)); } });
+        return RMED_PDF.build(m, A, { scale: 1.8, quality: 0.8, title: m.name, protect: popt, antiOcr: S.protOn ? (S.protAntiOcr || "none") : "none", onEncode: function (i, n) { prog(10 + Math.round(85 * i / n)); } });
       });
     }).then(function (r) {
       var c = ENGINE.compare(RMED_PDF.expectedWords(m), ENGINE.tokens(r.words.join(" ")));
       saveBlob(r.blob, m.name + ".pdf");
       prog(100); setTimeout(function () { prog(null); }, 700);
-      show(c.ok ? "ok" : "err", (c.ok ? "تم إنشاء PDF (" + r.pages + " صفحة)" + (r.protected ? " 🔒 محمي" + (popt.userPw ? " بكلمة سر" : "") + (popt.noPrint ? "، بلا طباعة" : "") : "") + " وبدأ التنزيل ✓ — تحقق الكلمات: " + c.inCount + " كلمة بدون أي فرق." : "تم إنشاء PDF لكن تحقق الكلمات وجد " + (c.missing.length + c.extra.length) + " فرق.") + (m.note ? " " + m.note : ""));
+      show(c.ok ? "ok" : "err", (c.ok ? "تم إنشاء PDF (" + r.pages + " صفحة)" + (r.protected ? " 🔒 محمي" + (popt.userPw ? " بكلمة سر" : "") + (popt.noPrint ? "، بلا طباعة" : "") : "") + (S.protOn && S.protAntiOcr && S.protAntiOcr !== "none" ? " 📷 ضد النسخ من الصورة" : "") + " وبدأ التنزيل ✓ — تحقق الكلمات: " + c.inCount + " كلمة بدون أي فرق." : "تم إنشاء PDF لكن تحقق الكلمات وجد " + (c.missing.length + c.extra.length) + " فرق.") + (m.note ? " " + m.note : ""));
       if (!c.ok && window.console) console.warn("PDF check " + JSON.stringify({ missing: c.missing, extra: c.extra }));
     }).catch(function (e) { prog(null); show("err", "تعذّر إنشاء PDF: " + (e && e.message ? e.message : e)); if (window.console) console.error(e); })
       .then(function () { busy = false; $("dlBtn").disabled = $("dlBtn2").disabled = $("pdfBtn").disabled = false; });
@@ -6881,7 +6899,8 @@ var ENGINE = (function () {
     $("protOn").checked = !!S.protOn; $("protBox").hidden = !S.protOn;
     ["protWord", "protPdf", "protNoPrint", "protNoCopy"].forEach(function (k) { $(k).checked = S[k] !== false; });
     $("protNoPrint").disabled = $("protNoCopy").disabled = $("protOwner").disabled = !S.protPdf;
-    var on = []; if (S.protOn) { if (S.protWord && protPw) on.push("Word"); if (protPdfOpts()) on.push("PDF"); }
+    Array.prototype.forEach.call($("antiOcrSeg").children, function (b) { b.classList.toggle("sel", b.dataset.v === (S.protAntiOcr || "none")); });
+    var on = []; if (S.protOn) { if (S.protWord && protPw) on.push("Word"); if (protPdfOpts()) on.push("PDF"); if (S.protAntiOcr && S.protAntiOcr !== "none") on.push("📷"); }
     $("protLbl").textContent = !S.protOn ? "مطفأة" : on.length ? "🔒 " + on.join(" + ") : "ناقصها كلمة سر";
   }
   ["protOn", "protWord", "protPdf", "protNoPrint", "protNoCopy"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); paintProt(); }; });
@@ -6899,6 +6918,7 @@ var ENGINE = (function () {
     }).catch(function (er) { prog(null); show("err", "تعذّرت حماية الملف: " + (er && er.message ? er.message : er)); if (window.console) console.error(er); })
       .then(function () { busy = false; });
   };
+  Array.prototype.forEach.call($("antiOcrSeg").children, function (b) { b.onclick = function () { S.protAntiOcr = b.dataset.v; save(); paintProt(); }; });
   $("protEye").onclick = function () { var t = $("protPw").type === "password" ? "text" : "password"; $("protPw").type = $("protOwner").type = t; };
   paintProt();
   paintPpt();
