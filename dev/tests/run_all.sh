@@ -18,3 +18,4 @@ echo "== التنسيق الذكي"; node smart_t.js 2>&1 | grep -E "check:|pdf:
 echo "== فصل هوية المنصة عن هوية الدكتور"; node sep_t.js 2>&1 | grep -E "✓|✗|FAIL"
 echo "== زخرفة الصفحات"; node deco_t.js 2>&1 | grep -E "^(hexa|bwave)|errors"
 echo "== التنسيق الذكي لملفات Word"; node wsmart_t.js 2>&1 | grep -E "on:|errors"
+echo "== حماية PDF جاهز مع ضد النسخ من السكرين"; node rast_t.js 2>&1 | grep -E "strong:|pw:|errors"

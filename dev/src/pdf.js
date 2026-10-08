@@ -24,11 +24,11 @@ var RMED_PDF = (function () {
   // sec (اختياري): حماية AES-256 من RMED_PROTECT.pdfSecurity — تُشفَّر كل المجاري والنصوص
   function writePdf(pages, title, sec, creator) {
     var enc = new TextEncoder();
-    var csText = "q " + PW + " 0 0 " + PH + " 0 0 cm /Im0 Do Q", csBytes = enc.encode(csText);
+    function csOf(p) { return enc.encode("q " + f2(p.pw || PW) + " 0 0 " + f2(p.ph || PH) + " 0 0 cm /Im0 Do Q"); } // مقاس كل صفحة (A4 افتراضياً)
     if (!sec) return Promise.resolve(emit(null));
     var jobs = [sec.enc(strBytes(title)).then(function (b) { title = b; })];
     pages.forEach(function (p) {
-      jobs.push(sec.enc(csBytes).then(function (b) { p.encCs = b; }), sec.enc(p.jpeg).then(function (b) { p.encJpeg = b; }));
+      jobs.push(sec.enc(csOf(p)).then(function (b) { p.encCs = b; }), sec.enc(p.jpeg).then(function (b) { p.encJpeg = b; }));
       p.encUrl = []; p.links.forEach(function (l, k) { jobs.push(sec.enc(strBytes(l.url)).then(function (b) { p.encUrl[k] = b; })); });
     });
     return Promise.all(jobs).then(function () { return emit(sec); });
@@ -45,13 +45,14 @@ var RMED_PDF = (function () {
       obj(2, ["<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + pages.length + " >>"]);
       obj(3, ["<< /Title " + (sec ? hexs(title) : pdfStr(title) + (creator ? " /Creator " + pdfStr(creator) + " /Producer " + pdfStr(creator) : "")) + " >>"]);
       pages.forEach(function (p) {
-        obj(p.o, ["<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PW + " " + PH + "] /Resources << /XObject << /Im0 " + p.im + " 0 R >> >> /Contents " + p.c + " 0 R" +
+        var pw = p.pw || PW, ph = p.ph || PH;
+        obj(p.o, ["<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + f2(pw) + " " + f2(ph) + "] /Resources << /XObject << /Im0 " + p.im + " 0 R >> >> /Contents " + p.c + " 0 R" +
           (p.an.length ? " /Annots [" + p.an.map(function (n) { return n + " 0 R"; }).join(" ") + "]" : "") + " >>"]);
-        var cs = sec ? p.encCs : csBytes, jp = sec ? p.encJpeg : p.jpeg;
+        var cs = sec ? p.encCs : csOf(p), jp = sec ? p.encJpeg : p.jpeg;
         obj(p.c, ["<< /Length " + cs.length + " >>\nstream\n", cs, "\nendstream"]);
         obj(p.im, ["<< /Type /XObject /Subtype /Image /Width " + p.w + " /Height " + p.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + jp.length + " >>\nstream\n", jp, "\nendstream"]);
         p.links.forEach(function (l, k) {
-          obj(p.an[k], ["<< /Type /Annot /Subtype /Link /Rect [" + [l.x, PH - l.y - l.h, l.x + l.w, PH - l.y].map(f2).join(" ") + "] /Border [0 0 0] /A << /S /URI /URI " + (sec ? hexs(p.encUrl[k]) : pdfStr(l.url)) + " >> >>"]);
+          obj(p.an[k], ["<< /Type /Annot /Subtype /Link /Rect [" + [l.x, ph - l.y - l.h, l.x + l.w, ph - l.y].map(f2).join(" ") + "] /Border [0 0 0] /A << /S /URI /URI " + (sec ? hexs(p.encUrl[k]) : pdfStr(l.url)) + " >> >>"]);
         });
       });
       if (sec) obj(encObj, [sec.dict]);
@@ -608,5 +609,26 @@ var RMED_PDF = (function () {
     m.L.forEach(function (L) { if (L.title !== null) inl(L.titleInl || [{ text: L.title }]); if (L.intro) inl(L.intro); blocksW(L.blocks); L.outro.forEach(inl); });
     return ENGINE.tokens(parts.join("\n"));
   }
-  return { build: build, expectedWords: expectedWords };
+  /* تحويل ملف PDF جاهز إلى صفحات صور محمية (ضد النسخ من الصورة) — pdfjsLib = مكتبة Mozilla pdf.js */
+  function rasterize(lib, data, opt) {
+    opt = opt || {}; var scale = opt.scale || 1.8, out = [];
+    return lib.getDocument({ data: data, isEvalSupported: false }).promise.then(function (doc) {
+      var chain = Promise.resolve();
+      for (var i = 1; i <= doc.numPages; i++) (function (i) {
+        chain = chain.then(function () { return doc.getPage(i); }).then(function (page) {
+          var vp0 = page.getViewport({ scale: 1 }), sc = Math.min(scale, 4000 / Math.max(vp0.width, vp0.height)), vp = page.getViewport({ scale: sc });
+          var c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+          var g = c.getContext("2d"); g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, c.width, c.height);
+          return page.render({ canvasContext: g, viewport: vp }).promise.then(function () {
+            if (opt.antiOcr && opt.antiOcr !== "none") antiOcr(c, opt.antiOcr, i - 1);
+            return canvasJpeg(c, opt.quality || 0.82);
+          }).then(function (jp) { out.push({ jpeg: jp, w: c.width, h: c.height, pw: vp0.width, ph: vp0.height, links: [] }); c.width = c.height = 1; page.cleanup(); if (opt.onPage) opt.onPage(i, doc.numPages); });
+        });
+      })(i);
+      return chain.then(function () { var n = doc.numPages; doc.destroy(); return n; });
+    }).then(function (n) {
+      return (opt.protect && window.RMED_PROTECT ? RMED_PROTECT.pdfSecurity(opt.protect) : Promise.resolve(null)).then(function (sec) { return writePdf(out, opt.title || "", sec, ""); }).then(function (blob) { return { blob: blob, pages: n }; });
+    });
+  }
+  return { build: build, expectedWords: expectedWords, rasterize: rasterize, antiOcr: antiOcr };
 })();

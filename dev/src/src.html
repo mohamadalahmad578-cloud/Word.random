@@ -508,7 +508,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
                 <label class="tg"><span>منع النسخ والتعديل (PDF)<small>صفحات الـ PDF أصلاً صور، فالنص ما بينسخ</small></span><span class="sw-t"><input type="checkbox" id="protNoCopy"><span></span></span></label>
               </div>
               <div class="field"><span class="lbl">ضد النسخ من السكرين/الكاميرا (PDF) 📷</span><div class="seg" id="antiOcrSeg" role="radiogroup" aria-label="ضد النسخ من الصورة"><button type="button" data-v="none">بدون</button><button type="button" data-v="light">خفيفة</button><button type="button" data-v="strong">قوية</button></div><small class="hint">بتنحط على صفحات الـ PDF طبقة خطوط ونقاط وحروف تمويه باهتة، فإذا حدا صوّر الصفحة أو أخد سكرين وجرّب «نسخ النص من الصورة» بيطلعلو نص مخربط. القراءة بالعين بتضل مريحة. «قوية» أشد بس الصفحة بتبين محبّبة شوي.</small></div>
-              <div class="field"><span class="lbl">حماية ملف PDF جاهز عندك 📄</span><div class="prow"><label class="btn">⬆ اختار ملف PDF<input type="file" id="protPdfIn" accept="application/pdf,.pdf" class="sr"></label></div><small class="hint">حوّلت الملف لـ PDF من Word عندك؟ ارفعه هون وبتنزل نسخة محمية بالإعدادات اللي فوق (كلمة السر ومنع الطباعة والنسخ). المحتوى ما بيتغيّر ولا حرف، وكل شي بيصير على جهازك.</small></div>
+              <div class="field"><span class="lbl">حماية ملف PDF جاهز عندك 📄</span><div class="prow"><label class="btn">⬆ اختار ملف PDF<input type="file" id="protPdfIn" accept="application/pdf,.pdf" class="sr"></label></div><small class="hint">حوّلت الملف لـ PDF من Word عندك؟ ارفعه هون وبتنزل نسخة محمية بالإعدادات اللي فوق (كلمة السر، منع الطباعة والنسخ، وضد النسخ من السكرين). إذا اخترت «ضد النسخ من السكرين» بتتحوّل الصفحات لصور عليها الطبقة، فالنص ما عاد ينسخ أبداً. كل شي بيصير على جهازك.</small></div>
               <div class="field"><label class="lbl" for="protOwner">كلمة سر المالك للـ PDF <small style="font-weight:400;color:var(--ink-soft)">(اختيارية — لترفع القيود لاحقاً)</small></label><input class="inp" id="protOwner" type="password" dir="ltr" autocomplete="new-password" maxlength="64" placeholder="إذا تركتها فاضية بتنعمل عشوائية"></div>
               <small class="hint">⚠️ كلمات السر ما بتنحفظ بالمتصفح، بتنمسح لما تسكّر الصفحة. احفظها عندك: إذا ضاعت كلمة سر Word ما في أي طريقة لفتح الملف. ملف Word ما فيه منع طباعة أو نسخ، هاد بس بالـ PDF.</small>
             </div>
@@ -3047,16 +3047,42 @@ var ENGINE = (function () {
   ["protOn", "protWord", "protPdf", "protNoPrint", "protNoCopy"].forEach(function (k) { $(k).onchange = function () { S[k] = this.checked; save(); paintProt(); }; });
   $("protPw").oninput = function () { protPw = this.value; paintProt(); };
   $("protOwner").oninput = function () { protOwner = this.value; };
+  /* مكتبة Mozilla pdf.js لقراءة ورسم ملفات PDF (تُحمَّل عند أول حاجة فقط) */
+  var pdfjsP = null;
+  function loadPdfJs() {
+    if (pdfjsP) return pdfjsP;
+    var V = "3.11.174", SRC = [["https://cdnjs.cloudflare.com/ajax/libs/pdf.js/" + V + "/pdf.min.js", "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/" + V + "/pdf.worker.min.js"], ["https://cdn.jsdelivr.net/npm/pdfjs-dist@" + V + "/build/pdf.min.js", "https://cdn.jsdelivr.net/npm/pdfjs-dist@" + V + "/build/pdf.worker.min.js"]], k = 0;
+    function txt(u) { return fetch(u).then(function (r) { if (!r.ok) throw new Error("net"); return r.text(); }); }
+    function next() {
+      if (k >= SRC.length) return Promise.reject(new Error("تعذّر تحميل قارئ PDF — تأكد من الاتصال بالإنترنت."));
+      var src = SRC[k++];
+      return Promise.all([txt(src[0]), txt(src[1])]).then(function (x) {
+        var sc = document.createElement("script"); sc.textContent = x[0]; document.head.appendChild(sc);
+        var lib = window.pdfjsLib || (window["pdfjs-dist/build/pdf"]); if (!lib || !lib.getDocument) throw new Error("lib");
+        lib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([x[1]], { type: "text/javascript" }));
+        return lib;
+      }).catch(function () { return next(); });
+    }
+    pdfjsP = next(); pdfjsP.catch(function () { pdfjsP = null; }); return pdfjsP;
+  }
+  window.RMED_loadPdfJs = loadPdfJs; // للاختبار الآلي
   $("protPdfIn").onchange = function (e) {
     var f = e.target.files[0]; e.target.value = ""; if (!f) return; if (busy) return;
     if (!window.RMED_PROTECT || !(window.crypto && window.crypto.subtle) || typeof DecompressionStream === "undefined") return show("err", "المتصفح ما بيدعم هالميزة — جرّب Chrome أو Safari محدّث، وافتح الموقع من رابطه.");
-    var o = { userPw: protPw, ownerPw: protOwner, noPrint: !!S.protNoPrint, noCopy: !!S.protNoCopy };
-    if (!o.userPw && !o.noPrint && !o.noCopy) return show("err", "ما في شي نحميه: اكتب كلمة سر أو فعّل منع الطباعة/النسخ.");
-    busy = true; show("info", "جارٍ حماية «" + f.name + "»…"); prog(30);
-    RMED_PROTECT.protectPdf(f, o).then(function (r) {
-      saveRaw(r.blob, f.name.replace(/\.pdf$/i, "") + " - محمي.pdf"); prog(100); setTimeout(function () { prog(null); }, 700);
-      show("ok", "تمت حماية الملف (" + r.pages + " صفحة) 🔒" + (o.userPw ? " بكلمة سر" : "") + (o.noPrint ? "، بلا طباعة" : "") + (o.noCopy ? "، بلا نسخ" : "") + " وبدأ التنزيل ✓");
-    }).catch(function (er) { prog(null); show("err", "تعذّرت حماية الملف: " + (er && er.message ? er.message : er)); if (window.console) console.error(er); })
+    var o = { userPw: protPw, ownerPw: protOwner, noPrint: !!S.protNoPrint, noCopy: !!S.protNoCopy }, aoc = S.protAntiOcr && S.protAntiOcr !== "none" ? S.protAntiOcr : null, enc = !!(o.userPw || o.noPrint || o.noCopy);
+    if (!enc && !aoc) return show("err", "ما في شي نحميه: اكتب كلمة سر، أو فعّل منع الطباعة/النسخ، أو اختار «ضد النسخ من السكرين».");
+    var outName = f.name.replace(/\.pdf$/i, "") + " - محمي.pdf";
+    function done(r) {
+      saveRaw(r.blob, outName); prog(100); setTimeout(function () { prog(null); }, 700);
+      show("ok", "تمت حماية الملف (" + r.pages + " صفحة) 🔒" + (o.userPw ? " بكلمة سر" : "") + (o.noPrint ? "، بلا طباعة" : "") + (o.noCopy ? "، بلا نسخ" : "") + (aoc ? "، 📷 ضد النسخ من الصورة" : "") + " وبدأ التنزيل ✓");
+    }
+    busy = true; show("info", "جارٍ حماية «" + f.name + "»…"); prog(10);
+    var job = aoc
+      ? Promise.all([loadPdfJs(), f.arrayBuffer()]).then(function (x) { // ضد النسخ من الصورة: نحوّل كل صفحة لصورة عليها الطبقة (النص ما عاد ينسخ أبداً)
+          return RMED_PDF.rasterize(x[0], new Uint8Array(x[1]), { antiOcr: aoc, title: f.name.replace(/\.pdf$/i, ""), protect: enc ? o : null, onPage: function (i, n) { prog(10 + Math.round(85 * i / n)); show("info", "جارٍ حماية الصفحة " + i + " من " + n + "…"); } });
+        })
+      : RMED_PROTECT.protectPdf(f, o);
+    job.then(done).catch(function (er) { prog(null); show("err", "تعذّرت حماية الملف: " + (er && er.message ? er.message : er)); if (window.console) console.error(er); })
       .then(function () { busy = false; });
   };
   Array.prototype.forEach.call($("antiOcrSeg").children, function (b) { b.onclick = function () { S.protAntiOcr = b.dataset.v; save(); paintProt(); }; });
