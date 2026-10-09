@@ -521,7 +521,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
                 <label class="tg"><span>منع الطباعة (PDF)</span><span class="sw-t"><input type="checkbox" id="protNoPrint"><span></span></span></label>
                 <label class="tg"><span>منع النسخ والتعديل (PDF)<small>صفحات الـ PDF أصلاً صور، فالنص ما بينسخ</small></span><span class="sw-t"><input type="checkbox" id="protNoCopy"><span></span></span></label>
               </div>
-              <div class="field"><span class="lbl">ضد النسخ من السكرين/الكاميرا (PDF) 📷</span><div class="seg" id="antiOcrSeg" role="radiogroup" aria-label="ضد النسخ من الصورة"><button type="button" data-v="none">بدون</button><button type="button" data-v="light">خفيفة</button><button type="button" data-v="strong">قوية</button><button type="button" data-v="max">قصوى 📱</button></div><small class="hint">بتنحط على صفحات الـ PDF طبقة خطوط ونقاط وحروف تمويه باهتة، فإذا حدا صوّر الصفحة أو أخد سكرين وجرّب «نسخ النص من الصورة» بيطلعلو نص مخربط. القراءة بالعين بتضل مريحة. «قوية» أشد بس الصفحة بتبين محبّبة شوي. «قصوى 📱» للآيفون والموبايلات الحديثة: بتقطع خط وصل الحروف بفتحات رفيعة وبترش حروف وهمية باهتة — الصفحة بتصير أخشن شوي.</small></div>
+              <div class="field"><span class="lbl">ضد النسخ من السكرين/الكاميرا (PDF) 📷</span><div class="seg" id="antiOcrSeg" role="radiogroup" aria-label="ضد النسخ من الصورة"><button type="button" data-v="none">بدون</button><button type="button" data-v="clean">نظيفة ✨</button><button type="button" data-v="light">خفيفة</button><button type="button" data-v="strong">قوية</button><button type="button" data-v="max">قصوى 📱</button></div><small class="hint">بتنحط على صفحات الـ PDF طبقة خطوط ونقاط وحروف تمويه باهتة، فإذا حدا صوّر الصفحة أو أخد سكرين وجرّب «نسخ النص من الصورة» بيطلعلو نص مخربط. القراءة بالعين بتضل مريحة. «قوية» أشد بس الصفحة بتبين محبّبة شوي. «نظيفة ✨» بلا حبوب أبداً: علامة مائية مائلة متكررة باسم المنصة بتقطع السطور + فتحات رفيعة بخط وصل الحروف — شكلها متل الملفات الممسوحة. «قصوى 📱» للآيفون والموبايلات الحديثة: بتقطع خط وصل الحروف بفتحات رفيعة وبترش حروف وهمية باهتة — الصفحة بتصير أخشن شوي.</small></div>
               <div class="field"><span class="lbl">حماية ملف PDF جاهز عندك 📄</span><div class="prow"><label class="btn">⬆ اختار ملف PDF<input type="file" id="protPdfIn" accept="application/pdf,.pdf" class="sr"></label></div><small class="hint">حوّلت الملف لـ PDF من Word عندك؟ ارفعه هون وبتنزل نسخة محمية بالإعدادات اللي فوق (كلمة السر، منع الطباعة والنسخ، وضد النسخ من السكرين). إذا اخترت «ضد النسخ من السكرين» بتتحوّل الصفحات لصور عليها الطبقة، فالنص ما عاد ينسخ أبداً. كل شي بيصير على جهازك.</small></div>
               <div class="field"><label class="lbl" for="protOwner">كلمة سر المالك للـ PDF <small style="font-weight:400;color:var(--ink-soft)">(اختيارية — لترفع القيود لاحقاً)</small></label><input class="inp" id="protOwner" type="password" dir="ltr" autocomplete="new-password" maxlength="64" placeholder="إذا تركتها فاضية بتنعمل عشوائية"></div>
               <small class="hint">⚠️ كلمات السر ما بتنحفظ بالمتصفح، بتنمسح لما تسكّر الصفحة. احفظها عندك: إذا ضاعت كلمة سر Word ما في أي طريقة لفتح الملف. ملف Word ما فيه منع طباعة أو نسخ، هاد بس بالـ PDF.</small>
@@ -1990,9 +1990,10 @@ var RMED_PDF = (function () {
   }
   /* طبقة «ضد النسخ بالكاميرا/السكرين» (OCR): خطوط مائلة دقيقة ونقاط وحروف تمويه باهتة تُربك برامج قراءة النص من الصور وتبقى القراءة بالعين مريحة.
      تُرسم مباشرة على الصورة (لا تدخل بتحقق الكلمات). */
-  function antiOcr(c, level, seed) {
+  function antiOcr(c, level, seed, mark) {
     var g = c.getContext("2d"), W = c.width, H = c.height, k = W / 595.28, s0 = (seed + 1) * 9301;
     function rnd() { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; }
+    if (level === "clean") { cutBaselines(c, rnd, k); tileMark(c, mark, rnd, k, seed); return; } // نظيفة: بلا حبوب — متل الملفات الممسوحة بعلامة مائية مائلة
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
     function hatch(ang, gap, alpha, lw) { g.strokeStyle = "rgba(25,28,45," + alpha + ")"; g.lineWidth = lw; var t = Math.tan(ang * Math.PI / 180); g.beginPath(); for (var x = -H * Math.abs(t) - gap; x < W + H * Math.abs(t) + gap; x += gap) { g.moveTo(x, 0); g.lineTo(x + H * t, H); } g.stroke(); }
     // نقاط صغيرة بحجم نقاط الحروف العربية: العين بتتجاهلها، وبرامج قراءة النص بتخلطها مع نقاط الحروف (ب/ت/ث، ج/خ…) فيطلع النص مخربط
@@ -2008,6 +2009,27 @@ var RMED_PDF = (function () {
   // «قصوى»: موجّهة لقرّاء النص القويين (Live Text بالآيفون…): نكتشف سطور النص ونقطع خط الوصل العربي (خط القاعدة) بفتحات رفيعة متقطعة،
   // ونرش حروف عربية وهمية باهتة بين السطور وفوقها حتى يختلط النص المنسوخ. العين بتكمّل الحرف المقطوع وبتتجاهل الباهت.
   function antiOcrMax(c, rnd, k) {
+    cutBaselines(c, rnd, k);
+    var g = c.getContext("2d"), W = c.width, H = c.height;
+    fakeLetters(g, W, H, rnd, k);
+  }
+  // علامة مائية نصية مائلة متكررة على كل الصفحة، تقطع السطور (مكانها وميلها بيتغيروا من صفحة لصفحة حتى ما تنشال بقالب واحد)
+  function tileMark(c, mark, rnd, k, seed) {
+    mark = String(mark || "").trim(); var g = c.getContext("2d"), W = c.width, H = c.height;
+    g.save();
+    if (mark) {
+      var fz = 15 * k, ang = -(26 + rnd() * 10) * Math.PI / 180;
+      g.font = "700 " + Math.round(fz) + "px 'El Messiri','IBM Plex Sans Arabic','Segoe UI',sans-serif"; g.textBaseline = "middle"; g.direction = /[\u0600-\u06FF]/.test(mark) ? "rtl" : "ltr";
+      var tw = g.measureText(mark).width + 46 * k, rowH = 58 * k, R = Math.hypot(W, H);
+      g.translate(W / 2, H / 2); g.rotate(ang); g.fillStyle = "rgba(30,36,60,0.12)";
+      for (var y = -R / 2 + rnd() * rowH, r = 0; y < R / 2; y += rowH, r++) for (var x = -R / 2 - (r % 2 ? tw / 2 : 0) - rnd() * tw * 0.3; x < R / 2; x += tw) g.fillText(mark, x, y);
+    } else { // بلا اسم (هوية دكتور بلا جهة): خطوط مائلة رفيعة
+      var t = Math.tan((30 + rnd() * 8) * Math.PI / 180), gap = 26 * k; g.strokeStyle = "rgba(30,36,60,0.14)"; g.lineWidth = Math.max(1, 0.7 * k); g.beginPath();
+      for (var x2 = -H * t; x2 < W + gap; x2 += gap) { g.moveTo(x2, 0); g.lineTo(x2 + H * t, H); } g.stroke();
+    }
+    g.restore();
+  }
+  function cutBaselines(c, rnd, k) {
     var g = c.getContext("2d"), W = c.width, H = c.height, im = g.getImageData(0, 0, W, H), D = im.data, cnt = new Uint32Array(H);
     for (var y = 0; y < H; y++) { var n = 0, o = y * W * 4; for (var x = 0; x < W; x++, o += 4) { var L = D[o] * 0.3 + D[o + 1] * 0.59 + D[o + 2] * 0.11; if (L < 120) n++; } cnt[y] = n; }
     var th = Math.max(3, W * 0.006), bands = [], y0 = -1;
@@ -2024,6 +2046,8 @@ var RMED_PDF = (function () {
       }
     });
     g.putImageData(im, 0, 0);
+  }
+  function fakeLetters(g, W, H, rnd, k) {
     var AR = "ابتثجحخدذرزسشصضطظعغفقكلمنهوية", FN = "'IBM Plex Sans Arabic','Noto Naskh Arabic','Segoe UI',sans-serif", nF = Math.round(W * H / (2600 * k * k));
     g.save(); g.textBaseline = "middle";
     for (var i = 0; i < nF; i++) {
@@ -2535,7 +2559,7 @@ var RMED_PDF = (function () {
     // صور الصفحات → PDF
     var out = [], chain = Promise.resolve();
     pages.forEach(function (p, i) {
-      if (opt.antiOcr && opt.antiOcr !== "none") antiOcr(p.c, opt.antiOcr, i);
+      if (opt.antiOcr && opt.antiOcr !== "none") antiOcr(p.c, opt.antiOcr, i, pfName);
       chain = chain.then(function () { return canvasJpeg(p.c, opt.quality || 0.85); }).then(function (jp) {
         out.push({ jpeg: jp, w: p.c.width, h: p.c.height, links: p.links }); p.c.width = p.c.height = 1; if (opt.onEncode) opt.onEncode(i + 1, pages.length);
       });
@@ -2573,7 +2597,7 @@ var RMED_PDF = (function () {
           var c = document.createElement("canvas"); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
           var g = c.getContext("2d"); g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, c.width, c.height);
           return page.render({ canvasContext: g, viewport: vp }).promise.then(function () {
-            if (opt.antiOcr && opt.antiOcr !== "none") antiOcr(c, opt.antiOcr, i - 1);
+            if (opt.antiOcr && opt.antiOcr !== "none") antiOcr(c, opt.antiOcr, i - 1, opt.mark);
             return canvasJpeg(c, opt.quality || 0.82);
           }).then(function (jp) { out.push({ jpeg: jp, w: c.width, h: c.height, pw: vp0.width, ph: vp0.height, links: [] }); c.width = c.height = 1; page.cleanup(); if (opt.onPage) opt.onPage(i, doc.numPages); });
         });
@@ -7190,7 +7214,7 @@ var ENGINE = (function () {
     busy = true; show("info", "جارٍ حماية «" + f.name + "»…"); prog(10);
     var job = aoc
       ? Promise.all([loadPdfJs(), f.arrayBuffer()]).then(function (x) { // ضد النسخ من الصورة: نحوّل كل صفحة لصورة عليها الطبقة (النص ما عاد ينسخ أبداً)
-          return RMED_PDF.rasterize(x[0], new Uint8Array(x[1]), { antiOcr: aoc, title: f.name.replace(/\.pdf$/i, ""), protect: enc ? o : null, onPage: function (i, n) { prog(10 + Math.round(85 * i / n)); show("info", "جارٍ حماية الصفحة " + i + " من " + n + "…"); } });
+          return RMED_PDF.rasterize(x[0], new Uint8Array(x[1]), { antiOcr: aoc, mark: platformName(effSettings()), title: f.name.replace(/\.pdf$/i, ""), protect: enc ? o : null, onPage: function (i, n) { prog(10 + Math.round(85 * i / n)); show("info", "جارٍ حماية الصفحة " + i + " من " + n + "…"); } });
         })
       : RMED_PROTECT.protectPdf(f, o);
     job.then(done).catch(function (er) { prog(null); show("err", "تعذّرت حماية الملف: " + (er && er.message ? er.message : er)); if (window.console) console.error(er); })
