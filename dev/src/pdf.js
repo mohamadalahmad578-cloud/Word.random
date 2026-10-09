@@ -287,6 +287,7 @@ var RMED_PDF = (function () {
     /* ---- ترويسة/تذييل صفحات المتن ---- */
     function bodyChrome() {
       if (dry) return;
+      if (A.wmRep) img(A.wmRep, 0, 0, PW, PH); // العلامة المتكررة بالقطر (إضافة)
       if (A.wm) { if (A.wm._full) img(A.wm, 0, 0, PW, PH); else { var ww = 430, wh = ww * A.wm.height / A.wm.width; img(A.wm, (PW - ww) / 2, (PH - wh) / 2, ww, wh); } }
       var hy = 46, hs = 8.5;
       if (A.logo && S.logo) { var lh2 = 13, lw2 = lh2 * A.logo.width / A.logo.height; img(A.logo, PW - MX - lw2, hy - lh2 + 2, lw2, lh2); }

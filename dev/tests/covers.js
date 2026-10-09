@@ -23,4 +23,8 @@ for(const st of (process.env.STYLES||'classic,block,band,geo,frame,wave,dna,mole
  },[src,st,theme]);
  fs.writeFileSync(__OUT+`cov_${st}.docx`,Buffer.from(b64,'base64'));
 }
-console.log((await pg.evaluate(()=>window.__covChk)).join(' ')); console.log('errors',errs); await b.close();})();
+console.log((await pg.evaluate(()=>window.__covChk)).join(' '));
+ const wr=await pg.evaluate(async(src)=>{const S={coverStyle:'classic',cover:true,toc:true,wm:true,wmRepeat:true,wmOpacity:7,platform:{name:'Random.MEd',url:''},subject:'x',theme:'brand',sizes:ENGINE.SIZE_DEFAULTS,lineSpacing:1.5,logo:true};
+  S.brand=await RMED_brand(S); const blob=await ENGINE.finalize(await docx.Packer.toBlob(ENGINE.build(ENGINE.parseLectures(src),S)),'blob'); const z=await JSZip.loadAsync(blob); let rep=0,wm=0;
+  for(const n of Object.keys(z.files)) if(/word\/header\d*\.xml$/.test(n)){const x=await z.file(n).async('string'); if(x.includes('name="wmrep"'))rep++; if(x.includes('name="watermark"'))wm++;} return 'wmRepeat: headers with repeat='+rep+' with original='+wm;},src);
+ console.log(wr); console.log('errors',errs); await b.close();})();
