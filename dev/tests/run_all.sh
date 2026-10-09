@@ -10,7 +10,7 @@ echo "== 4) الواجهة: قوالب/دمج/تسمية";      node uinew.js 2>
 echo "== 5) PDF بكل الأوضاع";               node pdft2.js 2>&1 | grep -E "^(text|word|merge) |errors" | cut -c1-120
 echo "== 6) خلفيات الصفحات";                node bgt.js 2>&1 | grep -E "^(cream|sky|tint|mint)|errors" | cut -c1-100
 echo "== 7) PowerPoint";                     node ppt_t.js 2>&1 | grep -E "check:|errors"; node ppt_t2.js 2>&1 | grep -E "report|docx:|pdf:|errors" | cut -c1-160
-echo "== 8) الأغلفة (ملفات في out/cov_*.docx)"; node covers.js 2>&1 | tail -1
+echo "== 8) الأغلفة (ملفات في out/cov_*.docx) — صورة الغلاف بالترويسة واسم المنصة بالتذييل"; node covers.js 2>&1 | tail -2
 echo "== هوية الملف (منصة/دكتور) بكل الأوضاع"; node idt.js 2>&1 | tail -4
 echo "== حماية الملفات (Word مشفّر + PDF AES-256)"; node prot_t.js 2>&1 | grep -E "word:|pdf|zip|errors" | cut -c1-120
 echo "   تحقق مستقل: python3 verify_agile.py out/text_locked.docx Bio2026 out/text_plain.docx ; qpdf --show-encryption --password=Bio2026 out/text_locked.pdf"
@@ -19,3 +19,4 @@ echo "== فصل هوية المنصة عن هوية الدكتور"; node sep_t.
 echo "== زخرفة الصفحات"; node deco_t.js 2>&1 | grep -E "^(hexa|bwave)|errors"
 echo "== التنسيق الذكي لملفات Word"; node wsmart_t.js 2>&1 | grep -E "on:|errors"
 echo "== حماية PDF جاهز مع ضد النسخ من السكرين"; node rast_t.js 2>&1 | grep -E "strong:|pw:|errors"
+echo "== حذف ما بين [ ] + المائل داخل الغامق"; node br_t.js 2>&1 | grep -E "unit:|off:|box:|all:|errors"

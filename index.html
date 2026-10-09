@@ -141,6 +141,13 @@ details.help code{background:var(--surface-2);padding:1px 5px;border-radius:5px;
 .sl output{font-weight:700;text-align:center;direction:ltr;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:2px 0;font-size:12.5px}
 input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .toggles{display:grid;gap:8px}
+.br-box{margin:0 0 10px;display:grid;gap:6px}
+.br-sub{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);padding-inline-start:6px}
+.br-sub input{accent-color:var(--brass);margin:0}
+.br-rep{font-size:12.5px;border:1px dashed var(--line);border-radius:10px;padding:6px 10px;background:var(--surface)}
+.br-rep summary{cursor:pointer;font-weight:600}
+.br-rep #brList{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;max-height:160px;overflow:auto}
+.br-rep #brList span{background:#FDE4E2;color:#8A1C1C;border-radius:6px;padding:1px 7px;text-decoration:line-through}
 .tg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:var(--surface-2);cursor:pointer;font-size:13px}
 .tg small{display:block;color:var(--ink-soft);font-size:11.5px}
 .sw-t{position:relative;width:42px;height:24px;flex:none}
@@ -225,6 +232,8 @@ input[type=range]{width:100%;accent-color:var(--brass);height:28px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 /* ---- أنماط الغلاف ---- */
 .covers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.cov-cat{margin:0 0 8px}
+.cov-cat button{flex:1}
 .cov{border:1px solid var(--line);border-radius:12px;padding:6px;background:var(--surface-2);cursor:pointer;text-align:center;font-size:12px}
 .cov canvas{width:100%;height:auto;display:block;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.12);margin-bottom:5px;background:#fff}
 .cov.sel{border-color:var(--brass);box-shadow:0 0 0 2px color-mix(in srgb,var(--brass) 40%,transparent);font-weight:700}
@@ -438,6 +447,11 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
           <button class="btn" id="moveL" title="نقل المحاضرة بعد">بعد ←</button>
           <button class="btn danger" id="delBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>حذف</button>
         </div>
+        <div class="br-box">
+          <label class="tg"><span>🗑 حذف كل ما بين [ ]<small>بيشيل الأقواس المربعة [ ] مع كل شي جواتها — حصراً هالنوع، الأقواس ( ) و { } ما بتنمسّ. النص هون بيضل متل ما هو، والحذف بس بالملف الناتج (Word و PDF والمعاينة).</small></span><span class="sw-t"><input type="checkbox" id="optBr"><span></span></span></label>
+          <label class="br-sub" id="brSubL"><input type="checkbox" id="optBrBox"> خلّي صناديق [هام جداً] و[تعريف] و[تحذير]… ملوّنة (بينشال الوسم وبيضل الصندوق)</label>
+          <details class="br-rep" id="brRep" hidden><summary id="brSum"></summary><div id="brList"></div></details>
+        </div>
         <div class="smart" id="smartPanel" role="region" aria-label="التنسيق الذكي" hidden>
           <h4>✨ التنسيق الذكي <span class="pill" id="smTab"></span></h4>
           <small class="hint" id="smHint" aria-live="polite">درسنا النص واقترحنا بنيته. راجع الاقتراحات وغيّر نوع أي سطر من القائمة، وبعدين اضغط «تطبيق». ولا كلمة بتتغيّر — بس التنسيق.</small>
@@ -565,6 +579,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
         <details class="sec" open>
           <summary>تصميم الغلاف والحقوق</summary>
           <div class="in">
+            <div class="seg cov-cat" id="covCat" role="tablist" aria-label="فئة الغلاف"><button type="button" data-v="all">الكل</button><button type="button" data-v="bio">طبي وحيوي</button><button type="button" data-v="lux">فاخر</button><button type="button" data-v="simple">بسيط</button></div>
             <div class="covers" id="covers" role="radiogroup" aria-label="نمط الغلاف"></div>
             <div class="toggles" style="margin-top:10px">
               <label class="tg">صفحة الغلاف<span class="sw-t"><input type="checkbox" id="optCover"><span></span></span></label>
@@ -2372,7 +2387,7 @@ var RMED_PDF = (function () {
       steroid: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 85, logo: true, bar: "A9761E", foot: "404040", r: 20, l: 20 }
     };
     function cover() {
-      var st = CSMAP[S.coverStyle] ? S.coverStyle : "classic", c = CSMAP[st];
+      var st0 = ENGINE.coverBase ? ENGINE.coverBase(S.coverStyle) : S.coverStyle, st = CSMAP[st0] ? st0 : "classic", c = CSMAP[st];
       var cl = (S.coverLines || []).filter(function (t) { return String(t).trim(); });
       var showSub = S.showSubtitle !== false && (!cl.length || S.subtitle), subTxt = S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات";
       var extra = String(S.coverExtra || "").split(/\n/).map(function (t) { return t.trim(); }).filter(Boolean).slice(0, 12), dr = String(S.doctor || "").trim();
@@ -3544,6 +3559,38 @@ var ENGINE = (function () {
   function stripMk(t) { return String(t || "").replace(MK_G, ""); }
   function calloutOf(text) { var k = MK_RE.exec(String(text || "")); if (k) { var lb = k[1] === "هام جدا" ? "هام جداً" : k[1]; for (var j = 0; j < CALLOUTS.length; j++) if (CALLOUTS[j].label === lb) return CALLOUTS[j]; }
     var m = CO_RE.exec(String(text || "")); if (!m) return null; for (var i = 0; i < CALLOUTS.length; i++) if (CALLOUTS[i].tag === m[1]) return CALLOUTS[i]; return null; }
+  // حذف اختياري لكل ما بين [ ] (حصراً هالنوع من الأقواس). keepBox: وسوم الصناديق المعروفة تصير وسماً مخفياً {{…}} فيضل الصندوق ملوّن
+  function stripBrackets(text, keepBox) {
+    var removed = [], boxes = 0, BR = /([ \t]*)(\*{1,3})?\[([^\[\]\n]*)\]\2([ \t]*)/g;
+    function cnt(x, re) { return (x.match(re) || []).length; }
+    var lines = String(text || "").split("\n").map(function (ln) {
+      if (ln.indexOf("[") < 0 || ln.indexOf("]") < 0) return ln;
+      var cur = ln, prev, hit = false;
+      do { prev = cur; cur = cur.replace(BR, function (m, a, st, inner, b, off, str) {
+          var tag = "[" + inner + "]", co = coByTag(tag);
+          hit = true;
+          if (co && keepBox && !/^\s*\|/.test(str)) { boxes++; return a + (st || "") + "{{" + co.label + "}}" + (st || "") + b; }
+          removed.push(tag);
+          var before = str.slice(0, off), after = str.slice(off + m.length);
+          if (!before.trim()) return a; // أول السطر: نحافظ على الإزاحة
+          if (!after.trim()) return "";
+          if (!a && /[*(«"“]$/.test(before)) return "";
+          if (!b && /^[*)»"”]/.test(after)) return "";
+          if (/^[).,،؛;:؟?!»”]/.test(after)) return "";
+          return a || b ? " " : "";
+        }); } while (cur !== prev);
+      if (!hit) return ln;
+      [/\*\*\s*\*\*/g, /\(\s*\)/g, /«\s*»/g].forEach(function (re) { if (cnt(cur, re) > cnt(ln, re)) cur = cur.replace(re, ""); });
+      cur = cur.replace(/[ \t]+$/, "").replace(/(\S)[ \t]{2,}(?=\S)/g, "$1 ");
+      if (/^\s*(#{1,6}|[*+\-•]|\d+[.)])?\s*$/.test(cur)) return null; // سطر صار فاضي أو بس رمز نقطة/عنوان
+      return cur;
+    }).filter(function (x) { return x !== null; });
+    return { text: lines.join("\n"), removed: removed, boxes: boxes };
+  }
+  // الأغلفة الإضافية تستعير تخطيط النص من نمط أساسي (فاتح/كريمي/داكن) — الرسمة وحدها تختلف
+  var COVER_BASE = { cell: "steroid", ecg: "steroid", pills: "steroid", lab: "steroid", blood: "steroid", virus: "steroid", crystal: "steroid", minimal: "steroid", ribbon: "steroid", watercolor: "steroid",
+    marble: "protein", botanical: "protein", neuron: "helix", night: "helix", artdeco: "helix" };
+  function coverBase(st) { return COVER_BASE[st] || st; }
   function coByTag(t) { for (var i = 0; i < CALLOUTS.length; i++) if (CALLOUTS[i].tag === t) return CALLOUTS[i]; return null; }
   var BOX_RE = /[─━│┃┌┐└┘┬┴┼├┤═║╔╗╚╝╠╣╦╩╬▼▲►◄▶◀]/g;
   var INVIS_RE = /[\u200E\u200F\u2060\u2066-\u2069\u202A-\u202E\uFEFF]/g;
@@ -3579,13 +3626,23 @@ var ENGINE = (function () {
 
   /* ---------------- التحليل ---------------- */
   function parseInline(text) {
-    var out = [], re = /\*\*(?=\S)(.+?)\*\*(?![\w*])|(?<![\w*])\*([^*\s](?:[^*]*?[^*\s])?)\*(?![\w*])/g, last = 0, m;
-    while ((m = re.exec(text))) {
-      if (m.index > last) out.push({ text: text.slice(last, m.index) });
-      if (m[1] !== undefined) out.push({ text: m[1], b: true }); else out.push({ text: m[2], i: true });
-      last = re.lastIndex;
+    var out = [];
+    // مائل داخل غامق مثل **دواء (*Drug*)** — نفكّه بدل ما تضل النجوم ظاهرة
+    function seg(t, bold) {
+      var re = bold ? /(?<![\w*])\*([^*\s](?:[^*]*?[^*\s])?)\*(?![\w*])/g : /\*\*(?=\S)(.+?)\*\*(?![\w*])|(?<![\w*])\*([^*\s](?:[^*]*?[^*\s])?)\*(?![\w*])/g, last = 0, m;
+      while ((m = re.exec(t))) {
+        if (m.index > last) out.push({ text: t.slice(last, m.index), b: bold || undefined });
+        if (bold) out.push({ text: m[1], b: true, i: true });
+        else if (m[1] !== undefined) seg(m[1], true); else out.push({ text: m[2], i: true });
+        last = re.lastIndex;
+      }
+      if (last < t.length) out.push({ text: t.slice(last), b: bold || undefined });
     }
-    if (last < text.length) out.push({ text: text.slice(last) });
+    // رموز Markdown الهاربة (\* \_ \[ …) تنكتب حرفياً، والنجوم المزدوجة اليتيمة (بدون إغلاق) ما بتنكتب
+    var ESC = {}; text = String(text).replace(/\\([*_\[\]#|`\\])/g, function (m, ch) { var k = String.fromCharCode(0xE000 + ch.charCodeAt(0) % 4096); ESC[k] = ch; return k; });
+    seg(text, false);
+    out.forEach(function (o) { o.text = o.text.replace(/\*{2,}/g, "").replace(/[\uE000-\uEFFF]/g, function (k) { return ESC[k] || k; }); });
+    out = out.filter(function (o) { return o.text; });
     var res = [];
     out.forEach(function (s) {
       s.text.split(CO_RE).forEach(function (p) {
@@ -4071,8 +4128,8 @@ var ENGINE = (function () {
       var href = /^https?:\/\//i.test(u) ? u : "https://" + u;
       return new D.ExternalHyperlink({ link: href, children: [new D.TextRun({ text: u.replace(/^https?:\/\//i, "").replace(/\/$/, ""), size: size, color: color, underline: {}, rightToLeft: false, font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })] });
     }
-    var cover = [], tocKids = [], coverFooterKids = null, coverMargins = null;
-    var CSTYLE = S.coverStyle || "classic";
+    var cover = [], tocKids = [], coverFooterKids = null, coverMargins = null, coverHdrRun = null, backHdrRun = null;
+    var CSTYLE = coverBase(S.coverStyle || "classic");
     var CS = {
       classic: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 1500, logo: true, bar: T.h2line, foot: "404040", s: 0, e: 0 },
       band:    { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 2600, logo: false, bar: T.h2line, foot: "404040", s: 2700, e: 0 },
@@ -4148,7 +4205,9 @@ var ENGINE = (function () {
       var bgRun = brand.coverBg ? new D.ImageRun({ type: brand.coverBg.type || "png", data: brand.coverBg.data, transformation: { width: 794, height: 1123 },
         floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 0 },
           behindDocument: true, allowOverlap: true, lockAnchor: true, wrap: { type: D.TextWrappingType.NONE } }, altText: { title: "خلفية الغلاف", description: PF.name, name: "coverbg" } }) : null;
-      if (bgRun) cover.push(new D.Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [bgRun] }));
+      // صورة الغلاف بترويسة قسم الغلاف (مو بالمتن): بـ Word طبقة الترويسة/التذييل تحت المتن، فلو الصورة بالمتن بتغطي اسم المنصة والحقوق بالتذييل
+      coverHdrRun = bgRun;
+      if (bgRun) cover.push(new D.Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [] }));
       if (S.coverImageOnly && bgRun) { coverFooterKids = []; } // غلاف = صورة المستخدم فقط
       else {
       if (CSTYLE === "block") {
@@ -4266,7 +4325,8 @@ var ENGINE = (function () {
       var bbg = brand.backBg ? new D.ImageRun({ type: "png", data: brand.backBg.data, transformation: { width: 794, height: 1123 },
         floating: { horizontalPosition: { relative: D.HorizontalPositionRelativeFrom.PAGE, offset: 0 }, verticalPosition: { relative: D.VerticalPositionRelativeFrom.PAGE, offset: 0 },
           behindDocument: true, allowOverlap: true, lockAnchor: true, wrap: { type: D.TextWrappingType.NONE } }, altText: { title: "خلفية الغلاف الخلفي", description: PF.name, name: "backbg" } }) : null;
-      back.push(new D.Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [GS()].concat(bbg ? [bbg] : []) }));
+      backHdrRun = bbg;
+      back.push(new D.Paragraph({ spacing: { before: 0, after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [GS()] }));
       back.push(new D.Paragraph({ spacing: { before: brand.qr ? 1500 : 2600, after: 0 }, children: [] }));
       var blr = brand.logo ? logoRun(130) : null;
       if (blr) back.push(new D.Paragraph({ bidirectional: true, alignment: CENTER, spacing: { after: 260, line: 240, lineRule: AUTO }, children: [blr] }));
@@ -4290,7 +4350,7 @@ var ENGINE = (function () {
     var emptyHF = function (C) { return new C({ children: [new D.Paragraph({ spacing: { after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [] })] }); };
     var sections = [];
     if (cover.length) {
-      var chKids = [];
+      var chKids = coverHdrRun ? [coverHdrRun] : [];
       sections.push({ properties: { page: { size: page.size, margin: coverMargins || page.margin } },
         headers: { default: new D.Header({ children: [new D.Paragraph({ spacing: { after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: chKids })] }) },
         footers: { default: coverFooterKids && coverFooterKids.length ? new D.Footer({ children: coverFooterKids }) : emptyHF(D.Footer) }, children: cover });
@@ -4298,7 +4358,7 @@ var ENGINE = (function () {
     var plain2 = Object.assign({}, page); delete plain2.borders;
     if (tocKids.length) sections.push({ properties: { page: page }, headers: { default: brand.deco ? new D.Header({ children: [new D.Paragraph({ children: [decoRun()] })] }) : emptyHF(D.Header) }, footers: { default: emptyHF(D.Footer) }, children: tocKids });
     sections.push({ properties: { page: Object.assign({}, page, { pageNumbers: { start: 1, formatType: D.NumberFormat.DECIMAL } }) }, headers: { default: header }, footers: { default: footer }, children: body });
-    if (back.length) sections.push({ properties: { page: plain2 }, headers: { default: emptyHF(D.Header) }, footers: { default: backFooterKids.length ? new D.Footer({ children: backFooterKids }) : emptyHF(D.Footer) }, children: back });
+    if (back.length) sections.push({ properties: { page: plain2 }, headers: { default: backHdrRun ? new D.Header({ children: [new D.Paragraph({ spacing: { after: 0, line: 20, lineRule: D.LineRuleType.EXACT }, children: [backHdrRun] })] }) : emptyHF(D.Header) }, footers: { default: backFooterKids.length ? new D.Footer({ children: backFooterKids }) : emptyHF(D.Footer) }, children: back });
     function hStyle(id, name, size, color) {
       return { id: id, name: name, basedOn: "Normal", next: "Normal", quickFormat: true,
         run: { size: size, bold: true, color: color, font: { ascii: FE, hAnsi: FE, cs: FA } }, paragraph: { keepNext: true, keepLines: true, bidirectional: true } };
@@ -4409,7 +4469,7 @@ var ENGINE = (function () {
     var h = "";
     if (S.cover && bgUrl && S.coverImageOnly) h += '<div class="pv-cover styled" style="background-image:url(' + bgUrl + ')"></div>';
     else if (S.cover && bgUrl) {
-      var cl2 = (S.coverLines || []).filter(function (x) { return String(x).trim(); }), st = S.coverStyle || "classic", T = resolveTheme(S);
+      var cl2 = (S.coverLines || []).filter(function (x) { return String(x).trim(); }), st = coverBase(S.coverStyle || "classic"), T = resolveTheme(S);
       var dark = st === "geo" || st === "cycle" || st === "helix", tc = dark ? "#fff" : "#" + T.h1, sc = dark ? "#F2CF86" : "#262626", lc = dark ? "#fff" : "#1A1A1A";
       var pad = { classic: "16% 10% 0", band: "26% 37% 0 6%", geo: "15% 12% 0", frame: "18% 14% 0", wave: "13% 10% 0", block: "0", dna: "18% 34% 0 8%", helix: "15% 14% 0", protein: "20% 14% 0", steroid: "18% 14% 0", molecule: "20% 12% 0", cycle: "14% 12% 0", peptide: "19% 10% 0" }[st] || "16% 10% 0";
       var showSub = S.showSubtitle !== false && (!cl2.length || S.subtitle), sub = esc(S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات");
@@ -4448,7 +4508,7 @@ var ENGINE = (function () {
 
   return { PAGE_BGS: PAGE_BGS, pageBgColor: pageBgColor, lecNum: lecNum, numLabel: numLabel, fileName: fileName, NAME_TPL: NAME_TPL, THEMES: THEMES, SIZE_DEFAULTS: SIZE_DEFAULTS, resolveTheme: resolveTheme, customTheme: customTheme, parseLectures: parseLectures, build: build, finalize: finalize,
     previewHTML: previewHTML, detectSubject: detectSubject, inputTokens: inputTokens, xmlTokens: xmlTokens, compare: compare, lectureLabel: lectureLabel,
-    plain: plain, splitDir: splitDir, b64ToBytes: b64ToBytes, parseInline: parseInline, tokens: tokens, AR_RE: AR_RE, IMP: IMP, CALLOUTS: CALLOUTS, CO_RE: CO_RE, calloutOf: calloutOf, stripMk: stripMk, MK_RE: MK_RE, classify: classify, coByTag: coByTag };
+    plain: plain, splitDir: splitDir, b64ToBytes: b64ToBytes, parseInline: parseInline, stripBrackets: stripBrackets, coverBase: coverBase, COVER_BASE: COVER_BASE, tokens: tokens, AR_RE: AR_RE, IMP: IMP, CALLOUTS: CALLOUTS, CO_RE: CO_RE, calloutOf: calloutOf, stripMk: stripMk, MK_RE: MK_RE, classify: classify, coByTag: coByTag };
 })();
 </script>
 
@@ -5471,7 +5531,7 @@ var ENGINE = (function () {
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
     keepParas: true, origLine: true, pageBg: "none", pageFrame: false, pageDeco: "none", decoStrength: "mid",
-    activeSlot: "platform", slotPlatform: "", slotDoctor: "", wordSmart: false, smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protAntiOcr: "none", protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
+    activeSlot: "platform", slotPlatform: "", slotDoctor: "", wordSmart: false, delBrackets: false, brKeepBox: true, smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protAntiOcr: "none", protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
   var S = JSON.parse(JSON.stringify(DEFAULTS));
@@ -5524,11 +5584,127 @@ var ENGINE = (function () {
   logoImg.src = LOGO_SRC;
   function canvasPng(c) { return new Promise(function (r) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { r(new Uint8Array(ab)); }); }, "image/png"); }); }
   /* ---- رسم خلفيات الغلاف (Canvas) ---- */
-  var COVER_STYLES = [["classic", "كلاسيكي"], ["block", "رأس ملوّن"], ["band", "شريط جانبي"], ["geo", "داكن هندسي"], ["frame", "إطار ذهبي"], ["wave", "موجات"],
-    ["dna", "حلزون DNA 🧬"], ["molecule", "جزيئات ⚗️"], ["cycle", "دورة استقلابية"], ["peptide", "سلسلة ببتيدية"], ["helix", "حلزون ذهبي فاخر ✨"], ["protein", "بروتين ملكي"], ["steroid", "هيكل ستيرويدي"]];
+  // [المفتاح، الاسم، الفئة: bio طبي-حيوي / lux فاخر / simple بسيط]
+  var COVER_STYLES = [["classic", "كلاسيكي", "simple"], ["block", "رأس ملوّن", "simple"], ["band", "شريط جانبي", "simple"], ["geo", "داكن هندسي", "lux"], ["frame", "إطار ذهبي", "lux"], ["wave", "موجات", "simple"],
+    ["dna", "حلزون DNA 🧬", "bio"], ["molecule", "جزيئات ⚗️", "bio"], ["cycle", "دورة استقلابية", "bio"], ["peptide", "سلسلة ببتيدية", "bio"], ["helix", "حلزون ذهبي فاخر ✨", "lux"], ["protein", "بروتين ملكي", "lux"], ["steroid", "هيكل ستيرويدي", "bio"],
+    ["cell", "خلية حيّة 🔬", "bio"], ["ecg", "نبض القلب ❤️", "bio"], ["pills", "كبسولات دوائية 💊", "bio"], ["lab", "مختبر 🧪", "bio"], ["blood", "كريات الدم 🩸", "bio"], ["virus", "فيروسات 🦠", "bio"],
+    ["neuron", "عصبونات ⚡", "bio"], ["night", "شبكة ليلية ✨", "lux"], ["artdeco", "آرت ديكو ذهبي", "lux"], ["marble", "رخام فاخر", "lux"], ["botanical", "أعشاب طبية 🌿", "bio"],
+    ["minimal", "بسيط أنيق", "simple"], ["ribbon", "شريط مائل", "simple"], ["crystal", "بلوري", "simple"], ["watercolor", "ألوان مائية 🎨", "simple"]];
   function hx(c) { return "#" + String(c).replace("#", ""); }
   function shadeHex(h, t) { h = String(h).replace("#", ""); var o = "#"; for (var i = 0; i < 3; i++) { var v = parseInt(h.substr(i * 2, 2), 16); v = t < 0 ? Math.round(v * (1 + t)) : Math.round(v + (255 - v) * t); o += ("0" + Math.max(0, Math.min(255, v)).toString(16)).slice(-2); } return o; }
   function hexPath(g, x, y, r) { g.beginPath(); for (var k = 0; k < 6; k++) { var a = Math.PI / 3 * k + Math.PI / 6; g.lineTo(x + r * Math.cos(a), y + r * Math.sin(a)); } g.closePath(); }
+  // أغلفة إضافية: الفن على الأطراف (شريط علوي + الحافتين + الزوايا السفلية) بعيداً عن عمود النص وتذييل اسم المنصة
+  function drawCoverExtra(style, g, W, H, u, T, P, A, L, GOLD, GOLD2) {
+    var sd = 11; function rnd() { sd = (sd * 9301 + 49297) % 233280; return sd / 233280; }
+    function circ(x, y, r, fill) { g.fillStyle = fill; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
+    function frame2(col, a, b) { g.strokeStyle = col; g.lineWidth = 3 * u; g.strokeRect(a * u, a * u, W - 2 * a * u, H - 2 * a * u); g.lineWidth = 1 * u; g.strokeRect(b * u, b * u, W - 2 * b * u, H - 2 * b * u); }
+    function diamond(x, y, s, col) { g.save(); g.translate(x, y); g.rotate(Math.PI / 4); g.fillStyle = col; g.fillRect(-s / 2, -s / 2, s, s); g.restore(); }
+    function rule(y, col) { g.fillStyle = col; g.fillRect(W / 2 - 200 * u, y, 160 * u, 2 * u); g.fillRect(W / 2 + 40 * u, y, 160 * u, 2 * u); diamond(W / 2, y + u, 14 * u, col); }
+    g.lineCap = "round"; g.lineJoin = "round";
+    if (style === "cell") { // خلية حيّة: غشاء مزدوج ونواة وميتوكوندريا
+      var cell = function (cx, cy, R, al) {
+        g.globalAlpha = al; var gr = g.createRadialGradient(cx, cy, R * 0.2, cx, cy, R); gr.addColorStop(0, shadeHex(T.light, 0.4)); gr.addColorStop(1, L); circ(cx, cy, R, gr);
+        g.strokeStyle = A; g.lineWidth = 7 * u; g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke(); g.strokeStyle = P; g.lineWidth = 2 * u; g.beginPath(); g.arc(cx, cy, R - 12 * u, 0, Math.PI * 2); g.stroke();
+        var nx = cx - R * 0.25, ny = cy + R * 0.22; circ(nx, ny, R * 0.3, shadeHex(T.h1, 0.55)); g.strokeStyle = P; g.lineWidth = 3 * u; g.beginPath(); g.arc(nx, ny, R * 0.3, 0, Math.PI * 2); g.stroke(); circ(nx + R * 0.06, ny - R * 0.05, R * 0.09, P);
+        for (var m = 0; m < 4; m++) { var a = 0.6 + m * 1.35, mx = cx + Math.cos(a) * R * 0.62, my = cy + Math.sin(a) * R * 0.62; g.save(); g.translate(mx, my); g.rotate(a + 0.8); g.fillStyle = GOLD; g.beginPath(); g.ellipse(0, 0, R * 0.13, R * 0.06, 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = GOLD2; g.lineWidth = 2 * u; g.beginPath(); for (var z = -3; z <= 3; z++) g.lineTo(z * R * 0.035, (z % 2 ? 1 : -1) * R * 0.035); g.stroke(); g.restore(); }
+        g.strokeStyle = shadeHex(T.acc, 0.3); g.lineWidth = 3 * u; for (var e = 0; e < 3; e++) { g.beginPath(); for (var t = 0; t <= 1; t += 0.05) { var aa = 3.6 + t * 1.3, rr = R * (0.45 + e * 0.07); g.lineTo(cx + Math.cos(aa) * rr, cy + Math.sin(aa) * rr + Math.sin(t * 18) * 4 * u); } g.stroke(); }
+        for (var d = 0; d < 14; d++) circ(cx + (rnd() - 0.5) * R * 1.3, cy + (rnd() - 0.5) * R * 1.3, 3 * u, A);
+        g.globalAlpha = 1;
+      };
+      cell(W - 70 * u, 60 * u, 250 * u, 0.9); cell(-10 * u, H - 330 * u, 140 * u, 0.55); cell(W - 30 * u, H - 470 * u, 70 * u, 0.35);
+      g.strokeStyle = shadeHex(T.light, -0.08); g.lineWidth = 2 * u; g.strokeRect(60 * u, 60 * u, W - 120 * u, H - 120 * u);
+    } else if (style === "ecg") { // ورق تخطيط قلب + موجة نبض
+      var band = function (y0, h) { g.fillStyle = shadeHex(T.light, 0.3); g.fillRect(0, y0, W, h); for (var x = 0; x <= W; x += 12 * u) { g.strokeStyle = shadeHex(T.light, -0.06); g.lineWidth = (Math.round(x / (12 * u)) % 5 ? 0.8 : 2) * u; g.beginPath(); g.moveTo(x, y0); g.lineTo(x, y0 + h); g.stroke(); } for (var y = y0; y <= y0 + h; y += 12 * u) { g.lineWidth = (Math.round((y - y0) / (12 * u)) % 5 ? 0.8 : 2) * u; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); } };
+      var beat = function (y0, amp, col, lw) { g.strokeStyle = col; g.lineWidth = lw * u; g.beginPath(); g.moveTo(0, y0); var x = 0, k = 0;
+        while (x < W) { var p = [[60, 0], [14, -0.12], [14, 0], [10, 0.15], [12, -1], [12, 0.45], [12, 0], [40, 0], [26, -0.22], [26, 0], [40, 0]]; for (var i = 0; i < p.length; i++) { x += p[i][0] * u; g.lineTo(x, y0 + p[i][1] * amp); } k++; } g.stroke(); };
+      band(0, 270 * u); beat(165 * u, 120 * u, A, 5); g.fillStyle = GOLD; g.fillRect(0, 270 * u, W, 6 * u);
+      g.globalAlpha = 0.5; beat(H - 40 * u, 26 * u, P, 3); g.globalAlpha = 1; g.fillStyle = P; g.fillRect(0, H - 14 * u, W, 14 * u);
+      circ(W - 120 * u, 165 * u - 120 * u, 9 * u, GOLD);
+    } else if (style === "pills") { // كبسولات وأقراص دوائية
+      var cap = function (x, y, len, r, rot, c1, c2) { g.save(); g.translate(x, y); g.rotate(rot); g.fillStyle = c1; g.beginPath(); g.arc(-len / 2, 0, r, Math.PI / 2, Math.PI * 1.5); g.lineTo(0, -r); g.lineTo(0, r); g.closePath(); g.fill(); g.fillStyle = c2; g.beginPath(); g.moveTo(0, -r); g.lineTo(len / 2, -r); g.arc(len / 2, 0, r, -Math.PI / 2, Math.PI / 2); g.lineTo(0, r); g.closePath(); g.fill(); g.fillStyle = "rgba(255,255,255,.45)"; g.fillRect(-len / 2, -r * 0.55, len * 0.9, r * 0.25); g.restore(); };
+      var tab = function (x, y, r, c, rot) { circ(x, y, r, c); g.save(); g.translate(x, y); g.rotate(rot); g.strokeStyle = "rgba(255,255,255,.7)"; g.lineWidth = 3 * u; g.beginPath(); g.moveTo(-r * 0.7, 0); g.lineTo(r * 0.7, 0); g.stroke(); g.restore(); circ(x - r * 0.35, y - r * 0.4, r * 0.18, "rgba(255,255,255,.45)"); };
+      var C = [P, A, GOLD, "#2E8B7A", shadeHex(T.h1, 0.4)];
+      var spots = [[130, 120], [300, 70], [480, 170], [660, 80], [840, 160], [1030, 90], [1150, 230], [80, 290], [1170, 520], [70, 700], [1180, 900], [60, 1120], [1170, 1300], [80, 1480], [1180, 1640], [60, 1700]];
+      spots.forEach(function (s, i) { var x = s[0] * u, y = s[1] * u, a = 0.85 - (y > 300 * u ? 0.35 : 0); g.globalAlpha = a; if (i % 3 === 1) tab(x, y, (22 + rnd() * 10) * u, C[(i + 2) % C.length], rnd() * 3); else cap(x, y, (62 + rnd() * 30) * u, (18 + rnd() * 6) * u, rnd() * Math.PI, C[i % C.length], i % 2 ? "#FFFFFF" : C[(i + 1) % C.length]); });
+      g.globalAlpha = 1; g.fillStyle = GOLD; g.fillRect(140 * u, 262 * u, W - 280 * u, 3 * u);
+    } else if (style === "lab") { // أدوات مخبرية بخط ذهبي
+      g.strokeStyle = GOLD2; g.lineWidth = 4 * u;
+      var flask = function (x, y, s) { g.beginPath(); g.moveTo(x - 18 * s, y - 120 * s); g.lineTo(x - 18 * s, y - 60 * s); g.lineTo(x - 70 * s, y + 40 * s); g.quadraticCurveTo(x - 78 * s, y + 60 * s, x - 55 * s, y + 60 * s); g.lineTo(x + 55 * s, y + 60 * s); g.quadraticCurveTo(x + 78 * s, y + 60 * s, x + 70 * s, y + 40 * s); g.lineTo(x + 18 * s, y - 60 * s); g.lineTo(x + 18 * s, y - 120 * s); g.stroke(); g.beginPath(); g.moveTo(x - 26 * s, y - 120 * s); g.lineTo(x + 26 * s, y - 120 * s); g.stroke();
+        g.globalAlpha = 0.35; g.fillStyle = A; g.beginPath(); g.moveTo(x - 50 * s, y + 8 * s); g.lineTo(x - 70 * s, y + 40 * s); g.quadraticCurveTo(x - 78 * s, y + 60 * s, x - 55 * s, y + 60 * s); g.lineTo(x + 55 * s, y + 60 * s); g.quadraticCurveTo(x + 78 * s, y + 60 * s, x + 70 * s, y + 40 * s); g.lineTo(x + 50 * s, y + 8 * s); g.closePath(); g.fill(); g.globalAlpha = 1;
+        for (var b = 0; b < 5; b++) { g.beginPath(); g.arc(x + (rnd() - 0.5) * 40 * s, y - (70 + b * 26) * s - 20 * s, (4 + rnd() * 6) * s, 0, Math.PI * 2); g.stroke(); } };
+      var tube = function (x, y, s, rot, col) { g.save(); g.translate(x, y); g.rotate(rot); g.beginPath(); g.moveTo(-14 * s, -90 * s); g.lineTo(-14 * s, 60 * s); g.arc(0, 60 * s, 14 * s, Math.PI, 0, true); g.lineTo(14 * s, -90 * s); g.stroke(); g.globalAlpha = 0.45; g.fillStyle = col; g.beginPath(); g.moveTo(-14 * s, 10 * s); g.lineTo(-14 * s, 60 * s); g.arc(0, 60 * s, 14 * s, Math.PI, 0, true); g.lineTo(14 * s, 10 * s); g.closePath(); g.fill(); g.globalAlpha = 1; g.restore(); };
+      var beaker = function (x, y, s) { g.beginPath(); g.moveTo(x - 50 * s, y - 70 * s); g.lineTo(x - 46 * s, y + 60 * s); g.lineTo(x + 46 * s, y + 60 * s); g.lineTo(x + 50 * s, y - 70 * s); g.lineTo(x + 60 * s, y - 80 * s); g.stroke(); for (var k = 0; k < 4; k++) { g.beginPath(); g.moveTo(x - 46 * s, y + (35 - k * 25) * s); g.lineTo(x - 30 * s, y + (35 - k * 25) * s); g.stroke(); } g.globalAlpha = 0.35; g.fillStyle = "#2E8B7A"; g.fillRect(x - 47 * s, y + 5 * s, 93 * s, 55 * s); g.globalAlpha = 1; };
+      flask(W - 170 * u, 175 * u, u); tube(W - 330 * u, 150 * u, u, 0.25, P); tube(W - 390 * u, 160 * u, u * 0.85, -0.1, GOLD); beaker(170 * u, 170 * u, u);
+      g.globalAlpha = 0.55; flask(70 * u, H - 330 * u, u * 0.6); tube(W - 70 * u, H - 330 * u, u * 0.7, 0.15, A); g.globalAlpha = 1;
+      g.fillStyle = GOLD; g.fillRect(0, 282 * u, W, 3 * u); g.fillStyle = P; g.fillRect(0, 0, W, 14 * u);
+    } else if (style === "blood") { // كريات دم حمراء ثنائية التقعر
+      var rbc = function (x, y, r, rot, a) { g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(rot); g.scale(1, 0.62 + rnd() * 0.35); var gr = g.createRadialGradient(0, 0, r * 0.15, 0, 0, r); gr.addColorStop(0, "#E9939B"); gr.addColorStop(0.55, "#C7303C"); gr.addColorStop(1, "#8E1621"); circ(0, 0, r, gr); circ(0, 0, r * 0.42, "rgba(255,210,210,.35)"); g.restore(); g.globalAlpha = 1; };
+      for (var i = 0; i < 26; i++) { var top = i < 16, x = top ? rnd() * W : (i % 2 ? W - rnd() * 110 * u : rnd() * 110 * u), y = top ? rnd() * 240 * u : 320 * u + rnd() * (H - 560 * u); rbc(x, y, (top ? 30 + rnd() * 24 : 20 + rnd() * 14) * u, rnd() * 3, top ? 0.85 : 0.45); }
+      for (i = 0; i < 6; i++) { g.globalAlpha = 0.5; circ(rnd() * W, rnd() * 240 * u, (8 + rnd() * 6) * u, "#F3E2E4"); }
+      g.globalAlpha = 1; g.fillStyle = "#8E1621"; g.fillRect(0, 270 * u, W, 5 * u); g.fillStyle = GOLD; g.fillRect(0, 277 * u, W, 3 * u);
+    } else if (style === "virus") { // جزيئات فيروسية بأشواك
+      var vir = function (x, y, r, col, a) { g.globalAlpha = a; g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 4 * u; for (var k = 0; k < 18; k++) { var an = k / 18 * Math.PI * 2; g.beginPath(); g.moveTo(x + Math.cos(an) * r, y + Math.sin(an) * r); g.lineTo(x + Math.cos(an) * r * 1.35, y + Math.sin(an) * r * 1.35); g.stroke(); circ(x + Math.cos(an) * r * 1.38, y + Math.sin(an) * r * 1.38, r * 0.09, k % 3 ? col : GOLD); }
+        var gr = g.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r); gr.addColorStop(0, shadeHex(col.slice(1), 0.5)); gr.addColorStop(1, col); circ(x, y, r, gr); for (var j = 0; j < 7; j++) circ(x + (rnd() - 0.5) * r, y + (rnd() - 0.5) * r, r * 0.1, "rgba(255,255,255,.3)"); g.globalAlpha = 1; };
+      vir(W - 150 * u, 140 * u, 80 * u, A, 0.9); vir(160 * u, 120 * u, 50 * u, P, 0.8); vir(W - 360 * u, 230 * u, 28 * u, P, 0.6); vir(410 * u, 230 * u, 22 * u, A, 0.5); vir(60 * u, H - 360 * u, 40 * u, A, 0.35); vir(W - 60 * u, H - 600 * u, 34 * u, P, 0.3);
+      g.strokeStyle = shadeHex(T.light, -0.08); g.lineWidth = 2 * u; g.strokeRect(54 * u, 300 * u, W - 108 * u, H - 354 * u);
+    } else if (style === "crystal") { // فسيفساء مثلثات بلورية بالشريط العلوي
+      var cols = [P, shadeHex(T.h1, 0.2), A, shadeHex(T.acc, 0.35), L, shadeHex(T.h1, -0.2)], cw = 124 * u, ch = 92 * u;
+      for (var r2 = 0; r2 < 4; r2++) for (var q = -1; q < 11; q++) { var x0 = q * cw + (r2 % 2 ? cw / 2 : 0), y0 = r2 * ch, fade = 1 - r2 / 4.2;
+        [[[x0, y0], [x0 + cw, y0], [x0 + cw / 2, y0 + ch]], [[x0 + cw / 2, y0 + ch], [x0 + cw, y0], [x0 + cw * 1.5, y0 + ch]]].forEach(function (tri, ti) { g.globalAlpha = fade * (0.55 + rnd() * 0.45); g.fillStyle = cols[Math.floor(rnd() * cols.length)]; g.beginPath(); g.moveTo(tri[0][0], tri[0][1]); g.lineTo(tri[1][0], tri[1][1]); g.lineTo(tri[2][0], tri[2][1]); g.closePath(); g.fill(); }); }
+      g.globalAlpha = 1; var fg = g.createLinearGradient(0, 200 * u, 0, 380 * u); fg.addColorStop(0, "rgba(255,255,255,0)"); fg.addColorStop(1, "#FFFFFF"); g.fillStyle = fg; g.fillRect(0, 200 * u, W, 180 * u);
+      g.globalAlpha = 0.7; for (var r3 = 0; r3 < 2; r3++) for (q = 0; q < 3; q++) { g.fillStyle = cols[(q + r3) % cols.length]; var bx = W - (q + 1) * 46 * u, by = H - (r3 + 1) * 40 * u; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + 46 * u, by); g.lineTo(bx + 23 * u, by + 40 * u); g.closePath(); g.fill(); }
+      g.globalAlpha = 1;
+    } else if (style === "minimal") { // بسيط أنيق: خط ذهبي عمودي ومساحة بيضاء
+      g.fillStyle = GOLD; g.fillRect(W - 92 * u, 120 * u, 3 * u, H - 240 * u); g.fillStyle = P; g.fillRect(W - 100 * u, 120 * u, 2 * u, H * 0.3);
+      diamond(W - 90 * u, 120 * u, 18 * u, GOLD); diamond(W - 90 * u, H - 120 * u, 18 * u, GOLD); diamond(W - 90 * u, H * 0.5, 26 * u, P); diamond(W - 90 * u, H * 0.5, 12 * u, GOLD);
+      g.fillStyle = P; g.fillRect(90 * u, 120 * u, 120 * u, 6 * u); g.fillStyle = GOLD; g.fillRect(90 * u, 134 * u, 60 * u, 3 * u);
+    } else if (style === "ribbon") { // شريط مائل بزاوية الصفحة
+      g.save(); g.fillStyle = P; g.beginPath(); g.moveTo(0, 0); g.lineTo(400 * u, 0); g.lineTo(0, 300 * u); g.closePath(); g.fill();
+      g.fillStyle = A; g.globalAlpha = 0.85; g.beginPath(); g.moveTo(400 * u, 0); g.lineTo(510 * u, 0); g.lineTo(0, 385 * u); g.lineTo(0, 300 * u); g.closePath(); g.fill(); g.globalAlpha = 1;
+      g.strokeStyle = GOLD; g.lineWidth = 6 * u; g.beginPath(); g.moveTo(535 * u, 0); g.lineTo(0, 404 * u); g.stroke(); g.restore();
+      g.fillStyle = P; g.beginPath(); g.moveTo(W, H); g.lineTo(W - 140 * u, H); g.lineTo(W, H - 105 * u); g.closePath(); g.fill(); g.strokeStyle = GOLD; g.lineWidth = 5 * u; g.beginPath(); g.moveTo(W - 170 * u, H); g.lineTo(W, H - 128 * u); g.stroke();
+      g.globalAlpha = 0.18; for (var k3 = 0; k3 < 6; k3++) circ(120 * u + k3 * 34 * u, 90 * u + k3 * 4 * u, 6 * u, "#FFFFFF"); g.globalAlpha = 1;
+    } else if (style === "watercolor") { // بقع ألوان مائية ناعمة
+      var blob = function (x, y, r, col, a) { for (var k = 0; k < 7; k++) { var gr = g.createRadialGradient(x, y, 0, x, y, r * (0.7 + rnd() * 0.5)); gr.addColorStop(0, col); gr.addColorStop(1, "rgba(255,255,255,0)"); g.globalAlpha = a * (0.4 + rnd() * 0.4); g.fillStyle = gr; g.beginPath(); g.arc(x + (rnd() - 0.5) * r * 0.6, y + (rnd() - 0.5) * r * 0.6, r, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1; };
+      blob(W - 70 * u, 40 * u, 250 * u, P, 0.5); blob(W - 380 * u, 10 * u, 170 * u, A, 0.45); blob(120 * u, 30 * u, 160 * u, GOLD, 0.35); blob(-20 * u, H - 330 * u, 130 * u, A, 0.4); blob(W + 20 * u, H - 520 * u, 120 * u, P, 0.3);
+      g.strokeStyle = GOLD; g.lineWidth = 1.5 * u; g.strokeRect(50 * u, 50 * u, W - 100 * u, H - 100 * u);
+    } else if (style === "marble") { // رخام كريمي بعروق ذهبية ورمادية
+      g.fillStyle = "#FBF8F1"; g.fillRect(0, 0, W, H);
+      var vein = function (x, y, len, ang, col, lw, a) { g.globalAlpha = a; g.strokeStyle = col; g.lineWidth = lw * u; g.beginPath(); g.moveTo(x, y); for (var s = 0; s < len; s += 14 * u) { ang += (rnd() - 0.5) * 0.5; x += Math.cos(ang) * 14 * u; y += Math.sin(ang) * 14 * u; g.lineTo(x, y); if (rnd() < 0.04 && lw > 1) vein(x, y, len * 0.3, ang + (rnd() - 0.5) * 1.6, col, lw * 0.5, a * 0.8); } g.stroke(); g.globalAlpha = 1; };
+      for (var v = 0; v < 7; v++) vein(rnd() * 400 * u, 0, 520 * u, 0.9 + rnd() * 0.5, v % 2 ? "#B9B2A4" : GOLD, 2.5, 0.55);
+      for (v = 0; v < 6; v++) vein(W - rnd() * 300 * u, H, 460 * u, -2.2 - rnd() * 0.4, v % 2 ? "#B9B2A4" : GOLD, 2.2, 0.5);
+      for (v = 0; v < 3; v++) vein(W, 120 * u + rnd() * 150 * u, 360 * u, 2.8 + rnd() * 0.4, "#C9C2B3", 1.6, 0.45);
+      frame2(GOLD2, 44, 58); [[58, 58], [W / u - 58, 58], [58, H / u - 58], [W / u - 58, H / u - 58]].forEach(function (p) { diamond(p[0] * u, p[1] * u, 22 * u, GOLD2); diamond(p[0] * u, p[1] * u, 9 * u, "#FBF8F1"); });
+      rule(300 * u, GOLD2);
+    } else if (style === "botanical") { // أعشاب طبية: أغصان وأوراق بخط ذهبي
+      g.fillStyle = "#FBF8F1"; g.fillRect(0, 0, W, H);
+      var branch = function (x, y, len, ang, dir, s) { g.strokeStyle = GOLD2; g.lineWidth = 3.2 * s * u; g.beginPath(); g.moveTo(x, y); var pts = []; for (var t = 0; t <= 1.0001; t += 0.05) { var a = ang + dir * t * 0.9, px = x + Math.cos(a) * len * t, py = y + Math.sin(a) * len * t; g.lineTo(px, py); pts.push([px, py, a]); } g.stroke();
+        pts.forEach(function (p, i) { if (i % 3 || i === 0) return; [1, -1].forEach(function (sg) { var la = p[2] + sg * 0.9, lx = p[0] + Math.cos(la) * 34 * s * u, ly = p[1] + Math.sin(la) * 34 * s * u; g.save(); g.translate((p[0] + lx) / 2, (p[1] + ly) / 2); g.rotate(la); g.globalAlpha = 0.85; g.fillStyle = i % 2 ? "#2E8B7A" : P; g.beginPath(); g.ellipse(0, 0, 22 * s * u, 8 * s * u, 0, 0, Math.PI * 2); g.fill(); g.strokeStyle = GOLD2; g.lineWidth = 1.2 * u; g.beginPath(); g.moveTo(-20 * s * u, 0); g.lineTo(20 * s * u, 0); g.stroke(); g.restore(); g.globalAlpha = 1; }); });
+        var e = pts[pts.length - 1]; circ(e[0], e[1], 8 * s * u, GOLD); };
+      branch(W - 40 * u, 40 * u, 420 * u, Math.PI * 0.8, 0.5, 1); branch(W - 40 * u, 40 * u, 300 * u, Math.PI * 0.52, -0.4, 0.85); branch(40 * u, H - 40 * u, 360 * u, -Math.PI * 0.35, -0.5, 0.8); branch(40 * u, H - 40 * u, 240 * u, -Math.PI * 0.05, 0.3, 0.7);
+      frame2(GOLD2, 26, 36); rule(318 * u, GOLD2);
+    } else if (style === "neuron") { // عصبونات متوهجة على خلفية داكنة
+      var gn = g.createLinearGradient(0, 0, W, H); gn.addColorStop(0, shadeHex(T.h1, -0.35)); gn.addColorStop(1, shadeHex(T.h1, -0.75)); g.fillStyle = gn; g.fillRect(0, 0, W, H);
+      var dend = function (x, y, ang, len, w, depth, col) { if (depth <= 0 || len < 8 * u) return; var x2 = x + Math.cos(ang) * len, y2 = y + Math.sin(ang) * len; g.strokeStyle = col; g.lineWidth = w * u; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo((x + x2) / 2 + (rnd() - 0.5) * len * 0.4, (y + y2) / 2 + (rnd() - 0.5) * len * 0.4, x2, y2); g.stroke(); var n = rnd() < 0.5 ? 2 : 3; for (var k = 0; k < n; k++) dend(x2, y2, ang + (rnd() - 0.5) * 1.3, len * (0.55 + rnd() * 0.2), w * 0.62, depth - 1, col); if (depth === 1) circ(x2, y2, 2.5 * u, GOLD); };
+      var neuron = function (x, y, r, a) { g.globalAlpha = a; var hl = g.createRadialGradient(x, y, 0, x, y, r * 5); hl.addColorStop(0, "rgba(217,168,78,.35)"); hl.addColorStop(1, "rgba(217,168,78,0)"); g.fillStyle = hl; g.beginPath(); g.arc(x, y, r * 5, 0, Math.PI * 2); g.fill(); for (var k = 0; k < 7; k++) dend(x, y, k / 7 * Math.PI * 2 + rnd() * 0.4, r * (2.2 + rnd()), 6, 4, k % 2 ? GOLD : shadeHex(T.acc, 0.35)); circ(x, y, r, "#F2D79B"); circ(x, y, r * 0.45, shadeHex(T.h1, -0.4)); g.globalAlpha = 1; };
+      neuron(150 * u, 150 * u, 30 * u, 0.95); neuron(W - 130 * u, H - 360 * u, 22 * u, 0.6); neuron(W - 200 * u, 120 * u, 14 * u, 0.5);
+      for (var s2 = 0; s2 < 60; s2++) { g.globalAlpha = 0.1 + rnd() * 0.25; circ(rnd() * W, rnd() * H, (1 + rnd() * 2) * u, GOLD); } g.globalAlpha = 1;
+      frame2(GOLD, 56, 72);
+    } else if (style === "night") { // شبكة جزيئية متلألئة على خلفية ليلية
+      var gn2 = g.createRadialGradient(W / 2, H * 0.35, 50 * u, W / 2, H * 0.4, 1100 * u); gn2.addColorStop(0, shadeHex(T.h1, -0.2)); gn2.addColorStop(1, shadeHex(T.h1, -0.8)); g.fillStyle = gn2; g.fillRect(0, 0, W, H);
+      var net = function (x0, y0, w, h, n) { var pts = []; for (var i = 0; i < n; i++) pts.push([x0 + rnd() * w, y0 + rnd() * h]); g.strokeStyle = "rgba(217,168,78,.28)"; g.lineWidth = 1.6 * u; pts.forEach(function (p, i) { pts.forEach(function (q2, j) { if (j <= i) return; var d = Math.hypot(p[0] - q2[0], p[1] - q2[1]); if (d < 150 * u) { g.globalAlpha = 1 - d / (150 * u); g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(q2[0], q2[1]); g.stroke(); } }); }); g.globalAlpha = 1; pts.forEach(function (p, i) { var r = (i % 5 ? 3 : 6) * u; var hl = g.createRadialGradient(p[0], p[1], 0, p[0], p[1], r * 4); hl.addColorStop(0, "rgba(242,215,155,.6)"); hl.addColorStop(1, "rgba(242,215,155,0)"); g.fillStyle = hl; g.beginPath(); g.arc(p[0], p[1], r * 4, 0, Math.PI * 2); g.fill(); circ(p[0], p[1], r, i % 4 ? "#F2D79B" : shadeHex(T.acc, 0.4)); }); };
+      net(60 * u, 60 * u, W - 120 * u, 240 * u, 34); net(60 * u, H - 500 * u, 90 * u, 400 * u, 8); net(W - 150 * u, H - 500 * u, 90 * u, 400 * u, 8);
+      frame2(GOLD, 40, 52);
+    } else if (style === "artdeco") { // آرت ديكو: مروحة ذهبية وزوايا متدرجة
+      var ga = g.createLinearGradient(0, 0, 0, H); ga.addColorStop(0, shadeHex(T.h1, -0.45)); ga.addColorStop(1, shadeHex(T.h1, -0.7)); g.fillStyle = ga; g.fillRect(0, 0, W, H);
+      g.save(); g.translate(W / 2, 40 * u); for (var k4 = 0; k4 <= 18; k4++) { var an = Math.PI * (0.08 + 0.84 * k4 / 18); g.strokeStyle = k4 % 2 ? "rgba(217,168,78,.5)" : GOLD; g.lineWidth = (k4 % 2 ? 1.5 : 3) * u; g.beginPath(); g.moveTo(Math.cos(an) * 40 * u, Math.sin(an) * 40 * u); g.lineTo(Math.cos(an) * 230 * u, Math.sin(an) * 230 * u); g.stroke(); }
+      [70, 150, 235].forEach(function (rr, i) { g.strokeStyle = GOLD; g.lineWidth = (i === 2 ? 4 : 2) * u; g.beginPath(); g.arc(0, 0, rr * u, Math.PI * 0.06, Math.PI * 0.94); g.stroke(); }); g.restore();
+      var step = function (x, y, sx, sy) { g.strokeStyle = GOLD; for (var k = 0; k < 4; k++) { g.lineWidth = (k ? 1.5 : 3) * u; g.beginPath(); g.moveTo(x, y + sy * (150 - k * 26) * u); g.lineTo(x + sx * (k * 26) * u, y + sy * (150 - k * 26) * u); g.lineTo(x + sx * (k * 26) * u, y + sy * (k * 26) * u); g.lineTo(x + sx * (150 - k * 26) * u, y + sy * (k * 26) * u); g.stroke(); } };
+      step(50 * u, 50 * u, 1, 1); step(W - 50 * u, 50 * u, -1, 1); step(50 * u, H - 50 * u, 1, -1); step(W - 50 * u, H - 50 * u, -1, -1);
+      g.strokeStyle = GOLD; g.lineWidth = 1.5 * u; g.strokeRect(80 * u, 80 * u, W - 160 * u, H - 160 * u);
+    } else return false;
+    g.globalAlpha = 1; return true;
+  }
   function drawCover(style, T, name, scale, lgo) {
     var LG = lgo === undefined ? logoImg : lgo; // شعار بديل (شعار الدكتور) أو null لإخفائه
     var W = Math.round(1240 * (scale || 1)), H = Math.round(1754 * (scale || 1)), c = document.createElement("canvas"); c.width = W; c.height = H;
@@ -5677,7 +5853,7 @@ var ENGINE = (function () {
       g.globalAlpha = 1; g.fillStyle = L; g.beginPath(); g.arc(W - 40 * u, 40 * u, 210 * u, 0, Math.PI * 2); g.fill();
       g.fillStyle = A; g.globalAlpha = 0.25; g.beginPath(); g.arc(W - 40 * u, 40 * u, 130 * u, 0, Math.PI * 2); g.fill(); g.globalAlpha = 1;
       g.fillStyle = GOLD; g.beginPath(); g.arc(90 * u, 210 * u, 14 * u, 0, Math.PI * 2); g.fill();
-    }
+    } else drawCoverExtra(style, g, W, H, u, T, P, A, L, GOLD, GOLD2);
     return c;
   }
 
@@ -5962,9 +6138,17 @@ var ENGINE = (function () {
   COVER_STYLES.forEach(function (cs) {
     var b = document.createElement("button"); b.type = "button"; b.className = "cov"; b.dataset.k = cs[0]; b.setAttribute("role", "radio");
     var cv = document.createElement("canvas"); cv.width = 124; cv.height = 175; b.appendChild(cv); b.appendChild(document.createTextNode(cs[1]));
+    b.dataset.cat = cs[2] || "simple";
     b.onclick = function () { S.coverStyle = cs[0]; if (!S.cover) S.cover = true; save(); paintSettings(); schedulePreview(); };
     coverThumbs[cs[0]] = cv; $("covers").appendChild(b);
   });
+  var covCat = "all";
+  function paintCovCat() {
+    Array.prototype.forEach.call($("covCat").children, function (b) { var on = b.dataset.v === covCat; b.classList.toggle("sel", on); b.setAttribute("aria-selected", on); });
+    Array.prototype.forEach.call($("covers").children, function (b) { b.hidden = covCat !== "all" && b.dataset.cat !== covCat && b.dataset.k !== S.coverStyle; });
+  }
+  Array.prototype.forEach.call($("covCat").children, function (b) { b.onclick = function () { covCat = b.dataset.v; paintCovCat(); }; });
+  paintCovCat();
   function paintCoverThumbs() {
     var T = ENGINE.resolveTheme(S), nm = platformName(S);
     logoReady.then(function () {
@@ -5972,6 +6156,7 @@ var ENGINE = (function () {
         var cv = coverThumbs[cs[0]], g = cv.getContext("2d"), big = drawCover(cs[0], T, nm, 0.25);
         g.clearRect(0, 0, cv.width, cv.height); g.drawImage(big, 0, 0, cv.width, cv.height);
         // تلميح للنص
+        var bk = ENGINE.coverBase(cs[0]); cs = [bk];
         var dark = cs[0] === "geo" || cs[0] === "cycle" || cs[0] === "helix", y = cs[0] === "block" ? 22 : cs[0] === "band" ? 52 : cs[0] === "wave" ? 40 : cs[0] === "peptide" || cs[0] === "molecule" || cs[0] === "protein" ? 54 : cs[0] === "cycle" ? 36 : 46, x0 = cs[0] === "band" || cs[0] === "dna" ? 8 : 26, x1 = cs[0] === "band" || cs[0] === "dna" ? 78 : 98;
         if (cs[0] === "block") { g.fillStyle = "#" + T.h1; g.fillRect(0, 0, cv.width, 62); g.fillStyle = "#D9A84E"; g.fillRect(0, 62, cv.width, 3); }
         g.fillStyle = dark || cs[0] === "block" ? "rgba(255,255,255,.92)" : "#" + T.h1; g.fillRect(x0, y, x1 - x0, 7);
@@ -6022,9 +6207,12 @@ var ENGINE = (function () {
   paintSettings();
 
   /* ---- التحليل ---- */
-  function allText() { syncActive(); return lectures.map(function (l) { return l.text; }); }
+  // خيار «حذف كل ما بين [ ]»: يُطبَّق على نسخة النص المرسلة للتوليد فقط
+  function prepText(t) { return S.delBrackets && t ? ENGINE.stripBrackets(t, S.brKeepBox !== false).text : t; }
+  function brInfo(t) { return S.delBrackets && t ? ENGINE.stripBrackets(t, S.brKeepBox !== false) : null; }
+  function allText() { syncActive(); return lectures.map(function (l) { return prepText(l.text); }); }
   function parseAll() { var out = []; allText().forEach(function (t) { if (t.trim()) out = out.concat(ENGINE.parseLectures(t)); }); return out; }
-  function parsedCount() { var n = 0; lectures.forEach(function (l) { if (l.text.trim()) n += ENGINE.parseLectures(l.text).length; }); return n; }
+  function parsedCount() { var n = 0; lectures.forEach(function (l) { if (l.text.trim()) n += ENGINE.parseLectures(prepText(l.text)).length; }); return n; }
   function effSettings() {
     var s = JSON.parse(JSON.stringify(S));
     s.subject = String(s.subject == null ? "" : s.subject); s.subtitle = String(s.subtitle == null ? "" : s.subtitle);
@@ -6033,12 +6221,23 @@ var ENGINE = (function () {
     return s;
   }
   function updateMeta() {
-    var t = $("src").value, words = t.trim() ? ENGINE.inputTokens(t).length : 0, pl = t.trim() ? ENGINE.parseLectures(t) : [];
-    var h2 = 0, tb = 0, imp = (t.match(/\[هام جداً\]/g) || []).length;
+    var t0 = $("src").value, bi = brInfo(t0), t = bi ? bi.text : t0, words = t.trim() ? ENGINE.inputTokens(t).length : 0, pl = t.trim() ? ENGINE.parseLectures(t) : [];
+    paintBr(bi);
+    var h2 = 0, tb = 0, imp = (t.match(/\[هام جداً\]|\{\{هام جداً\}\}/g) || []).length;
     pl.forEach(function (L) { L.blocks.forEach(function (b) { if (b.t === "h" && b.level === 2) h2++; if (b.t === "table") tb++; }); });
     $("meta").innerHTML = t.trim() ? "<span><b>" + words + "</b> كلمة</span><span><b>" + pl.length + "</b> محاضرة</span><span><b>" + h2 + "</b> محور</span><span><b>" + tb + "</b> جدول</span><span><b>" + imp + "</b> نقطة هامة</span>" : "<span>لا يوجد نص بعد</span>";
     var det = ENGINE.detectSubject(t); $("subj").placeholder = det ? "تلقائي: " + det : "يُستخرج تلقائياً من النص";
   }
+  function paintBr(bi) {
+    $("optBr").checked = !!S.delBrackets; $("optBrBox").checked = S.brKeepBox !== false; $("brSubL").hidden = !S.delBrackets;
+    var r = $("brRep"); if (!bi || (!bi.removed.length && !bi.boxes)) { r.hidden = true; return; }
+    r.hidden = false; var e = function (x) { return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
+    var bx = bi.boxes ? bi.boxes + " وسم صندوق متل [هام جداً] بينشال وبيضل الصندوق ملوّن" : "";
+    $("brSum").textContent = bi.removed.length ? "رح ينحذف " + bi.removed.length + " مقطع بين [ ] من هالمحاضرة" + (bx ? " — و" + bx : "") : bx;
+    $("brList").innerHTML = bi.removed.slice(0, 300).map(function (x) { return "<span>" + e(x) + "</span>"; }).join("") || "<small>ولا مقطع غير وسوم الصناديق.</small>";
+  }
+  $("optBr").onchange = function () { S.delBrackets = this.checked; save(); updateMeta(); renderTabs(); schedulePreview(); };
+  $("optBrBox").onchange = function () { S.brKeepBox = this.checked; save(); updateMeta(); schedulePreview(); };
   var tmr = null;
   $("src").addEventListener("input", function () { clearTimeout(tmr); tmr = setTimeout(function () { syncActive(); renderTabs(); updateMeta(); if (S.pvReal) schedulePreview(); else renderPreview(); paintName(); }, 350); });
 
@@ -6446,6 +6645,8 @@ var ENGINE = (function () {
         var r = ENGINE.compare(inTok, ENGINE.xmlTokens(xml)), el = $("report");
         var esc = function (x) { return String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;"); };
         var h = '<div class="rh ' + (r.ok ? "good" : "bad") + '">' + (r.ok ? "✓ مطابقة تامة — لا توجد أي كلمة محذوفة أو مضافة أو معدّلة" : "✗ يوجد اختلاف بين المدخل والملف الناتج") + "</div>";
+        var brN = 0; if (S.delBrackets) lectures.forEach(function (l) { var bi = brInfo(l.text); if (bi) brN += bi.removed.length; });
+        if (brN) h += '<div class="rh">🗑 حذفنا ' + brN + " مقطع بين [ ] حسب خيارك — هاد حذف مقصود ومحسوب، والمقارنة تحت على النص بعد الحذف</div>";
         h += '<div class="stats"><div><b>' + r.inCount + "</b>كلمات المدخل</div><div><b>" + r.outCount + "</b>كلمات الملف</div><div><b>" + (r.missing.length + r.extra.length) + "</b>فروقات</div></div>";
         if (r.missing.length) h += "<ul>" + r.missing.map(function (x) { return "<li>ناقصة: «" + esc(x[0]) + "» × " + x[1] + "</li>"; }).join("") + "</ul>";
         if (r.extra.length) h += "<ul>" + r.extra.map(function (x) { return "<li>زائدة: «" + esc(x[0]) + "» × " + x[1] + "</li>"; }).join("") + "</ul>";

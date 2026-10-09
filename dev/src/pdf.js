@@ -463,7 +463,7 @@ var RMED_PDF = (function () {
       steroid: { title: T.h1, sub: "262626", line: "1A1A1A", first: T.h2t, top: 85, logo: true, bar: "A9761E", foot: "404040", r: 20, l: 20 }
     };
     function cover() {
-      var st = CSMAP[S.coverStyle] ? S.coverStyle : "classic", c = CSMAP[st];
+      var st0 = ENGINE.coverBase ? ENGINE.coverBase(S.coverStyle) : S.coverStyle, st = CSMAP[st0] ? st0 : "classic", c = CSMAP[st];
       var cl = (S.coverLines || []).filter(function (t) { return String(t).trim(); });
       var showSub = S.showSubtitle !== false && (!cl.length || S.subtitle), subTxt = S.subtitle || "التفريغ النصي الأكاديمي الشامل للمحاضرات";
       var extra = String(S.coverExtra || "").split(/\n/).map(function (t) { return t.trim(); }).filter(Boolean).slice(0, 12), dr = String(S.doctor || "").trim();
