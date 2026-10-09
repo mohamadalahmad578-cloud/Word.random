@@ -482,6 +482,7 @@ var RESTYLE = (function () {
       var p = it.node, pPr = ensurePr(p, "pPr"), txt = it.text, rtl = AR.test(txt);
       if (S.keepParas && txt.trim()) place(pPr, mk(doc, "keepLines"), ORD.pPr); // الفقرة كاملة بصفحة وحدة
       if (S.keepLabel !== false && !it.level && (ENGINE.LABEL_RE || /[:：]\s*$/).test(txt)) place(pPr, mk(doc, "keepNext"), ORD.pPr); // سطر ينتهي بنقطتين يبقى مع شرحه
+      if (S.keepLabel !== false && (it.drawing || (CAP_RE.test(txt.trim()) && txt.trim().length < 40))) place(pPr, mk(doc, "keepNext"), ORD.pPr); // الصورة و«الشكل N» يبقيان مع الشرح اللي بعدهما // الصورة تبقى مع تعليقها (الفقرة/الجدول اللي بعدها)
       if (it.level) {
         var lv = it.level; rep.headings[lv]++;
         place(pPr, mk(doc, "pStyle", { val: "Heading" + lv }), ORD.pPr);
@@ -544,9 +545,12 @@ var RESTYLE = (function () {
         place(tblPr, cm, ORD.tblPr);
       }
       var ncol = Math.max.apply(null, rows.map(function (r) { return kids(r, "tc").length; }).concat([1]));
+      // صفوف الجدول: الجدول القصير (≤ 8 صفوف) يبقى كله بصفحة وحدة، والطويل ما يترك صفاً وحيداً أول/آخر الصفحة (أول صفّين وآخر صفّين معاً)
+      var nR = rows.length, keepRow = function (ri) { if (S.keepTable === false || nR < 2) return false; return nR <= 8 ? ri < nR - 1 : (ri === 0 || ri === nR - 2); };
       rows.forEach(function (tr, ri) {
         var trPr = ensurePr(tr, "trPr");
         if (S.keepParas !== false) place(trPr, mk(doc, "cantSplit"), ORD.trPr);
+        if (keepRow(ri)) kids(tr, "tc").forEach(function (tc0) { allW(tc0, "p").forEach(function (p0) { place(ensurePr(p0, "pPr"), mk(doc, "keepNext"), ORD.pPr); }); });
         if (ri === 0 && headRow) place(trPr, mk(doc, "tblHeader"), ORD.trPr);
         if (!kid(trPr, "cantSplit") && !kid(trPr, "tblHeader") && !trPr.firstChild) tr.removeChild(trPr);
         kids(tr, "tc").forEach(function (tc, ci) {

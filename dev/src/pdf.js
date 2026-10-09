@@ -487,6 +487,7 @@ var RMED_PDF = (function () {
         var cells = ri === 0 && headCells ? headCells : cellBoxes(r, ri), full = rowFull(cells);
         if (ri === 0 && headCells && rows.length > 1) { var nx1 = rowFull(cellBoxes(rows[1], 1)); if (!room(full + Math.min(nx1, lineH(TS) * 2 + 2 * PAD)) && y > TOP + 1) newPage("body"); } // لا يبقى سطر العناوين وحيداً
         if (!room(full) && full <= BOT - TOP - 40) { newPage("body"); if (ri > 0) repeatHead(); }
+        else if (S.keepTable !== false && rows.length >= 3 && ri === rows.length - 2 && ri > 0) { var lastH = rowFull(cellBoxes(rows[ri + 1], ri + 1)); if (!room(full + lastH) && full + lastH <= BOT - TOP - 40) { newPage("body"); repeatHead(); } } // آخر صفّين معاً
         // يرسم السطر على دفعات إن كان أطول من المساحة المتبقية
         var guard = 0;
         while (cells.some(function (c) { return c.done < c.L.lines.length || (c.ims.length && !c.imgDone); }) && guard++ < 50) {

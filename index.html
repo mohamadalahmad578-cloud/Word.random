@@ -647,6 +647,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
               <label class="tg">فهرس المحاضرات ومحاورها<span class="sw-t"><input type="checkbox" id="optToc"><span></span></span></label>
               <label class="tg"><span>عدم تقسيم الفقرة بين صفحتين<small>إذا ما بقي مكان للفقرة كاملة بتنزل كلها عالصفحة الجاية</small></span><span class="sw-t"><input type="checkbox" id="optKeep"><span></span></span></label>
               <label class="tg"><span>سطر العنوان يبقى مع شرحه<small>السطر اللي بينتهي بنقطتين (أو يليه بنود فرعية) ما بيضل لحاله بآخر الصفحة وشرحه بالصفحة الجاية</small></span><span class="sw-t"><input type="checkbox" id="optKeepLabel"><span></span></span></label>
+              <label class="tg"><span>الجدول أو الكتلة لا تنقسم بين صفحتين<small>الجدول القصير (حتى 8 صفوف) ينزل كاملاً للصفحة الجاية إذا ما بقي له مكان، والطويل ما بيترك صفاً وحيداً أول الصفحة أو آخرها</small></span><span class="sw-t"><input type="checkbox" id="optKeepTable"><span></span></span></label>
             </div>
             <div class="field" style="margin-top:12px">
               <label class="lbl" for="nameTpl">تسمية الملف تلقائياً</label>
@@ -2437,6 +2438,7 @@ var RMED_PDF = (function () {
         var cells = ri === 0 && headCells ? headCells : cellBoxes(r, ri), full = rowFull(cells);
         if (ri === 0 && headCells && rows.length > 1) { var nx1 = rowFull(cellBoxes(rows[1], 1)); if (!room(full + Math.min(nx1, lineH(TS) * 2 + 2 * PAD)) && y > TOP + 1) newPage("body"); } // لا يبقى سطر العناوين وحيداً
         if (!room(full) && full <= BOT - TOP - 40) { newPage("body"); if (ri > 0) repeatHead(); }
+        else if (S.keepTable !== false && rows.length >= 3 && ri === rows.length - 2 && ri > 0) { var lastH = rowFull(cellBoxes(rows[ri + 1], ri + 1)); if (!room(full + lastH) && full + lastH <= BOT - TOP - 40) { newPage("body"); repeatHead(); } } // آخر صفّين معاً
         // يرسم السطر على دفعات إن كان أطول من المساحة المتبقية
         var guard = 0;
         while (cells.some(function (c) { return c.done < c.L.lines.length || (c.ims.length && !c.imgDone); }) && guard++ < 50) {
@@ -4102,7 +4104,8 @@ var ENGINE = (function () {
     function dataTable(rows, width) {
       var hasSpan = rows.some(function (r) { return r.some(function (c) { return c.span > 1; }); });
       if (hasSpan) { var expanded = rows.map(function (r) { var o = []; r.forEach(function (c) { o.push(c); for (var k = 1; k < (c.span || 1); k++) { var ph = []; ph.skip = true; o.push(ph); } }); return o; }); expanded.noHead = rows.noHead; expanded.ltrTable = rows.ltrTable; expanded.ltrCells = rows.ltrCells; rows = expanded; }
-      var cw = colWidths(rows, width), n = cw.length;
+      var cw = colWidths(rows, width), n = cw.length, nR = rows.length;
+      var keepRow = function (i) { if (S.keepTable === false || nR < 2) return false; return nR <= 8 ? i < nR - 1 : (i === 0 || i === nR - 2); }; // جدول قصير كله معاً، وطويل بلا صف وحيد أول/آخر الصفحة
       var trs = rows.map(function (r, i) {
         var cells = [];
         for (var j = 0; j < n; j++) {
@@ -4112,7 +4115,7 @@ var ENGINE = (function () {
           var head = i === 0 && !rows.noHead, fill = head ? T.thead : ((j === 0 && n >= 3) ? T.fc : (i % 2 === 0 ? T.alt : "FFFFFF"));
           var cimgs = inl.filter(function (x) { return x.img; }).map(function (x) { return imgPara(x.img, Math.round(cw[j] / 15) - 14); });
           cells.push(new D.TableCell({ width: { size: spW, type: D.WidthType.DXA }, columnSpan: sp > 1 ? sp : undefined, shading: shade(fill), margins: { top: 60, bottom: 60, left: 100, right: 100 }, verticalAlign: D.VerticalAlign.CENTER,
-            children: cimgs.concat([P(inl, { size: SZ.table, line: TLINE, after: 0, forceRtl: !rows.ltrCells || AR_RE.test(plain(inl)), align: head ? CENTER : START,
+            children: cimgs.concat([P(inl, { size: SZ.table, line: TLINE, after: 0, keepNext: keepRow(i) || undefined, forceRtl: !rows.ltrCells || AR_RE.test(plain(inl)), align: head ? CENTER : START,
               bold: head || (j === 0 && n >= 3), color: head ? "FFFFFF" : ((j === 0 && n >= 3) ? T.bold : undefined), boldColor: head ? "FFFFFF" : T.bold })]) }));
         }
         return new D.TableRow({ children: cells, cantSplit: true, tableHeader: i === 0 && !rows.noHead });
@@ -4123,7 +4126,8 @@ var ENGINE = (function () {
       var ltrList = !b.items.some(function (it) { return AR_RE.test(plain(it.inl)); });
       var indent = b.nested ? 400 * Math.max(1, b.indentLevel || 1) : 0, w = width - indent, NW = 620, TW = w - NW, numLeft = ltrList ? true : S.numPos === "left";
       var trs = b.items.map(function (it) {
-        var knO = (it.children && it.children.length) || (S.keepLabel !== false && LABEL_RE.test(plain(it.inl))) ? { keepNext: true } : {};
+        var nI = b.items.length, ii = b.items.indexOf(it);
+        var knO = (it.children && it.children.length) || (S.keepLabel !== false && LABEL_RE.test(plain(it.inl))) || (S.keepTable !== false && nI >= 2 && (nI <= 8 ? ii < nI - 1 : (ii === 0 || ii === nI - 2))) ? { keepNext: true } : {};
         var kids = [it.imp ? P(it.inl, impOpts(0, Object.assign({ indent: ind(60, 60), before: 20, after: 60 }, knO), it.imp)) : P(it.inl, Object.assign({ after: 40 }, knO))];
         kids = kids.concat(renderBlocks(it.children, TW - 160));
         var num = new D.Paragraph({ bidirectional: false, alignment: CENTER, spacing: { line: LINE, before: 0, after: 0 },
@@ -5116,6 +5120,7 @@ var ENGINE = (function () {
       var p = it.node, pPr = ensurePr(p, "pPr"), txt = it.text, rtl = AR.test(txt);
       if (S.keepParas && txt.trim()) place(pPr, mk(doc, "keepLines"), ORD.pPr); // الفقرة كاملة بصفحة وحدة
       if (S.keepLabel !== false && !it.level && (ENGINE.LABEL_RE || /[:：]\s*$/).test(txt)) place(pPr, mk(doc, "keepNext"), ORD.pPr); // سطر ينتهي بنقطتين يبقى مع شرحه
+      if (S.keepLabel !== false && (it.drawing || (CAP_RE.test(txt.trim()) && txt.trim().length < 40))) place(pPr, mk(doc, "keepNext"), ORD.pPr); // الصورة و«الشكل N» يبقيان مع الشرح اللي بعدهما // الصورة تبقى مع تعليقها (الفقرة/الجدول اللي بعدها)
       if (it.level) {
         var lv = it.level; rep.headings[lv]++;
         place(pPr, mk(doc, "pStyle", { val: "Heading" + lv }), ORD.pPr);
@@ -5178,9 +5183,12 @@ var ENGINE = (function () {
         place(tblPr, cm, ORD.tblPr);
       }
       var ncol = Math.max.apply(null, rows.map(function (r) { return kids(r, "tc").length; }).concat([1]));
+      // صفوف الجدول: الجدول القصير (≤ 8 صفوف) يبقى كله بصفحة وحدة، والطويل ما يترك صفاً وحيداً أول/آخر الصفحة (أول صفّين وآخر صفّين معاً)
+      var nR = rows.length, keepRow = function (ri) { if (S.keepTable === false || nR < 2) return false; return nR <= 8 ? ri < nR - 1 : (ri === 0 || ri === nR - 2); };
       rows.forEach(function (tr, ri) {
         var trPr = ensurePr(tr, "trPr");
         if (S.keepParas !== false) place(trPr, mk(doc, "cantSplit"), ORD.trPr);
+        if (keepRow(ri)) kids(tr, "tc").forEach(function (tc0) { allW(tc0, "p").forEach(function (p0) { place(ensurePr(p0, "pPr"), mk(doc, "keepNext"), ORD.pPr); }); });
         if (ri === 0 && headRow) place(trPr, mk(doc, "tblHeader"), ORD.trPr);
         if (!kid(trPr, "cantSplit") && !kid(trPr, "tblHeader") && !trPr.firstChild) tr.removeChild(trPr);
         kids(tr, "tc").forEach(function (tc, ci) {
@@ -5650,7 +5658,7 @@ var ENGINE = (function () {
   var LS_KEY = "randommed.lec2docx.settings.v2";
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmRepeat: false, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
-    keepParas: true, keepLabel: true, origLine: true, pageBg: "none", pageFrame: false, pageDeco: "none", decoStrength: "mid",
+    keepParas: true, keepLabel: true, keepTable: true, origLine: true, pageBg: "none", pageFrame: false, pageDeco: "none", decoStrength: "mid",
     activeSlot: "platform", slotPlatform: "", slotDoctor: "", wordSmart: false, delBrackets: false, brKeepBox: true, smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protAntiOcr: "none", protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
@@ -6400,7 +6408,7 @@ var ENGINE = (function () {
   $("pfName").oninput = function () { S.platform.name = this.value; save(); paintCoverThumbs(); schedulePreview(); };
   $("pfUrl").oninput = function () { S.platform.url = this.value.trim(); save(); paintQrHint(); schedulePreview(); };
   function paintQrHint() { $("qrHint").textContent = qrHref(S) ? "رمز QR رح ينولّد تلقائياً لـ " + qrHref(S).replace(/^https?:\/\//, "") : "اكتب «رابط المنصة» بقسم الغلاف والحقوق ليظهر رمز QR."; }
-  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optWmRep", "wmRepeat"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"], ["optBack", "backCover"], ["optMerge", "merge"], ["optKeep", "keepParas"], ["optKeepLabel", "keepLabel"], ["optOrigLine", "origLine"], ["optFrame", "pageFrame"]].forEach(function (p) {
+  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optWmRep", "wmRepeat"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"], ["optBack", "backCover"], ["optMerge", "merge"], ["optKeep", "keepParas"], ["optKeepLabel", "keepLabel"], ["optKeepTable", "keepTable"], ["optOrigLine", "origLine"], ["optFrame", "pageFrame"]].forEach(function (p) {
     $(p[0]).onchange = function () { S[p[1]] = this.checked; save(); paintSettings(); schedulePreview(); };
   });
   $("wmOp").oninput = function () { S.wmOpacity = +this.value; $("wmOpV").textContent = this.value + "%"; save(); schedulePreview(); };
@@ -6416,7 +6424,7 @@ var ENGINE = (function () {
     $("optSub").checked = S.showSubtitle !== false; $("optRights").checked = S.rights !== false;
     $("pfName").value = S.platform.name || ""; $("pfUrl").value = S.platform.url || "";
     $("doctor").value = S.doctor || ""; $("coverExtra").value = S.coverExtra || ""; $("backText").value = S.backText || ""; $("social").value = S.social || "";
-    $("optBack").checked = !!S.backCover; $("optKeep").checked = !!S.keepParas; $("optKeepLabel").checked = S.keepLabel !== false; $("optFrame").checked = !!S.pageFrame; paintBgs(); $("optOrigLine").checked = S.origLine !== false; $("optMerge").checked = !!S.merge; $("nameTpl").value = S.nameTpl || "";
+    $("optBack").checked = !!S.backCover; $("optKeep").checked = !!S.keepParas; $("optKeepLabel").checked = S.keepLabel !== false; $("optKeepTable").checked = S.keepTable !== false; $("optFrame").checked = !!S.pageFrame; paintBgs(); $("optOrigLine").checked = S.origLine !== false; $("optMerge").checked = !!S.merge; $("nameTpl").value = S.nameTpl || "";
     Array.prototype.forEach.call($("pvSeg").children, function (b) { b.classList.toggle("sel", (b.dataset.v === "real") === !!S.pvReal); });
     paintQrHint(); paintName(); paintPresets();
     Array.prototype.forEach.call($("covers").children, function (b) { var on = b.dataset.k === (S.coverStyle || "classic"); b.classList.toggle("sel", on && S.cover); b.setAttribute("aria-checked", on && S.cover ? "true" : "false"); });
