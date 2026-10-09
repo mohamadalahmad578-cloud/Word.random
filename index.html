@@ -521,7 +521,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
                 <label class="tg"><span>منع الطباعة (PDF)</span><span class="sw-t"><input type="checkbox" id="protNoPrint"><span></span></span></label>
                 <label class="tg"><span>منع النسخ والتعديل (PDF)<small>صفحات الـ PDF أصلاً صور، فالنص ما بينسخ</small></span><span class="sw-t"><input type="checkbox" id="protNoCopy"><span></span></span></label>
               </div>
-              <div class="field"><span class="lbl">ضد النسخ من السكرين/الكاميرا (PDF) 📷</span><div class="seg" id="antiOcrSeg" role="radiogroup" aria-label="ضد النسخ من الصورة"><button type="button" data-v="none">بدون</button><button type="button" data-v="clean">نظيفة ✨</button><button type="button" data-v="light">خفيفة</button><button type="button" data-v="strong">قوية</button><button type="button" data-v="max">قصوى 📱</button></div><small class="hint">بتنحط على صفحات الـ PDF طبقة خطوط ونقاط وحروف تمويه باهتة، فإذا حدا صوّر الصفحة أو أخد سكرين وجرّب «نسخ النص من الصورة» بيطلعلو نص مخربط. القراءة بالعين بتضل مريحة. «قوية» أشد بس الصفحة بتبين محبّبة شوي. «نظيفة ✨» بلا حبوب أبداً: علامة مائية مائلة متكررة باسم المنصة بتقطع السطور، والكتابة بتضل نظيفة تماماً — شكلها متل الملفات الممسوحة (بس الآيفون غالباً بيقدر ينسخ منها). «قصوى 📱» للآيفون والموبايلات الحديثة: بتقطع خط وصل الحروف بفتحات رفيعة وبترش حروف وهمية باهتة — الصفحة بتصير أخشن شوي.</small></div>
+              <div class="field"><span class="lbl">ضد النسخ من السكرين/الكاميرا (PDF) 📷</span><div class="seg" id="antiOcrSeg" role="radiogroup" aria-label="ضد النسخ من الصورة"><button type="button" data-v="none">بدون</button><button type="button" data-v="clean">نظيفة ✨</button><button type="button" data-v="mix">مخربطة 🔀</button><button type="button" data-v="light">خفيفة</button><button type="button" data-v="strong">قوية</button><button type="button" data-v="max">قصوى 📱</button></div><small class="hint">بتنحط على صفحات الـ PDF طبقة خطوط ونقاط وحروف تمويه باهتة، فإذا حدا صوّر الصفحة أو أخد سكرين وجرّب «نسخ النص من الصورة» بيطلعلو نص مخربط. القراءة بالعين بتضل مريحة. «قوية» أشد بس الصفحة بتبين محبّبة شوي. «نظيفة ✨» بلا حبوب أبداً: علامة مائية مائلة متكررة باسم المنصة بتقطع السطور، والكتابة بتضل نظيفة تماماً — شكلها متل الملفات الممسوحة (بس الآيفون غالباً بيقدر ينسخ منها). «مخربطة 🔀»: متل «نظيفة» مع سطور كلمات وهمية باهتة بين السطور، فإذا انسخ النص من السكرين بيطلع مخلوط بكلام ما إلو معنى. «قصوى 📱» للآيفون والموبايلات الحديثة: بتقطع خط وصل الحروف بفتحات رفيعة وبترش حروف وهمية باهتة — الصفحة بتصير أخشن شوي.</small></div>
               <div class="field"><span class="lbl">حماية ملف PDF جاهز عندك 📄</span><div class="prow"><label class="btn">⬆ اختار ملف PDF<input type="file" id="protPdfIn" accept="application/pdf,.pdf" class="sr"></label></div><small class="hint">حوّلت الملف لـ PDF من Word عندك؟ ارفعه هون وبتنزل نسخة محمية بالإعدادات اللي فوق (كلمة السر، منع الطباعة والنسخ، وضد النسخ من السكرين). إذا اخترت «ضد النسخ من السكرين» بتتحوّل الصفحات لصور عليها الطبقة، فالنص ما عاد ينسخ أبداً. كل شي بيصير على جهازك.</small></div>
               <div class="field"><label class="lbl" for="protOwner">كلمة سر المالك للـ PDF <small style="font-weight:400;color:var(--ink-soft)">(اختيارية — لترفع القيود لاحقاً)</small></label><input class="inp" id="protOwner" type="password" dir="ltr" autocomplete="new-password" maxlength="64" placeholder="إذا تركتها فاضية بتنعمل عشوائية"></div>
               <small class="hint">⚠️ كلمات السر ما بتنحفظ بالمتصفح، بتنمسح لما تسكّر الصفحة. احفظها عندك: إذا ضاعت كلمة سر Word ما في أي طريقة لفتح الملف. ملف Word ما فيه منع طباعة أو نسخ، هاد بس بالـ PDF.</small>
@@ -1994,7 +1994,7 @@ var RMED_PDF = (function () {
   function antiOcr(c, level, seed, mark) {
     var g = c.getContext("2d"), W = c.width, H = c.height, k = W / 595.28, s0 = (seed + 1) * 9301;
     function rnd() { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; }
-    if (level === "clean") { tileMark(c, mark, rnd, k, seed); return; } // نظيفة: بلا حبوب — متل الملفات الممسوحة بعلامة مائية مائلة
+    if (level === "clean" || level === "mix") { g.save(); g.setTransform(1, 0, 0, 1, 0, 0); if (level === "mix") decoyLines(c, rnd, k); tileMark(c, mark, rnd, k, seed); g.restore(); return; } // نظيفة/مخربطة: بلا حبوب // مخربطة: الكتابة والألوان متل ما هي + سطور وهمية باهتة بين السطور تختلط بالنسخ // نظيفة: بلا حبوب — متل الملفات الممسوحة بعلامة مائية مائلة
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
     function hatch(ang, gap, alpha, lw) { g.strokeStyle = "rgba(25,28,45," + alpha + ")"; g.lineWidth = lw; var t = Math.tan(ang * Math.PI / 180); g.beginPath(); for (var x = -H * Math.abs(t) - gap; x < W + H * Math.abs(t) + gap; x += gap) { g.moveTo(x, 0); g.lineTo(x + H * t, H); } g.stroke(); }
     // نقاط صغيرة بحجم نقاط الحروف العربية: العين بتتجاهلها، وبرامج قراءة النص بتخلطها مع نقاط الحروف (ب/ت/ث، ج/خ…) فيطلع النص مخربط
@@ -2028,6 +2028,27 @@ var RMED_PDF = (function () {
       var t = Math.tan((30 + rnd() * 8) * Math.PI / 180), gap = 26 * k; g.strokeStyle = "rgba(30,36,60,0.14)"; g.lineWidth = Math.max(1, 0.7 * k); g.beginPath();
       for (var x2 = -H * t; x2 < W + gap; x2 += gap) { g.moveTo(x2, 0); g.lineTo(x2 + H * t, H); } g.stroke();
     }
+    g.restore();
+  }
+  // سطور كلمات عربية وهمية باهتة بالفراغ بين سطور النص: العين بتتجاهلها، وقارئ النص بيقراها كسطور حقيقية فيطلع المنسوخ مخلوط
+  var DECOY = "التشخيص العلاج الأعراض المريض الجرعة الدواء المزمن الحاد الوظيفة الخلايا النسيج الدم القلب الكبد الكلية الرئة الدماغ العصب المستقبل الإنزيم البروتين الهرمون الالتهاب الانتان الضغط السكري الحمض القاعدة الاستقلاب الإطراح الامتصاص التوزع الفعالية السمية المضاد المثبط المحفز التأثير الجانبي الآلية المرحلة الحالة السريرية الفحص التحليل النتيجة المعدل النسبة الزيادة النقص الطبيعي المرضي المتلازمة الاختلاط الوقاية التدبير".split(" ");
+  function decoyLines(c, rnd, k) {
+    var g = c.getContext("2d"), W = c.width, H = c.height, im = g.getImageData(0, 0, W, H), D = im.data, cnt = new Uint32Array(H), x0s = new Int32Array(H), x1s = new Int32Array(H);
+    for (var y = 0; y < H; y++) { var n = 0, o = y * W * 4, a = W, b = -1; for (var x = 0; x < W; x++, o += 4) { var L = D[o] * 0.3 + D[o + 1] * 0.59 + D[o + 2] * 0.11; if (L < 120) { n++; if (x < a) a = x; b = x; } } cnt[y] = n; x0s[y] = a; x1s[y] = b; }
+    var th = Math.max(3, W * 0.006), bands = [], y0 = -1;
+    for (y = 0; y <= H; y++) { var on = y < H && cnt[y] > th; if (on && y0 < 0) y0 = y; else if (!on && y0 >= 0) { bands.push([y0, y - 1]); y0 = -1; } }
+    var hs = bands.map(function (bd) { return bd[1] - bd[0] + 1; }).filter(function (h) { return h >= 3 * k && h < H * 0.05; }).sort(function (p, q) { return p - q; }), med = hs.length ? hs[hs.length >> 1] : 0, ML = 72 * k, MR = W - 72 * k;
+    g.save(); g.textBaseline = "middle"; g.direction = "rtl"; g.textAlign = "right";
+    bands.forEach(function (bd, i) {
+      var h = bd[1] - bd[0] + 1; if (!med || h < med * 0.6 || h > med * 1.5) return;
+      var nx = bands[i + 1], gap = nx ? nx[0] - bd[1] : h; if (gap < h * 0.35) return;
+      var a = W, b = 0; for (var yy = bd[0]; yy <= bd[1]; yy++) { if (x0s[yy] < a) a = x0s[yy]; if (x1s[yy] > b) b = x1s[yy]; }
+      a = Math.max(a, ML); b = Math.min(b, MR); if (b - a < 40 * k) return;
+      var fz = Math.max(5 * k, Math.min(h * 0.7, gap * 0.95)), yc = bd[1] + Math.min(gap, h * 1.6) / 2, line = "";
+      g.font = "400 " + Math.round(fz) + "px 'IBM Plex Sans Arabic','Noto Naskh Arabic','Segoe UI',sans-serif"; g.fillStyle = "rgba(40,46,70,0.25)";
+      while (g.measureText(line).width < b - a) line += DECOY[Math.floor(rnd() * DECOY.length)] + " ";
+      g.save(); g.beginPath(); g.rect(a, yc - fz, b - a, fz * 2); g.clip(); g.fillText(line, b, yc); g.restore();
+    });
     g.restore();
   }
   function cutBaselines(c, rnd, k) {
