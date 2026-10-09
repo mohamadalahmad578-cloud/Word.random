@@ -788,7 +788,7 @@ var ENGINE = (function () {
     if (/^```/.test(s)) return { k: "fence" };
     if (HR_RE.test(s)) return { k: "hr" };
     if ((m = s.match(/^(#{1,6})\s+(.*)$/))) return { k: "h", level: Math.min(m[1].length, 4), text: stripMk(m[2]), indent: indent };
-    if (/^إليك التفريغ/.test(s)) return { k: "intro", text: stripMk(s) };
+    if (/^إليك التفريغ/.test(s) || /^(إليكم?|فيما يلي|في ما يلي|هذا هو|هذه هي|هنا)\s/.test(s) && /التفريغ|تفريغ/.test(s.replace(/\*+/g, "").slice(0, 70))) return { k: "intro", text: stripMk(s) };
     if (/^💡/.test(s)) return { k: "outro", text: stripMk(s) };
     if (s.charAt(0) === "|") return { k: "tr", text: s };
     if ((m = s.match(/^[*+\-•]\s+(.*)$/))) return { k: "li", text: m[1], indent: indent };

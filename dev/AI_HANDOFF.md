@@ -190,3 +190,4 @@ git push origin HEAD:refs/heads/stable-$(date +%Y-%m-%d)   # نقطة رجوع (
 - `COVER_STYLES` صار `[المفتاح، الاسم، الفئة]` والفئات bio/lux/simple مع أزرار فلترة `#covCat` (النمط المختار يضل ظاهر).
 - الجديد: cell, ecg, pills, lab, blood, virus, neuron, night, artdeco, marble, botanical, minimal, ribbon, crystal, watercolor — رسمها بـ `drawCoverExtra` (الفن على الأطراف والشريط العلوي فقط بعيداً عن عمود النص والتذييل).
 - تخطيط النص يُستعار من نمط أساسي: `ENGINE.COVER_BASE` / `ENGINE.coverBase(st)` (فاتح → steroid، كريمي → protein، داكن → helix) ويستعمله ENGINE وpdf.js والمعاينة والمصغرات. لإضافة غلاف: رسمة بـ drawCoverExtra + سطر بـ COVER_STYLES + أساس بـ COVER_BASE.
+- سطر المقدمة: صار يُعرف كمقدمة أي سطر يبدأ بـ «إليك/إليكم/فيما يلي/في ما يلي/هذا هو/هذه هي/هنا» وفيه «التفريغ» بأول 70 حرف (كان «فيما يلي…» يعمل محاضرة وهمية زيادة قبل العنوان).
