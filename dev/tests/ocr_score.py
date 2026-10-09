@@ -7,7 +7,7 @@ def toks(t): return re.findall(r'[؀-ۿA-Za-z]{3,}',t)
 res={}
 for dpi in [96,150,220]:
     refs={}
-    for lv in ['none','light','strong']:
+    for lv in ['none','light','strong','max']:
         tot=[];hit=0;n=0
         for pg in [3,5]:
             subprocess.run(['pdftoppm','-r',str(dpi),'-f',str(pg),'-l',str(pg),'-png',f'{d}/{lv}.pdf',f'{d}/r_{lv}_{dpi}'])

@@ -16,5 +16,5 @@ const OUT=process.env.OUT||__OUT+'aocr/'; fs.mkdirSync(OUT,{recursive:true});
  console.log('none:', await dl('#pdfBtn','none.pdf'));
  await pg.evaluate(()=>document.querySelector('#protOn').click()); await pg.evaluate(()=>{const c=document.querySelector('#protWord');if(c.checked)c.click();});
  await pg.evaluate(()=>{const c=document.querySelector('#protNoPrint');if(c.checked)c.click(); const d=document.querySelector('#protNoCopy');if(d.checked)d.click();});
- for (const lv of ['light','strong']) { await pg.click(`#antiOcrSeg button[data-v="${lv}"]`); console.log(lv+':', await dl('#pdfBtn',lv+'.pdf')); }
+ for (const lv of ['light','strong','max']) { await pg.click(`#antiOcrSeg button[data-v="${lv}"]`); console.log(lv+':', await dl('#pdfBtn',lv+'.pdf')); }
  console.log('lbl', await pg.textContent('#protLbl'), 'errors',errs); await b.close();})().catch(e=>{console.error(e);process.exit(1)});

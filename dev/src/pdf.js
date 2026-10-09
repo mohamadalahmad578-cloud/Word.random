@@ -72,12 +72,41 @@ var RMED_PDF = (function () {
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
     function hatch(ang, gap, alpha, lw) { g.strokeStyle = "rgba(25,28,45," + alpha + ")"; g.lineWidth = lw; var t = Math.tan(ang * Math.PI / 180); g.beginPath(); for (var x = -H * Math.abs(t) - gap; x < W + H * Math.abs(t) + gap; x += gap) { g.moveTo(x, 0); g.lineTo(x + H * t, H); } g.stroke(); }
     // نقاط صغيرة بحجم نقاط الحروف العربية: العين بتتجاهلها، وبرامج قراءة النص بتخلطها مع نقاط الحروف (ب/ت/ث، ج/خ…) فيطلع النص مخربط
-    var strong = level === "strong", dens = strong ? 0.012 : 0.008, al = strong ? 0.5 : 0.4, r = Math.max(1.2, 0.83 * k), n = Math.round(W * H * dens * (1.8 / k) * (1.8 / k));
+    var strong = level === "strong" || level === "max", dens = strong ? 0.012 : 0.008, al = strong ? 0.5 : 0.4, r = Math.max(1.2, 0.83 * k), n = Math.round(W * H * dens * (1.8 / k) * (1.8 / k));
     g.fillStyle = "rgba(25,28,45," + al + ")";
     for (var d = 0; d < n; d++) { g.beginPath(); g.arc(rnd() * W, rnd() * H, r, 0, 6.2832); g.fill(); }
     if (strong) hatch(35, Math.max(3, 2.1 * k), 0.2, Math.max(1, 0.5 * k));
     g.fillStyle = "rgba(255,255,255," + (strong ? 0.55 : 0.45) + ")"; // نقاط فاتحة: تشتغل على الأشرطة الغامقة (العناوين البيضاء على كحلي)
     for (var d2 = 0, n2 = Math.round(n * 0.6); d2 < n2; d2++) { g.beginPath(); g.arc(rnd() * W, rnd() * H, r, 0, 6.2832); g.fill(); }
+    g.restore();
+    if (level === "max") antiOcrMax(c, rnd, k);
+  }
+  // «قصوى»: موجّهة لقرّاء النص القويين (Live Text بالآيفون…): نكتشف سطور النص ونقطع خط الوصل العربي (خط القاعدة) بفتحات رفيعة متقطعة،
+  // ونرش حروف عربية وهمية باهتة بين السطور وفوقها حتى يختلط النص المنسوخ. العين بتكمّل الحرف المقطوع وبتتجاهل الباهت.
+  function antiOcrMax(c, rnd, k) {
+    var g = c.getContext("2d"), W = c.width, H = c.height, im = g.getImageData(0, 0, W, H), D = im.data, cnt = new Uint32Array(H);
+    for (var y = 0; y < H; y++) { var n = 0, o = y * W * 4; for (var x = 0; x < W; x++, o += 4) { var L = D[o] * 0.3 + D[o + 1] * 0.59 + D[o + 2] * 0.11; if (L < 120) n++; } cnt[y] = n; }
+    var th = Math.max(3, W * 0.006), bands = [], y0 = -1;
+    for (y = 0; y <= H; y++) { var on = y < H && cnt[y] > th; if (on && y0 < 0) y0 = y; else if (!on && y0 >= 0) { bands.push([y0, y - 1]); y0 = -1; } }
+    bands.forEach(function (bd) {
+      var h = bd[1] - bd[0] + 1; if (h < 4 * k / 2 || h > H * 0.06) return;
+      var by = bd[0], mx = 0; for (var yy = bd[0]; yy <= bd[1]; yy++) if (cnt[yy] > mx) { mx = cnt[yy]; by = yy; }
+      var t = Math.max(1, Math.round(h * 0.11)), src = Math.max(0, bd[0] - Math.max(2, Math.round(h * 0.25)));
+      // نقطع خط القاعدة بفتحات متقطعة: نستبدل بكسلاتها بلون الخلفية من فوق السطر
+      for (var x0 = Math.floor(rnd() * 6 * k); x0 < W;) {
+        var seg = Math.round((2.2 + rnd() * 2.5) * k), gap = Math.round((2.5 + rnd() * 3.5) * k), yc = by - Math.floor(t / 2) + (rnd() < 0.5 ? 0 : 1);
+        for (var xx = x0; xx < Math.min(W, x0 + seg); xx++) for (var q = 0; q < t; q++) { var yr = yc + q; if (yr < 0 || yr >= H) continue; var o2 = (yr * W + xx) * 4, o3 = (src * W + xx) * 4; D[o2] = D[o3]; D[o2 + 1] = D[o3 + 1]; D[o2 + 2] = D[o3 + 2]; }
+        x0 += seg + gap;
+      }
+    });
+    g.putImageData(im, 0, 0);
+    var AR = "ابتثجحخدذرزسشصضطظعغفقكلمنهوية", FN = "'IBM Plex Sans Arabic','Noto Naskh Arabic','Segoe UI',sans-serif", nF = Math.round(W * H / (2600 * k * k));
+    g.save(); g.textBaseline = "middle";
+    for (var i = 0; i < nF; i++) {
+      var sz = (6 + rnd() * 6) * k, w = ""; for (var j = 0, m = 2 + Math.floor(rnd() * 4); j < m; j++) w += AR.charAt(Math.floor(rnd() * AR.length));
+      g.font = "400 " + Math.round(sz) + "px " + FN; g.fillStyle = "rgba(30,34,52," + (0.1 + rnd() * 0.08) + ")"; g.direction = "rtl";
+      g.save(); g.translate(rnd() * W, rnd() * H); g.rotate((rnd() - 0.5) * 0.5); g.fillText(w, 0, 0); g.restore();
+    }
     g.restore();
   }
   function canvasJpeg(c, q) { return new Promise(function (res) { c.toBlob(function (b) { b.arrayBuffer().then(function (ab) { res(new Uint8Array(ab)); }); }, "image/jpeg", q); }); }
