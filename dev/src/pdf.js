@@ -69,7 +69,7 @@ var RMED_PDF = (function () {
   function antiOcr(c, level, seed, mark) {
     var g = c.getContext("2d"), W = c.width, H = c.height, k = W / 595.28, s0 = (seed + 1) * 9301;
     function rnd() { s0 = (s0 * 9301 + 49297) % 233280; return s0 / 233280; }
-    if (level === "clean") { cutBaselines(c, rnd, k); tileMark(c, mark, rnd, k, seed); return; } // نظيفة: بلا حبوب — متل الملفات الممسوحة بعلامة مائية مائلة
+    if (level === "clean") { tileMark(c, mark, rnd, k, seed); return; } // نظيفة: بلا حبوب — متل الملفات الممسوحة بعلامة مائية مائلة
     g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
     function hatch(ang, gap, alpha, lw) { g.strokeStyle = "rgba(25,28,45," + alpha + ")"; g.lineWidth = lw; var t = Math.tan(ang * Math.PI / 180); g.beginPath(); for (var x = -H * Math.abs(t) - gap; x < W + H * Math.abs(t) + gap; x += gap) { g.moveTo(x, 0); g.lineTo(x + H * t, H); } g.stroke(); }
     // نقاط صغيرة بحجم نقاط الحروف العربية: العين بتتجاهلها، وبرامج قراءة النص بتخلطها مع نقاط الحروف (ب/ت/ث، ج/خ…) فيطلع النص مخربط
