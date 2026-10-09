@@ -646,6 +646,7 @@ textarea.inp{min-height:70px;resize:vertical;font:inherit;line-height:1.6}
             <div class="toggles">
               <label class="tg">فهرس المحاضرات ومحاورها<span class="sw-t"><input type="checkbox" id="optToc"><span></span></span></label>
               <label class="tg"><span>عدم تقسيم الفقرة بين صفحتين<small>إذا ما بقي مكان للفقرة كاملة بتنزل كلها عالصفحة الجاية</small></span><span class="sw-t"><input type="checkbox" id="optKeep"><span></span></span></label>
+              <label class="tg"><span>سطر العنوان يبقى مع شرحه<small>السطر اللي بينتهي بنقطتين (أو يليه بنود فرعية) ما بيضل لحاله بآخر الصفحة وشرحه بالصفحة الجاية</small></span><span class="sw-t"><input type="checkbox" id="optKeepLabel"><span></span></span></label>
             </div>
             <div class="field" style="margin-top:12px">
               <label class="lbl" for="nameTpl">تسمية الملف تلقائياً</label>
@@ -2318,17 +2319,21 @@ var RMED_PDF = (function () {
       else para(b.inl, { x: x, w: w, size: Z.h4, bold: true, color: T.h4, boldColor: T.h4, align: "right", before: 8, after: 3, keepNext: kn });
     }
     function coBox(co) { co = co && co.fill ? co : (ENGINE.CALLOUTS ? ENGINE.CALLOUTS[0] : { fill: "FFF2CC", border: "BF9000" }); return { fill: co.fill, border: co.border, pad: 4, padX: 3, lw: 0.9 }; }
+    var LABEL_RE = ENGINE.LABEL_RE || /[:：]\s*$/, KN2 = lineH(Z.body) * 2.2; // سطر العنوان (ينتهي بنقطتين أو يليه بند فرعي) يبقى مع سطرين على الأقل مما بعده
+    function labelLike(b, next) { if (S.keepLabel === false || !b || !b.inl) return false; if (LABEL_RE.test(ENGINE.plain(b.inl))) return true; return !!(next && (next.t === "li" || next.t === "p") && (next.level || 0) > (b.level || 0)); }
     function blocks(list, x, w) {
       list.forEach(function (b, bi) {
+        var kn = labelLike(b, list[bi + 1]) ? KN2 : 0;
         switch (b.t) {
           case "h": heading(b, x, w); break;
-          case "p": { var ind = (b.level || 0) * 18; para(b.inl, { x: x, w: w - ind, size: Z.body, color: "111111", boldColor: T.bold, after: 4 }, b.imp ? coBox(b.imp) : null); break; }
+          case "p": { var ind = (b.level || 0) * 18; para(b.inl, { x: x, w: w - ind, size: Z.body, color: "111111", boldColor: T.bold, after: 4, keepNext: kn }, b.imp ? coBox(b.imp) : null); break; }
           case "li": {
             var ind2 = 16 + (b.level || 0) * 14, top = y;
-            if (b.imp) { para(b.inl, { x: x, w: w - (b.level || 0) * 14, size: Z.body, color: "111111", boldColor: T.bold, after: 3 }, coBox(b.imp)); break; }
+            if (b.imp) { para(b.inl, { x: x, w: w - (b.level || 0) * 14, size: Z.body, color: "111111", boldColor: T.bold, after: 3, keepNext: kn }, coBox(b.imp)); break; }
             var L0 = layout(b.inl, { size: Z.body, width: w - ind2 }); if (S.keepParas && !room(L0.h) && L0.h <= BOT - TOP) newPage("body"); if (!room(L0.lh)) newPage("body");
+            if (kn && !room(L0.h + kn) && L0.h + kn <= BOT - TOP) newPage("body");
             top = y; var rtlL = L0.rtl; bullet(["●", "○", "■", "▪"][Math.min(3, b.level || 0)], rtlL ? x + w - ind2 + 4 + (b.level || 0) * 0 : x + (b.level || 0) * 14 + 2, top, Math.max(6, Z.body - 5), T.acc);
-            para(b.inl, { x: rtlL ? x : x + ind2, w: w - ind2, size: Z.body, color: "111111", boldColor: T.bold, after: 2 }); break;
+            para(b.inl, { x: rtlL ? x : x + ind2, w: w - ind2, size: Z.body, color: "111111", boldColor: T.bold, after: 2, keepNext: kn }); break;
           }
           case "ol": {
             var indO = b.nested ? 18 * Math.max(1, b.indentLevel || 1) : 0, wO = w - indO, NW = 26;
@@ -2337,13 +2342,13 @@ var RMED_PDF = (function () {
             // المساحة: قائمة عربية تُزاح من اليمين، وقائمة إنجليزية من اليسار
             var ax = ltrList ? x + indO : x, aw = wO, TWd = aw - NW - 6;
             b.items.forEach(function (it) {
-              var Lt = layout(it.inl, { size: Z.body, width: TWd });
-              if ((S.keepParas && !room(Lt.h) && Lt.h <= BOT - TOP) || !room(Lt.lh)) newPage("body");
+              var Lt = layout(it.inl, { size: Z.body, width: TWd }), knI = (it.children && it.children.length) || (S.keepLabel !== false && LABEL_RE.test(ENGINE.plain(it.inl))) ? KN2 : 0;
+              if ((S.keepParas && !room(Lt.h) && Lt.h <= BOT - TOP) || !room(Lt.lh) || (knI && !room(Lt.h + knI) && Lt.h + knI <= BOT - TOP)) newPage("body");
               var top2 = y, nx = numLeft ? ax : ax + aw - NW, tx = numLeft ? ax + NW + 6 : ax;
               rect(nx, top2, NW, Lt.lh, T.light);
               var nt = String(it.num || ""), nf = fitFont(nt, Z.body, true, false, NW - 2);
               text(nt, nx + (NW - width(nf, nt)) / 2, top2 + (Lt.lh - Z.body) / 2 + Z.body * 0.86, nf, T.acc, false); if (!it.gen) drawn.push(nt);
-              para(it.inl, { x: tx, w: TWd, size: Z.body, color: "111111", boldColor: T.bold, after: 3 }, it.imp ? coBox(it.imp) : null);
+              para(it.inl, { x: tx, w: TWd, size: Z.body, color: "111111", boldColor: T.bold, after: 3, keepNext: knI }, it.imp ? coBox(it.imp) : null);
               if (it.children && it.children.length) blocks(it.children, tx, TWd);
             });
             y += 3; break;
@@ -3697,6 +3702,7 @@ var ENGINE = (function () {
   var INVIS_RE = /[\u200E\u200F\u2060\u2066-\u2069\u202A-\u202E\uFEFF]/g;
   var SEP_RE = /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/;
   var HR_RE = /^\s*(-{3,}|\*{3,}|_{3,})\s*$/;
+  var LABEL_RE = /[:：]\s*[*_»"”)\]]*\s*$/; // سطر ينتهي بنقطتين (مع رموز إغلاق محتملة)
   var AR_RE = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/;
   var LRM = "\u200E", WJ = "\u2060";
 
@@ -4117,7 +4123,8 @@ var ENGINE = (function () {
       var ltrList = !b.items.some(function (it) { return AR_RE.test(plain(it.inl)); });
       var indent = b.nested ? 400 * Math.max(1, b.indentLevel || 1) : 0, w = width - indent, NW = 620, TW = w - NW, numLeft = ltrList ? true : S.numPos === "left";
       var trs = b.items.map(function (it) {
-        var kids = [it.imp ? P(it.inl, impOpts(0, { indent: ind(60, 60), before: 20, after: 60 }, it.imp)) : P(it.inl, { after: 40 })];
+        var knO = (it.children && it.children.length) || (S.keepLabel !== false && LABEL_RE.test(plain(it.inl))) ? { keepNext: true } : {};
+        var kids = [it.imp ? P(it.inl, impOpts(0, Object.assign({ indent: ind(60, 60), before: 20, after: 60 }, knO), it.imp)) : P(it.inl, Object.assign({ after: 40 }, knO))];
         kids = kids.concat(renderBlocks(it.children, TW - 160));
         var num = new D.Paragraph({ bidirectional: false, alignment: CENTER, spacing: { line: LINE, before: 0, after: 0 },
           children: (it.gen ? [GS()] : []).concat([new D.TextRun({ text: it.num, rightToLeft: false, bold: true, boldComplexScript: true, color: T.acc, size: SZ.body, font: { ascii: FE, hAnsi: FE, cs: FE }, language: { value: "en-US" } })]).concat(it.gen ? [GE()] : []) });
@@ -4176,13 +4183,20 @@ var ENGINE = (function () {
         return new D.Paragraph({ bidirectional: false, spacing: { line: 240, after: 0 }, shading: shade("F7F7F7"), children: [new D.TextRun({ text: l, font: "Courier New", size: Math.max(14, SZ.table - 2) })] });
       });
     }
+    // «سطر العنوان» (ينتهي بنقطتين أو يليه بند فرعي) يبقى مع ما بعده حتى لا ينقسم الشرح عن عنوانه بين صفحتين
+    function labelLike(b, next) {
+      if (S.keepLabel === false || !b || !b.inl) return false;
+      if (LABEL_RE.test(plain(b.inl))) return true;
+      return !!(next && (next.t === "li" || next.t === "p") && (next.level || 0) > (b.level || 0));
+    }
     function renderBlocks(blocks, width) {
       var out = [];
-      blocks.forEach(function (b) {
+      blocks.forEach(function (b, bi) {
+        var kn = labelLike(b, blocks[bi + 1]) ? { keepNext: true } : {};
         switch (b.t) {
           case "h": out.push(heading(b)); break;
-          case "p": out.push(b.imp ? P(b.inl, impOpts(b.level || 0, null, b.imp)) : P(b.inl, b.level ? { indent: ind(b.level * 400) } : {})); break;
-          case "li": out.push(b.imp ? P(b.inl, impOpts(b.level, null, b.imp)) : P(b.inl, { numbering: { reference: "bul", level: b.level }, after: 60 })); break;
+          case "p": out.push(b.imp ? P(b.inl, impOpts(b.level || 0, kn, b.imp)) : P(b.inl, Object.assign(b.level ? { indent: ind(b.level * 400) } : {}, kn))); break;
+          case "li": out.push(b.imp ? P(b.inl, impOpts(b.level, kn, b.imp)) : P(b.inl, Object.assign({ numbering: { reference: "bul", level: b.level }, after: 60 }, kn))); break;
           case "ol": out.push.apply(out, olTable(b, width)); break;
           case "table": if (!b.rows.length || !b.rows.some(function (r) { return r.length; })) break; var rr = b.rows.filter(function (r) { return r.length; }); rr.noHead = b.noHead; rr.ltrTable = b.ltrTable; rr.ltrCells = b.ltrTable; out.push(dataTable(rr, width)); out.push(new D.Paragraph({ spacing: { before: 0, after: 120, line: 200 }, children: [] })); break;
           case "diagram": out.push.apply(out, diagram(b.rows, width)); break;
@@ -4613,7 +4627,7 @@ var ENGINE = (function () {
 
   return { PAGE_BGS: PAGE_BGS, pageBgColor: pageBgColor, lecNum: lecNum, numLabel: numLabel, fileName: fileName, NAME_TPL: NAME_TPL, THEMES: THEMES, SIZE_DEFAULTS: SIZE_DEFAULTS, resolveTheme: resolveTheme, customTheme: customTheme, parseLectures: parseLectures, build: build, finalize: finalize,
     previewHTML: previewHTML, detectSubject: detectSubject, inputTokens: inputTokens, xmlTokens: xmlTokens, compare: compare, lectureLabel: lectureLabel,
-    plain: plain, splitDir: splitDir, b64ToBytes: b64ToBytes, parseInline: parseInline, stripBrackets: stripBrackets, coverBase: coverBase, COVER_BASE: COVER_BASE, tokens: tokens, AR_RE: AR_RE, IMP: IMP, CALLOUTS: CALLOUTS, CO_RE: CO_RE, calloutOf: calloutOf, stripMk: stripMk, MK_RE: MK_RE, classify: classify, coByTag: coByTag };
+    plain: plain, LABEL_RE: LABEL_RE, splitDir: splitDir, b64ToBytes: b64ToBytes, parseInline: parseInline, stripBrackets: stripBrackets, coverBase: coverBase, COVER_BASE: COVER_BASE, tokens: tokens, AR_RE: AR_RE, IMP: IMP, CALLOUTS: CALLOUTS, CO_RE: CO_RE, calloutOf: calloutOf, stripMk: stripMk, MK_RE: MK_RE, classify: classify, coByTag: coByTag };
 })();
 </script>
 
@@ -5101,6 +5115,7 @@ var ENGINE = (function () {
       if (it.kind !== "p") return;
       var p = it.node, pPr = ensurePr(p, "pPr"), txt = it.text, rtl = AR.test(txt);
       if (S.keepParas && txt.trim()) place(pPr, mk(doc, "keepLines"), ORD.pPr); // الفقرة كاملة بصفحة وحدة
+      if (S.keepLabel !== false && !it.level && (ENGINE.LABEL_RE || /[:：]\s*$/).test(txt)) place(pPr, mk(doc, "keepNext"), ORD.pPr); // سطر ينتهي بنقطتين يبقى مع شرحه
       if (it.level) {
         var lv = it.level; rep.headings[lv]++;
         place(pPr, mk(doc, "pStyle", { val: "Heading" + lv }), ORD.pPr);
@@ -5635,7 +5650,7 @@ var ENGINE = (function () {
   var LS_KEY = "randommed.lec2docx.settings.v2";
   var DEFAULTS = { subject: "", subtitle: "", theme: "brand", cMain: "#141B2E", cAcc: "#A9761E", sizes: Object.assign({}, ENGINE.SIZE_DEFAULTS), lineSpacing: 1.5,
     cover: true, toc: true, mode: "single", numPos: "right", logo: true, wm: true, wmRepeat: false, wmOpacity: 7, footBrand: true, dark: null, uiMode: "text", method: "reskin", coverStyle: "classic", showSubtitle: true, rights: true, platform: { name: "Random.MEd", url: "" },
-    keepParas: true, origLine: true, pageBg: "none", pageFrame: false, pageDeco: "none", decoStrength: "mid",
+    keepParas: true, keepLabel: true, origLine: true, pageBg: "none", pageFrame: false, pageDeco: "none", decoStrength: "mid",
     activeSlot: "platform", slotPlatform: "", slotDoctor: "", wordSmart: false, delBrackets: false, brKeepBox: true, smHeadings: true, smTitle: true, smBullets: true, smTables: true, smBoxes: true, smBold: true, protOn: false, protAntiOcr: "none", protWord: true, protPdf: true, protNoPrint: true, protNoCopy: true, idText: "platform", idWord: "platform", pptIdentity: true, pptDoctor: "", pptCourse: "", pptUni: "", pptYear: "", pptFooter: "", pptRights: false, pptBack: false, pptAutoColors: true,
     pptMergeCont: true, pptStripRepeat: true, pptDropEmpty: true, pptJoinFrag: false, pptSlideNums: false, pptGlossary: false, pptNotesPage: false,
     pptLogo: false, pptNotes: true, pptCover: true, pptCovMode: "style", pptCoverStyle: "classic", pptImageOnly: false, pptWm: "doctor", pptWmText: "", pptWmOpacity: 8, doctor: "", coverExtra: "", backCover: true, backText: "", social: "", nameTpl: ENGINE.NAME_TPL, merge: false, pvReal: false };
@@ -6385,7 +6400,7 @@ var ENGINE = (function () {
   $("pfName").oninput = function () { S.platform.name = this.value; save(); paintCoverThumbs(); schedulePreview(); };
   $("pfUrl").oninput = function () { S.platform.url = this.value.trim(); save(); paintQrHint(); schedulePreview(); };
   function paintQrHint() { $("qrHint").textContent = qrHref(S) ? "رمز QR رح ينولّد تلقائياً لـ " + qrHref(S).replace(/^https?:\/\//, "") : "اكتب «رابط المنصة» بقسم الغلاف والحقوق ليظهر رمز QR."; }
-  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optWmRep", "wmRepeat"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"], ["optBack", "backCover"], ["optMerge", "merge"], ["optKeep", "keepParas"], ["optOrigLine", "origLine"], ["optFrame", "pageFrame"]].forEach(function (p) {
+  [["optCover", "cover"], ["optToc", "toc"], ["optLogo", "logo"], ["optWm", "wm"], ["optWmRep", "wmRepeat"], ["optFootBrand", "footBrand"], ["optSub", "showSubtitle"], ["optRights", "rights"], ["optBack", "backCover"], ["optMerge", "merge"], ["optKeep", "keepParas"], ["optKeepLabel", "keepLabel"], ["optOrigLine", "origLine"], ["optFrame", "pageFrame"]].forEach(function (p) {
     $(p[0]).onchange = function () { S[p[1]] = this.checked; save(); paintSettings(); schedulePreview(); };
   });
   $("wmOp").oninput = function () { S.wmOpacity = +this.value; $("wmOpV").textContent = this.value + "%"; save(); schedulePreview(); };
@@ -6401,7 +6416,7 @@ var ENGINE = (function () {
     $("optSub").checked = S.showSubtitle !== false; $("optRights").checked = S.rights !== false;
     $("pfName").value = S.platform.name || ""; $("pfUrl").value = S.platform.url || "";
     $("doctor").value = S.doctor || ""; $("coverExtra").value = S.coverExtra || ""; $("backText").value = S.backText || ""; $("social").value = S.social || "";
-    $("optBack").checked = !!S.backCover; $("optKeep").checked = !!S.keepParas; $("optFrame").checked = !!S.pageFrame; paintBgs(); $("optOrigLine").checked = S.origLine !== false; $("optMerge").checked = !!S.merge; $("nameTpl").value = S.nameTpl || "";
+    $("optBack").checked = !!S.backCover; $("optKeep").checked = !!S.keepParas; $("optKeepLabel").checked = S.keepLabel !== false; $("optFrame").checked = !!S.pageFrame; paintBgs(); $("optOrigLine").checked = S.origLine !== false; $("optMerge").checked = !!S.merge; $("nameTpl").value = S.nameTpl || "";
     Array.prototype.forEach.call($("pvSeg").children, function (b) { b.classList.toggle("sel", (b.dataset.v === "real") === !!S.pvReal); });
     paintQrHint(); paintName(); paintPresets();
     Array.prototype.forEach.call($("covers").children, function (b) { var on = b.dataset.k === (S.coverStyle || "classic"); b.classList.toggle("sel", on && S.cover); b.setAttribute("aria-checked", on && S.cover ? "true" : "false"); });

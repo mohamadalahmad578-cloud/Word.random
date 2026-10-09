@@ -208,3 +208,8 @@ git push origin HEAD:refs/heads/stable-$(date +%Y-%m-%d)   # نقطة رجوع (
 - الوضع الداكن: الزر الرئيسي ذهبي بنص كحلي (كان يختفي). قواعد المعاينة `.page …` نُسخت كما هي (62 قاعدة) آخر الـ CSS.
 - أغلفة جديدة (41 نمطاً): stetho, microscope, atom, dnaband, asclepius, topo, goldwaves, sunburst, honeycomb, bokeh, gridpaper, ink, gradient (كلها بـ `drawCoverExtra` مع أساس بـ `COVER_BASE`). الرسم بالشريط العلوي/الزوايا فقط حتى ما يلاقي عنواناً طويلاً.
 - زخرفات جديدة: مجموعة «حركات طبية» (`med`: pulse, cells, leaf, pills) + atoms بالكيمياء + للمنصة: bframe, bribbon, bhex, blines. مجموعة `med` مسموحة بهوية الدكتور (فقط `brand` ممنوعة).
+
+## سطر العنوان يبقى مع شرحه (`S.keepLabel`, افتراضي مفعّل — خيار بقسم الإخراج جنب «عدم تقسيم الفقرة»)
+- المشكلة: «فقرات مقسومة» رغم keepLines — السبب الغالب سطر ينتهي بنقطتين (أو بند يليه بنود فرعية) يبقى آخر الصفحة وشرحه بالصفحة التالية.
+- `LABEL_RE` بـ ENGINE (نقطتين + رموز إغلاق). Word: `keepNext` على p/li (`labelLike(b, next)` بـ renderBlocks) وعلى بنود ol (مع أبناء أو نقطتين). PDF: `keepNext` = سطرين (`KN2`) بـ para/li/ol. إعادة التلبيس: keepNext على الفقرة العادية المنتهية بنقطتين.
+- كل الفقرات الطويلة بالملف المولّد فيها keepLines (83/83) — فإذا اشتكى المستخدم من تقسيم بعد هالتعديل، اسأله بأي برنامج يفتح (Word للويب/الموبايل يتجاهل أحياناً keepLines).

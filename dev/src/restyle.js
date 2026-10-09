@@ -481,6 +481,7 @@ var RESTYLE = (function () {
       if (it.kind !== "p") return;
       var p = it.node, pPr = ensurePr(p, "pPr"), txt = it.text, rtl = AR.test(txt);
       if (S.keepParas && txt.trim()) place(pPr, mk(doc, "keepLines"), ORD.pPr); // الفقرة كاملة بصفحة وحدة
+      if (S.keepLabel !== false && !it.level && (ENGINE.LABEL_RE || /[:：]\s*$/).test(txt)) place(pPr, mk(doc, "keepNext"), ORD.pPr); // سطر ينتهي بنقطتين يبقى مع شرحه
       if (it.level) {
         var lv = it.level; rep.headings[lv]++;
         place(pPr, mk(doc, "pStyle", { val: "Heading" + lv }), ORD.pPr);

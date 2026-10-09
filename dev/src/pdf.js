@@ -369,17 +369,21 @@ var RMED_PDF = (function () {
       else para(b.inl, { x: x, w: w, size: Z.h4, bold: true, color: T.h4, boldColor: T.h4, align: "right", before: 8, after: 3, keepNext: kn });
     }
     function coBox(co) { co = co && co.fill ? co : (ENGINE.CALLOUTS ? ENGINE.CALLOUTS[0] : { fill: "FFF2CC", border: "BF9000" }); return { fill: co.fill, border: co.border, pad: 4, padX: 3, lw: 0.9 }; }
+    var LABEL_RE = ENGINE.LABEL_RE || /[:：]\s*$/, KN2 = lineH(Z.body) * 2.2; // سطر العنوان (ينتهي بنقطتين أو يليه بند فرعي) يبقى مع سطرين على الأقل مما بعده
+    function labelLike(b, next) { if (S.keepLabel === false || !b || !b.inl) return false; if (LABEL_RE.test(ENGINE.plain(b.inl))) return true; return !!(next && (next.t === "li" || next.t === "p") && (next.level || 0) > (b.level || 0)); }
     function blocks(list, x, w) {
       list.forEach(function (b, bi) {
+        var kn = labelLike(b, list[bi + 1]) ? KN2 : 0;
         switch (b.t) {
           case "h": heading(b, x, w); break;
-          case "p": { var ind = (b.level || 0) * 18; para(b.inl, { x: x, w: w - ind, size: Z.body, color: "111111", boldColor: T.bold, after: 4 }, b.imp ? coBox(b.imp) : null); break; }
+          case "p": { var ind = (b.level || 0) * 18; para(b.inl, { x: x, w: w - ind, size: Z.body, color: "111111", boldColor: T.bold, after: 4, keepNext: kn }, b.imp ? coBox(b.imp) : null); break; }
           case "li": {
             var ind2 = 16 + (b.level || 0) * 14, top = y;
-            if (b.imp) { para(b.inl, { x: x, w: w - (b.level || 0) * 14, size: Z.body, color: "111111", boldColor: T.bold, after: 3 }, coBox(b.imp)); break; }
+            if (b.imp) { para(b.inl, { x: x, w: w - (b.level || 0) * 14, size: Z.body, color: "111111", boldColor: T.bold, after: 3, keepNext: kn }, coBox(b.imp)); break; }
             var L0 = layout(b.inl, { size: Z.body, width: w - ind2 }); if (S.keepParas && !room(L0.h) && L0.h <= BOT - TOP) newPage("body"); if (!room(L0.lh)) newPage("body");
+            if (kn && !room(L0.h + kn) && L0.h + kn <= BOT - TOP) newPage("body");
             top = y; var rtlL = L0.rtl; bullet(["●", "○", "■", "▪"][Math.min(3, b.level || 0)], rtlL ? x + w - ind2 + 4 + (b.level || 0) * 0 : x + (b.level || 0) * 14 + 2, top, Math.max(6, Z.body - 5), T.acc);
-            para(b.inl, { x: rtlL ? x : x + ind2, w: w - ind2, size: Z.body, color: "111111", boldColor: T.bold, after: 2 }); break;
+            para(b.inl, { x: rtlL ? x : x + ind2, w: w - ind2, size: Z.body, color: "111111", boldColor: T.bold, after: 2, keepNext: kn }); break;
           }
           case "ol": {
             var indO = b.nested ? 18 * Math.max(1, b.indentLevel || 1) : 0, wO = w - indO, NW = 26;
@@ -388,13 +392,13 @@ var RMED_PDF = (function () {
             // المساحة: قائمة عربية تُزاح من اليمين، وقائمة إنجليزية من اليسار
             var ax = ltrList ? x + indO : x, aw = wO, TWd = aw - NW - 6;
             b.items.forEach(function (it) {
-              var Lt = layout(it.inl, { size: Z.body, width: TWd });
-              if ((S.keepParas && !room(Lt.h) && Lt.h <= BOT - TOP) || !room(Lt.lh)) newPage("body");
+              var Lt = layout(it.inl, { size: Z.body, width: TWd }), knI = (it.children && it.children.length) || (S.keepLabel !== false && LABEL_RE.test(ENGINE.plain(it.inl))) ? KN2 : 0;
+              if ((S.keepParas && !room(Lt.h) && Lt.h <= BOT - TOP) || !room(Lt.lh) || (knI && !room(Lt.h + knI) && Lt.h + knI <= BOT - TOP)) newPage("body");
               var top2 = y, nx = numLeft ? ax : ax + aw - NW, tx = numLeft ? ax + NW + 6 : ax;
               rect(nx, top2, NW, Lt.lh, T.light);
               var nt = String(it.num || ""), nf = fitFont(nt, Z.body, true, false, NW - 2);
               text(nt, nx + (NW - width(nf, nt)) / 2, top2 + (Lt.lh - Z.body) / 2 + Z.body * 0.86, nf, T.acc, false); if (!it.gen) drawn.push(nt);
-              para(it.inl, { x: tx, w: TWd, size: Z.body, color: "111111", boldColor: T.bold, after: 3 }, it.imp ? coBox(it.imp) : null);
+              para(it.inl, { x: tx, w: TWd, size: Z.body, color: "111111", boldColor: T.bold, after: 3, keepNext: knI }, it.imp ? coBox(it.imp) : null);
               if (it.children && it.children.length) blocks(it.children, tx, TWd);
             });
             y += 3; break;
